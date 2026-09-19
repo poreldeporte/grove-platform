@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Grove Platform — design tokens
+   The single source of truth for colour, type, space, radius and elevation.
+   Nothing in the app may hard-code a value that exists here.
+   ========================================================================== */
+
+:root {
+  /* --- Brand -------------------------------------------------------------
+     Grove green is the primary action colour. Plum is the family/registration
+     accent. Clay is reserved for money problems and safety, never decoration. */
+  --grove: #367067;
+  --grove-ink: #2B5A53;          /* hover / pressed */
+  --grove-tint: #DCEDE9;
+  --grove-tint-deep: #C4E0DA;
+
+  --plum: #8E3A7C;
+  --plum-ink: #77315F;
+  --plum-tint: #F5DFEF;
+
+  --clay: #A03B28;
+  --clay-tint: #F7E4DE;
+
+  --amber: #B07C22;
+  --amber-tint: #F6ECCB;
+
+  /* --- Surfaces ---------------------------------------------------------- */
+  --shell: #241F1B;              /* prototype chrome */
+  --shell-line: rgba(250, 247, 242, 0.12);
+  --shell-fg: #FAF7F2;
+  --shell-fg-dim: rgba(250, 247, 242, 0.62);
+  --shell-fill: rgba(250, 247, 242, 0.07);
+
+  --paper: #FAF7F2;              /* app background */
+  --surface: #FFFFFF;            /* cards */
+  --surface-sunk: #F6F2EB;       /* table headers, inset wells */
+  --line: #E4DFD5;
+  --line-soft: #EFEAE1;
+
+  /* --- Ink ---------------------------------------------------------------- */
+  --ink: #241F1B;
+  --ink-70: #58514A;
+  --ink-45: #8A837A;
+
+  /* --- Programme colours --------------------------------------------------
+     Used for the small dot beside a class, never as a fill behind text. */
+  --prog-after: #3E8C80;
+  --prog-camp: #B07C22;
+  --prog-noschool: #B35E3C;
+  --prog-private: #4F6FA8;
+  --prog-birthday: #B0509B;
+  --prog-popup: #7A5CA8;
+
+  /* --- Type ---------------------------------------------------------------
+     One family for the interface, one for the handwritten eyebrow. */
+  --font: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-hand: "Caveat", var(--font);
+
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 13.5px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 30px;
+  --text-3xl: 38px;
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-normal: 1.55;
+
+  /* Letterspacing for the small all-caps labels used on cards and tables. */
+  --track-caps: 0.09em;
+
+  /* --- Space --------------------------------------------------------------
+     A 4px base. Screens compose from these only — no stray 13px paddings. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+  --s-10: 64px;
+
+  /* --- Radius -------------------------------------------------------------- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* --- Elevation ----------------------------------------------------------- */
+  --shadow-card: 0 1px 2px rgba(36, 31, 27, 0.04);
+  --shadow-pop: 0 18px 40px -16px rgba(36, 31, 27, 0.28);
+  --shadow-frame: 0 24px 70px -20px rgba(0, 0, 0, 0.55);
+
+  /* --- Layout -------------------------------------------------------------
+     THE container. Every screen body is this wide — this is what makes the
+     portals feel like one product instead of forty hand-built pages. */
+  --page-max: 1180px;
+  --page-pad-x: 40px;
+  --page-pad-top: 28px;
+  --page-pad-bottom: 56px;
+
+  --rail-w: 244px;
+  --topbar-h: 54px;
+
+  --focus: 0 0 0 3px rgba(54, 112, 103, 0.28);
+  --speed: 140ms;
+}
+
+/* Tablet and phone previews shrink the gutter but never the rhythm. */
+[data-viewport="tablet"] {
+  --page-pad-x: 28px;
+  --rail-w: 208px;
+}
+
+[data-viewport="phone"] {
+  --page-pad-x: 18px;
+  --page-pad-top: 20px;
+  --text-3xl: 28px;
+  --text-2xl: 24px;
+}
