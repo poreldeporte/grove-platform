@@ -824,7 +824,7 @@
     }, priceTable(id));
 
     return ui.grid(2, [identityCard(id), runs]) +
-      '<div class="section">' + ui.grid('aside', [howPricedCard(id), prices]) + '</div>' +
+      '<div class="section">' + ui.grid(2, [howPricedCard(id), prices]) + '</div>' +
       '<div class="section">' + rulesCard(id) + '</div>' +
       '<div class="section">' + policiesCard(id) + '</div>' +
       ui.formActions([

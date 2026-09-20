@@ -414,6 +414,9 @@ a:hover { color: var(--plum); }
 
 [data-viewport="tablet"] .grid--3,
 [data-viewport="tablet"] .grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* A tablet frame is 900px wide and the rail takes 208 of it, so two columns
+   leave about 310px each — too narrow for a table. One column instead. */
+[data-viewport="tablet"] .grid--2 { grid-template-columns: minmax(0, 1fr); }
 [data-viewport="tablet"] .grid--sidebar,
 [data-viewport="tablet"] .grid--aside { grid-template-columns: minmax(0, 1fr); }
 [data-viewport="phone"] .grid { grid-template-columns: minmax(0, 1fr) !important; }
