@@ -24,7 +24,7 @@
     });
 
     return h`<header class="chrome">
-      <span class="chrome__brand">Symplian</span>
+      <span class="chrome__brand">Grove</span>
       <span class="chrome__tag">PROTOTYPE</span>
       <nav class="segmented" aria-label="Portal">${raw(tabs.map(function (id) {
         return h`<button class="segmented__btn" type="button" aria-pressed="${id === S.surface}"

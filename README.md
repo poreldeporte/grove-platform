@@ -1,6 +1,6 @@
 # Grove Platform
 
-A click-through front-end prototype of **Symplian**, the platform that runs
+A click-through front-end prototype of the platform that runs
 [The Grove Art Studio](https://thegroveartstudio.com) — an after-school art
 institute.
 
