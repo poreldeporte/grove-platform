@@ -424,7 +424,13 @@
   }
 
   function staffCost() {
-    var hours = 0, classes = 0, wage = 0, teachHours = 0, teachPay = 0, teachers = 0, teachClasses = 0;
+    /* A class with nobody on it is still a class. The staff records account
+       for the ones that have an instructor; the rest are named rather than
+       left to look like a different class count from the other two reports. */
+    var named = D.STAFF.map(function (s) { return s.name; });
+    var unstaffed = D.CLASSES.filter(function (c) { return named.indexOf(c.staff) === -1; });
+
+    var hours = 0, classes = 0, wage = 0, teachHours = 0, teachPay = 0, teachers = 0;
     D.STAFF.forEach(function (s) {
       var hrs = figure(s.hrs), pay = payOf(s);
       if (hrs !== null) hours += hrs;
@@ -433,7 +439,7 @@
       if (s.role === 'Instructor') {
         if (hrs !== null) teachHours += hrs;
         if (pay !== null) teachPay += pay;
-        if (s.classes) { teachers += 1; teachClasses += s.classes; }
+        if (s.classes) { teachers += 1; }
       }
     });
     var unrated = D.STAFF.filter(function (s) { return hourly(s) === null; });
@@ -459,9 +465,12 @@
       unit: 'Hours a week',
       value: String(hours),
       delta: money0(wage) + ' in hourly pay',
-      find: 'The team is on the books for ' + hours + ' hours a week and teaches ' +
-        count(classes, 'class', 'classes') + '. ' + count(teachers, 'instructor carries', 'instructors carry') + ' ' +
-        teachClasses + ' of them in ' + teachHours + ' hours between them.',
+      find: 'The team is on the books for ' + hours + ' hours a week and teaches ' + classes +
+        ' of the ' + count(D.CLASSES.length, 'class', 'classes') + ' the studio runs' +
+        (unstaffed.length
+          ? ' — the other ' + count(unstaffed.length, 'class has', 'classes have') + ' no instructor on the record yet'
+          : '') + '. The teaching sits with ' + teachers + ' of the ' +
+        count(D.STAFF.length, 'person', 'people') + ' on the team, ' + teachHours + ' hours between them.',
       read: 'Hourly pay comes to ' + money0(wage) + ' a week and ' + pct(teachPay, wage) +
         ' of that is teaching. The rest is the front desk and the office.',
       act: 'Hours and rates are set on the staff record.',
@@ -629,10 +638,14 @@
         <p class="cell-mute">${b.act}</p>
       </div>`);
 
-      var counted = ui.card({ title: 'How it is counted' }, ui.kv([
-        { k: 'Counts', v: esc(b.counts), tone: 'mute' },
-        { k: 'Excludes', v: esc(b.excludes), tone: 'mute' },
-        { k: 'Refreshes', v: 'Overnight.', tone: 'mute' }
+      /* These three values are sentences, not figures. A kv row right-aligns
+         its value, which left a full sentence ragged down its left edge and
+         broke the shortest one across two lines. A label over the line reads
+         as prose and every line starts in the same place. */
+      var counted = ui.card({ title: 'How it is counted', flush: true }, ui.rows([
+        { title: 'Counts', sub: esc(b.counts) },
+        { title: 'Excludes', sub: esc(b.excludes) },
+        { title: 'Refreshes', sub: 'Overnight.' }
       ]));
 
       var behind = ui.card({

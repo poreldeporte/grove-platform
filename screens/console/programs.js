@@ -20,10 +20,10 @@
      - 25 controls are now 5. Kept: program name, what families should know,
        age bands, session length, places per class.
      - Cut to stated facts: colour (set once, stated in the Identity note);
-       term, start, end, runs-on and rooms (now the "When it runs" card, with
-       days and rooms read from CLASSES); the eight Billing controls and the
-       four Make-up controls (now one "Standing rules" card — the answer was
-       the same for every program, so it is written once in Settings).
+       term, start, end, runs-on and rooms (now the "How it runs" card, read
+       from CLASSES); the eight Billing controls and the four Make-up controls
+       (now one "Standing rules" card — the answer was the same for every
+       program, so it is written once in Settings).
      - Cut outright: the two capacity switches, "Show remaining places
        publicly" and "Offer waitlist when full", which were on for everything
        and are now the stated default; the nine policy toggle chips, which
@@ -48,7 +48,15 @@
        card no longer holds a 70px blank band.
      - The Eligibility note lost a changelog sentence about "two switches"
        that meant nothing to a studio owner, and an invented waitlist length.
-     - "1 hour and 2 hour" is now "1 hour or 2 hours". */
+     - "1 hour and 2 hour" is now "1 hour or 2 hours".
+     - The schedule card no longer prints a term, a start and an end date. It
+       said "Starts 17 Aug 2026" of a program whose five classes are running
+       now, carry attendance, and gave up make-up credits in July. Grove.data
+       holds no term calendar to read those dates from, and the card's own
+       note already says the calendar is kept in Settings — so the card now
+       states only what the class rows say: the days, the number of classes a
+       week, the rooms, who teaches them and how full they are. Registration
+       still opens the autumn year on 17 Aug; nothing here contradicts it. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -195,6 +203,7 @@
       var places = uniq(cls.map(function (c) { return String(c.cap); })).join(' / ');
       var days = uniq(cls.map(function (c) { return c.day; })).join(', ');
       var rooms = uniq(cls.map(function (c) { return c.room; })).join(', ');
+      var teachers = uniq(cls.map(function (c) { return c.staff; })).join(', ');
 
       /* Identity and Eligibility are one ui.grid(2) row, so they stretch to a
          shared height. They are built to need the same height: one hint line
@@ -269,14 +278,14 @@
       ));
 
       var when = ui.card({
-        title: 'When it runs',
-        note: 'The term calendar is kept in Settings and the sessions themselves live under Classes, so the days and rooms here are read from the classes, not typed again.'
+        title: 'How it runs',
+        note: 'The term calendar is kept in Settings and the sessions themselves live under Classes, so every line here is read from the classes this program is running, not typed again.'
       }, ui.kv([
-        ['Term', '2026–2027 school year'],
-        ['Starts', '17 Aug 2026'],
-        ['Ends', '12 Jun 2027'],
         ['Runs on', esc(days)],
-        ['Rooms', esc(rooms)]
+        ['Classes a week', esc(String(cls.length))],
+        ['Rooms', esc(rooms)],
+        ['Instructors', esc(teachers)],
+        ['Enrolled', esc(placesLine('as'))]
       ]));
 
       var rules = ui.card({

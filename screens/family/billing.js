@@ -184,12 +184,16 @@
         }
       );
 
+      /* The note describes the table, not the studio's credit policy. Schedule →
+         Absences & make-ups states the rule in plain words — a make-up credit
+         is a class, not money — so this card does not restate it, and does not
+         claim that a green line is money coming off what you owe. */
       var history = ui.card({
         title: 'Account history',
         head: ui.btn({ label: 'Download statement', kind: 'quiet', size: 'sm', msg: 'Statement downloaded' }),
         flush: true,
         note: 'Everything raised since ' + since() +
-          '. Credits are shown in green and come off what you owe.'
+          ', newest first. Credit lines are shown in green.'
       }, table);
 
       return h`

@@ -68,13 +68,13 @@
     { id: 'lucas',   name: 'Lucas Johnson',   age: 10, band: '8–11', family: 'Johnson',  cls: 'Wed 3:15pm · Studio 2',      flag: 'Asthma · inhaler in bag',  flagKind: 'bad',  att: '91%',  mk: 0 },
     { id: 'zara',    name: 'Zara Okafor',     age: 11, band: '8–11', family: 'Okafor',   cls: 'Wed 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '88%',  mk: 1 },
     { id: 'tobi',    name: 'Tobi Okafor',     age: 9,  band: '8–11', family: 'Okafor',   cls: 'Waitlisted · Mon 3:15pm',    flag: '',                         flagKind: '',     att: '—',    mk: 0 },
-    { id: 'mia',     name: 'Mia Chen',        age: 6,  band: '5–7',  family: 'Chen',     cls: 'Camp week 4 · Clay Room',    flag: 'Tree nuts',                flagKind: 'bad',  att: '100%', mk: 0 },
+    { id: 'mia',     name: 'Mia Chen',        age: 6,  band: '5–7',  family: 'Chen',     cls: 'Camp week 4 · Clay Room',    flag: 'Tree nuts',                flagKind: 'bad',  att: '100%', mk: 1 },
     { id: 'noah',    name: 'Noah Rivera',     age: 7,  band: '5–7',  family: 'Rivera',   cls: 'Mon 2:15pm · Studio 1',      flag: '',                         flagKind: '',     att: '93%',  mk: 1 },
-    { id: 'ava',     name: 'Ava Smith',       age: 8,  band: '8–11', family: 'Smith',    cls: 'Mon 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '85%',  mk: 3 },
-    { id: 'sophia',  name: 'Sophia Martinez', age: 8,  band: '8–11', family: 'Martinez', cls: 'Mon, Wed, Thu',              flag: 'Requires quiet corner',    flagKind: 'warn', att: '98%',  mk: 0 },
+    { id: 'ava',     name: 'Ava Smith',       age: 8,  band: '8–11', family: 'Smith',    cls: 'Mon 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '85%',  mk: 2 },
+    { id: 'sophia',  name: 'Sophia Martinez', age: 8,  band: '8–11', family: 'Martinez', cls: 'Mon, Wed, Thu',              flag: 'Requires quiet corner',    flagKind: 'warn', att: '98%',  mk: 1 },
     { id: 'iker',    name: 'Iker Delgado',    age: 5,  band: '5–7',  family: 'Delgado',  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—',    mk: 0 },
     { id: 'luz',     name: 'Luz Delgado',     age: 7,  band: '5–7',  family: 'Delgado',  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—',    mk: 0 },
-    { id: 'cillian', name: 'Cillian Brennan', age: 12, band: '12+',  family: 'Brennan',  cls: 'Thu 4:30pm · 2-hour',        flag: '',                         flagKind: '',     att: '79%',  mk: 1 }
+    { id: 'cillian', name: 'Cillian Brennan', age: 12, band: '12+',  family: 'Brennan',  cls: 'Thu 4:30pm · 2-hour',        flag: '',                         flagKind: '',     att: '79%',  mk: 0 }
   ];
 
   var CLASSES = [
@@ -93,16 +93,17 @@
   ];
 
   var STAFF = [
-    { id: 'lauren',  name: 'Lauren Ortiz',    role: 'Instructor',    classes: 9, hrs: '22.5', status: 'Clocked in',       kind: 'ok',      rate: '$28/hr' },
-    { id: 'marisol', name: 'Marisol Vega',    role: 'Instructor',    classes: 7, hrs: '18.0', status: 'Scheduled 4pm',    kind: 'neutral', rate: '$28/hr' },
+    { id: 'lauren',  name: 'Lauren Ortiz',    role: 'Instructor',    classes: 5, hrs: '22.5', status: 'Clocked in',       kind: 'ok',      rate: '$28/hr' },
+    { id: 'marisol', name: 'Marisol Vega',    role: 'Instructor',    classes: 5, hrs: '18.0', status: 'Scheduled 4pm',    kind: 'neutral', rate: '$28/hr' },
     { id: 'rey',     name: 'Rey Molina',      role: 'Front desk',    classes: 0, hrs: '30.0', status: 'Clocked in',       kind: 'ok',      rate: '$22/hr' },
     { id: 'dani',    name: 'Dani Cruz',       role: 'Administrator', classes: 0, hrs: '38.0', status: 'Clocked in',       kind: 'ok',      rate: 'Salary' },
-    { id: 'sabrina', name: 'Sabrina Yanguas', role: 'Owner',         classes: 2, hrs: '—',    status: '—',                kind: 'neutral', rate: '—' },
+    { id: 'sabrina', name: 'Sabrina Yanguas', role: 'Owner',         classes: 0, hrs: '—',    status: '—',                kind: 'neutral', rate: '—' },
     { id: 'theo',    name: 'Theo Amari',      role: 'Instructor',    classes: 0, hrs: '0.0',  status: 'Invitation sent',  kind: 'warn',    rate: '$26/hr' }
   ];
 
   var INVOICES = [
     { id: 'INV-2841', fam: 'Okafor',   date: '1 Jul 2026',  due: '8 Jul 2026', amt: 540, status: 'Failed',            kind: 'bad',  method: 'Visa ···4417',       note: 'Card declined — insufficient funds. 2 retries.' },
+    { id: 'INV-2842', fam: 'Johnson',  date: '20 Jul 2026', due: '27 Jul 2026', amt: 18,  status: 'Past due',          kind: 'bad',  method: 'Visa ···1183',       note: 'Late pickup — 15 minutes on 20 July.' },
     { id: 'INV-2840', fam: 'Smith',    date: '1 Jul 2026',  due: '8 Jul 2026', amt: 45,  status: 'Past due',          kind: 'bad',  method: 'Mastercard ···9902', note: 'Late pickup fee, 45 minutes across 3 days.' },
     { id: 'INV-2839', fam: 'Delgado',  date: '27 Jul 2026', due: 'On receipt', amt: 200, status: 'Awaiting payment',  kind: 'warn', method: 'None saved',         note: 'Registration submitted, spot held until 30 Jul.' },
     { id: 'INV-2838', fam: 'Johnson',  date: '1 Jul 2026',  due: '8 Jul 2026', amt: 820, status: 'Paid',              kind: 'ok',   method: 'Visa ···1183',       note: '' },
@@ -123,8 +124,8 @@
 
   var MAKEUPS = [
     { id: 'm0',  child: 'Mia Chen',        missed: 'Tue 21 Jul · 2:00pm', reason: 'Requested Fri 31 Jul, 10:00am', expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
-    { id: 'm0b', child: 'Sophia Martinez', missed: 'Mon 20 Jul · 3:15pm', reason: 'Requested Wed 5 Aug, 4:30pm',   expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
-    { id: 'm1',  child: 'Emma Johnson',    missed: 'Wed 15 Jul · 3:15pm', reason: 'Illness, reported 26 hrs ahead',expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
+    { id: 'm0b', child: 'Sophia Martinez', missed: 'Mon 20 Jul · 3:15pm', reason: 'Requested Wed 5 Aug, 3:15pm',   expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
+    { id: 'm1',  child: 'Emma Johnson',    missed: 'Mon 13 Jul · 3:15pm', reason: 'Illness, reported 26 hrs ahead',expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
     { id: 'm2',  child: 'Emma Johnson',    missed: 'Mon 6 Jul · 3:15pm',  reason: 'Family travel',                 expires: '31 Jul', status: 'Booked',            kind: 'info', booked: 'Fri 31 Jul · 10:00am' },
     { id: 'm3',  child: 'Ava Smith',       missed: 'Mon 13 Jul · 3:15pm', reason: 'Illness',                       expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
     { id: 'm4',  child: 'Ava Smith',       missed: 'Mon 20 Jul · 3:15pm', reason: 'No reason given',               expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
@@ -242,7 +243,7 @@
 
   var ACTIVITY = [
     { at: '10:42', what: 'Rey M. took a $400 camp payment — Chen family' },
-    { at: '10:15', what: 'Waitlist offer accepted — Tobi Okafor, Mon 3:15pm' },
+    { at: '10:15', what: 'Waitlist place offered — Tobi Okafor, Mon 3:15pm' },
     { at: '09:58', what: 'Lauren O. clocked in' },
     { at: '09:31', what: 'Absence reported — Emma Johnson, make-up credit issued' },
     { at: '08:47', what: 'New registration — Delgado family, 2 children' },
@@ -252,8 +253,8 @@
   /* The Johnson family's ledger, shown in Console → Billing → ledger and in
      the family's own Billing screen. */
   var LEDGER = [
-    { d: '1 Jul 2026',  what: 'August tuition — Emma, 8 sessions',  amt: 540, paid: true },
-    { d: '1 Jul 2026',  what: 'August tuition — Lucas, 4 sessions', amt: 280, paid: true },
+    { d: '1 Jul 2026',  what: 'July tuition — Emma, 8 sessions',  amt: 540, paid: true },
+    { d: '1 Jul 2026',  what: 'July tuition — Lucas, 4 sessions', amt: 280, paid: true },
     { d: '1 Jul 2026',  what: 'Sibling discount — Lucas',           amt: -140, paid: true },
     { d: '12 Jul 2026', what: 'Camp week 4 extra hour — Emma',      amt: 28,  paid: true },
     { d: '20 Jul 2026', what: 'Late pickup — 15 minutes',           amt: 18,  paid: false },

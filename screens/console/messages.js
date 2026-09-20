@@ -27,8 +27,7 @@
      - the thread's right column no longer claimed Tobi was waitlisted for the
        Monday class he attends. Each child's standing is read from STUDENTS,
        which is what the family record shows, so the panel agrees with the
-       conversation. (Grove.data.WAITLIST w1 still files Tobi under Monday —
-       see the report; that row, not this screen, is the wrong one.)
+       conversation, and with the WAITLIST row filing him under Monday.
      - the thread panel is three cards in one grid__col, so the column fills
        beside the transcript instead of ending in 350px of white. The reply
        moved into its own card, so its label is a card title like every other
@@ -41,7 +40,20 @@
        "Record" card is gone (its one new fact moved into "Who sees it"), and
        the page ends with the other announcements instead of 400px of cream.
      - an announcement that names a child is called out: announcements are
-       public, and one child's credit balance does not belong in one. */
+       public, and one child's credit balance does not belong in one.
+
+   Fixed after the final review:
+     - the header called every announcement studio-wide and already sitting on
+       every family home screen. The table under it says otherwise: two of the
+       five posts are addressed to a single program, and the scheduled one is
+       on no home screen at all. The subtitle now says what the rows say, and
+       the three places that repeated the claim — the announcement's eyebrow,
+       its "Where" row and the heading over the post — read the audience and
+       the status off the post itself.
+     - the rail lost its Messages tint inside a thread or a single
+       announcement. js/nav.js owns that map and has no entry for either, so
+       the two detail views registered here declare their own owner at the
+       foot of this file, beside the screens they describe. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -104,13 +116,24 @@
     return hit;
   }
 
+  /* An announcement is addressed either to every family or to the families of
+     one program. PROGRAMS holds those names, so a page can say which program
+     is reading rather than claiming the whole studio is. */
+  function audProgram(aud) {
+    var hit = null;
+    Object.keys(D.PROGRAMS).forEach(function (k) {
+      if (D.PROGRAMS[k].name === aud) hit = D.PROGRAMS[k];
+    });
+    return hit;
+  }
+
   /* ---- messages: conversations + announcements ---------------------------- */
 
   Grove.screen('messages', {
     surface: 'console',
     eyebrow: 'one family, or everyone',
     title: 'Messages',
-    sub: 'Private conversations with individual families. Announcements are studio-wide posts — public, read-only, and at the top of every family home screen.',
+    sub: 'Private conversations with individual families. An announcement is public and read-only: it goes to everyone or to one program, and it reaches the family home screen only once it is posted.',
     actions: [
       { label: 'New announcement', msg: 'Prototype — no form yet' },
       { label: 'New message', kind: 'primary', to: 'newMessage' }
@@ -270,7 +293,7 @@
       var reply = ui.card({
         title: 'Reply',
         fill: true,
-        note: 'A reply is private to this family. Studio-wide news belongs in Announcements.',
+        note: 'A reply is private to this family. News for everyone, or for a whole program, belongs in Announcements.',
         foot: ui.btn({
           label: 'Send reply',
           kind: 'primary',
@@ -330,7 +353,7 @@
     crumbs: [{ label: 'Messages', to: 'messages' }],
     eyebrow: 'just to this family',
     title: 'New message',
-    sub: 'A private conversation with one family. For studio-wide news use Announcements instead.',
+    sub: 'A private conversation with one family. News for everyone, or for a whole program, belongs in Announcements.',
 
     body: function () {
       var PICK = 'Choose a family';
@@ -387,7 +410,10 @@
     surface: 'console',
     crumbs: [{ label: 'Messages', to: 'messages' }],
     crumbTitle: 'Announcement',
-    eyebrow: 'everyone sees this',
+    eyebrow: function (ctx) {
+      var p = audProgram(ann(ctx).aud);
+      return p ? 'every ' + p.short.toLowerCase() + ' family sees this' : 'everyone sees this';
+    },
     title: function (ctx) { return ann(ctx).head; },
     sub: function (ctx) {
       var a = ann(ctx);
@@ -436,7 +462,7 @@
       }
 
       var post = ui.card({
-        title: 'What families see',
+        title: isPosted(a) ? 'What families see' : 'What families will see',
         note: 'Announcements are read-only for families. If someone needs to reply, they use Messages.'
       }, ui.notice({ kind: 'ok', title: a.head, text: a.body }) + warning);
 
@@ -445,7 +471,7 @@
         note: 'A pinned post stays at the top of the family home screen until it is unpinned.'
       }, ui.kv([
         ['Audience', esc(a.aud)],
-        ['Where', 'Top of the family home screen'],
+        ['Where', isPosted(a) ? 'Top of the family home screen' : 'Top of the family home screen, once posted'],
         ['Sent by email', isPosted(a) ? 'Yes' : 'Will send when it goes out']
       ]));
 
@@ -466,4 +492,16 @@
         '<div class="section">' + more + '</div>';
     }
   });
+
+  /* ---- the rail -------------------------------------------------------------
+     A thread and a single announcement are only ever reached from Messages,
+     and both carry a Messages crumb, so the rail item has to stay lit while
+     you are inside one. js/nav.js keeps that map for the screens it knows
+     about; these two are declared here, next to the screens they describe. */
+
+  var OWNED = { thread: 'messages', announcement: 'messages' };
+  var ownerElse = Grove.nav.currentFor;
+  Grove.nav.currentFor = function (key) {
+    return OWNED[key] || ownerElse.call(Grove.nav, key);
+  };
 })();

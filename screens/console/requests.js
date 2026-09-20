@@ -367,6 +367,9 @@
     if (m.booked) return m.booked;
     return 'Not yet booked';
   }
+  function expiryLine(m) {
+    return 'Expires ' + m.expires + ' · ' + inDays(dayCount(m.expires));
+  }
 
   function makeupTab() {
     var q = Grove.query('makeups');
@@ -375,11 +378,16 @@
       return Grove.match(q, m.child, m.missed, m.reason, m.status);
     });
 
+    /* Five columns, not six. Six asked for more width than the table has, and
+       the shortfall came out of the one column that cannot give any: the
+       action cell shrank below its own two buttons, so Decline wrapped above
+       Approve and those two rows stood a line taller than the six beneath
+       them. The expiry now rides under the placement — the same two facts,
+       one column — and the pair sits on one line, as it does under Supplies. */
     var table = ui.table(
       [
         'Child',
         'Missed session',
-        'Expires',
         { label: 'Status', shrink: true },
         'Placement',
         { label: '' }
@@ -391,9 +399,8 @@
           cells: [
             ui.two(m.child, s ? s.family + ' family' : ''),
             ui.two(m.missed, missReason(m)),
-            ui.mute(m.expires + ' · ' + inDays(dayCount(m.expires))),
             ui.pill(m.status, MAKEUP_PILL[m.status]),
-            ui.mute(placement(m)),
+            ui.two(placement(m), expiryLine(m)),
             m.status === 'Awaiting approval'
               ? ui.btns([
                   { label: 'Decline', size: 'sm', msg: 'Request declined · ' + m.child + ' keeps the credit' },

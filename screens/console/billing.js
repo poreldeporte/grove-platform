@@ -1,12 +1,14 @@
 /* Console → Billing (the studio ledger) and the family ledger behind it.
 
    Every number on this screen is worked out from the rows printed underneath
-   it. Outstanding is the sum of what is genuinely chaseable — the three unpaid
-   invoices plus the desk charge sitting unpaid on a family ledger that no
+   it. Outstanding is the sum of what is genuinely chaseable — every unpaid
+   invoice, plus any desk charge sitting unpaid on a family ledger that no
    invoice has picked up yet — and comes to the same total, across the same
-   four families, as the balances held on those four family records in
-   js/data.js. Collected is the sum of the settled invoices; Failed is the sum
-   of the two declined cards. Nothing here is typed in by hand.
+   families, as the balances held on those family records in js/data.js. A
+   desk charge an invoice has since picked up is left to its invoice, or the
+   same money would be chased twice on one table. Collected is the sum of the
+   settled invoices; Failed is the sum of the cards worth retrying. Nothing
+   here is typed in by hand.
    (Console → Dashboard still carries $1,840 outstanding and $28,360 revenue as
    literals. The same treatment is owed there, in that file.)
 
@@ -131,13 +133,23 @@
   /* Failed and past due: the cards that can actually be retried. */
   function failing() { return D.INVOICES.filter(function (i) { return i.kind === 'bad'; }); }
 
+  /* A desk charge is chaseable in its own right only while no invoice has
+     picked it up. Once one is raised on that family, on the day of the charge,
+     for the amount of the charge, the invoice is the row to chase — counting
+     the ledger line as well would put the same money on this table twice. */
+  function unbilled(line, fam) {
+    return !D.INVOICES.filter(function (i) {
+      return i.fam === fam.name && i.date === line.d && i.amt === line.amt;
+    }).length;
+  }
+
   /* Everything the studio is still owed: unpaid invoices, plus any charge
      already posted to a family ledger that no invoice has picked up yet. The
      two together are exactly the balances carried on the family records. */
   function attention() {
     var items = D.INVOICES.filter(unpaid).map(asItem);
     var f = D.family(LEDGER_FAMILY);
-    D.LEDGER.filter(function (l) { return !l.paid; }).forEach(function (l) {
+    D.LEDGER.filter(function (l) { return !l.paid && unbilled(l, f); }).forEach(function (l) {
       items.push({
         ref: 'Not invoiced',
         note: l.what,
@@ -149,7 +161,8 @@
         amt: l.amt,
         status: 'Unbilled',
         kind: 'warn',
-        owing: true
+        owing: true,
+        desk: true
       });
     });
     return items;
@@ -257,7 +270,7 @@
     title: 'Billing',
     sub: function () {
       var tab = currentTab();
-      if (tab === T_ATTENTION) return 'Everything the studio is still owed: cards that failed, invoices past their date, and charges taken at the desk that no invoice has picked up yet.';
+      if (tab === T_ATTENTION) return 'Everything the studio is still owed: cards that failed, invoices past their date, and any charge taken at the desk that no invoice has picked up yet.';
       if (tab === T_CREDITS) return 'Credits and refunds owed back to a family. Distinct from make-up credits, which are counted in classes and never convert to cash.';
       return 'Every charge the studio has raised. Money moves are always recorded against a family, never against a child.';
     },
@@ -302,6 +315,7 @@
   function attentionTab() {
     var owed = attention();
     var bad = failing();
+    var desk = owed.filter(function (it) { return it.desk; });
     var q = Grove.query('attention');
     var list = owed.filter(function (it) { return matches(q, it); });
 
@@ -315,15 +329,20 @@
       { label: 'Retry failed cards', kind: 'quiet', size: 'sm', msg: plural(bad.length, 'card') + ' retried · results land within the hour' }
     ]);
 
+    var note = 'Retry cadence is day 1, day 3, day 7. After the third failure the enrolment is flagged but never silently cancelled — a person decides.';
+    if (desk.length) {
+      note += ' A line marked unbilled is a desk charge already on the family ledger; it joins their next invoice.';
+    }
+
     return ui.toolbar({
       tabs: billingTabs(),
       search: { key: 'attention', placeholder: 'Search invoice, family, card…' },
       count: list.length + ' of ' + owed.length + ' outstanding'
     }) + stats(T_ATTENTION) + ui.card({
-      title: 'Failed, past due and unbilled',
+      title: desk.length ? 'Failed, past due and unbilled' : 'Failed and past due',
       head: head,
       flush: true,
-      note: 'Retry cadence is day 1, day 3, day 7. After the third failure the enrolment is flagged but never silently cancelled — a person decides. A line marked unbilled is a desk charge already on the family ledger; it joins their next invoice.'
+      note: note
     }, table);
   }
 

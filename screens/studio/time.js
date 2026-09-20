@@ -11,6 +11,13 @@
      - the incomplete Thursday is one notice with the single action that
        mattered, instead of a status a teacher has to open a drawer to read.
 
+   Column widths. A date, a clock time and an hours figure each have one
+   shape, so the four fixed-shape columns are shrink columns — they take their
+   content's width and hold it on one line, which is what stops "Tue 28 Jul"
+   breaking after the weekday and "Still clocked in" running to two lines and
+   deepening its row. Classes is the one column with prose in it, so it takes
+   whatever width is left and wraps there.
+
    Numbers. Clock entries are the one thing on this screen Grove.data does not
    hold, so the five rows below are this file's own — but they are the rows the
    rest of the app is costed against. Their recorded hours sum to 22.5 and the
@@ -132,7 +139,13 @@
         : '';
 
       var table = ui.table(
-        ['Day', 'In', 'Out', { label: 'Hours', align: 'right' }, 'Classes'],
+        [
+          { label: 'Day', shrink: true },
+          { label: 'In', shrink: true },
+          { label: 'Out', shrink: true },
+          { label: 'Hours', align: 'right', shrink: true },
+          'Classes'
+        ],
         ENTRIES.map(function (e) {
           var out;
           if (e.missing) out = '<span class="clay strong">' + esc(e.outAt) + '</span>';

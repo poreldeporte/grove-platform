@@ -29,9 +29,10 @@
        same gap, so the two screens tell one story
      - which children are on a class roster is now worked out with the same
        rules Console → Classes uses, so a child cannot appear on a register
-       here and be missing from the same class's roster there. The camp week is
-       still the spec's named list, because the dataset links no child to a
-       camp class; it is the same six ids Today reads
+       here and be missing from the same class's roster there. Which children
+       hold a camp week 4 record is still the spec's list, because the dataset
+       links no child to a camp class, but which room takes each of them is
+       derived, not named
      - who "my classes" belongs to is read from ctx.persona, never from a
        literal name, so this screen and Today can never disagree about whose
        classes these are
@@ -47,6 +48,13 @@
        the card, so the two differ on their first line and their title
      - the fifth class card sat alone in the last row. The "ask the office"
        notice is the sixth cell of the same grid, so the grid closes out
+     - the camp register listed all six of the week's children under a room
+       whose own card calls it "Ages 5–7", and three of them were 8 or older.
+       Camp runs two rooms at the same hour, so the room a child is in is now
+       settled by the band Grove.data puts on the room, and the same enrolment
+       test the other rosters use is applied to camp as well — a child the
+       dataset still reads as "Not yet enrolled" was standing in Studio 1. The
+       card and the register can no longer disagree about who the class is for
      - the same two allergy facts were stated three times: a banner, a stat
        cell and a pill on the child's row. The pill also made the one row
        without a flag 6px shorter than its neighbours, so the list's rhythm
@@ -54,11 +62,14 @@
        banner at the top; the stat cell and the row pills are gone and every
        register row is now the same height
 
-   Roster membership: the camp register is the spec's, by child id. Everything
-   shown about each child — name, age, family, safety flag, attendance — is read
-   from Grove.data.STUDENTS. Every other class works its roster out from the
-   dataset the way Console → Classes does: the child's recorded class has to
-   match this class's day and then its room, its start time or its age band. */
+   Roster membership: which children hold a camp week 4 record is the spec's,
+   by child id; which camp room each one sits in is not, because a camp room
+   takes the children of its own week who are enrolled and in the age band
+   Grove.data gives that room. Everything shown about each child — name, age,
+   family, safety flag, attendance — is read from Grove.data.STUDENTS. Every
+   other class works its roster out from the dataset the way Console → Classes
+   does: the child's recorded class has to match this class's day and then its
+   room, its start time or its age band. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -66,9 +77,13 @@
   var TODAY_DAY = 'Tue';                    /* Grove.data.today — Tuesday 28 July 2026 */
   var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  /* The camp register is the spec's, by child id — the dataset does not link a
-     child to a class id. Today reads the same six. */
-  var CAMP_REGISTER = { c6: ['mia', 'emma', 'noah', 'sophia', 'iker', 'zara'] };
+  /* The children the prototype holds a camp week 4 record for, by child id —
+     the dataset links no child to a class id. Which of them a given camp room
+     takes is worked out below from the band on the room, never written down
+     here, so a child cannot land on a register the class card says they are
+     too old for. */
+  var CAMP_WEEK = 'week 4';
+  var CAMP_CHILDREN = ['mia', 'emma', 'noah', 'sophia', 'iker', 'zara'];
 
   /* ---- helpers ------------------------------------------------------------ */
 
@@ -137,7 +152,8 @@
   /* The dataset writes a child's placement as free text ("Mon 3:15pm · Studio
      2", "Camp week 4 · Clay Room", "Mon, Wed, Thu"), so membership is matched
      on the signals those strings carry. Same rules as Console → Classes, so a
-     child is on the same rosters in both portals. */
+     child is on the same rosters in both portals. Camp is the exception and is
+     settled by the band rule below. */
   function onRoster(c, s) {
     if (!enrolled(s)) return false;
 
@@ -145,11 +161,6 @@
     if (String(c.name).toLowerCase().indexOf(String(s.name).toLowerCase()) !== -1) return true;
 
     var roomHit = text.indexOf(String(c.room).toLowerCase()) !== -1;
-
-    /* Camp runs Mon–Fri, so a weekday alone proves nothing: a camp roster is
-       the children recorded against that week AND that room. */
-    var week = weekOf(c.name);
-    if (week) return text.indexOf(week) !== -1 && roomHit;
 
     var dayHit = dayTokens(c).filter(function (d) {
       return text.indexOf(d.toLowerCase()) !== -1;
@@ -163,11 +174,20 @@
     return roomHit || text.indexOf(startTime(c)) !== -1;
   }
 
+  /* Camp runs Mon–Fri in two rooms at once, so a weekday proves nothing about
+     which room a child is in — the age band does. A camp room takes the
+     children of its own week who are enrolled and in the band the room
+     advertises. Enrolment is the same test every other roster here applies:
+     a child the dataset has not enrolled yet is nobody's register. */
+  function campRoster(c) {
+    if (weekOf(c.name) !== CAMP_WEEK) return [];
+    return CAMP_CHILDREN
+      .map(function (id) { return D.student(id); })
+      .filter(function (s) { return s && enrolled(s) && s.band === c.band; });
+  }
+
   function roster(c) {
-    var named = CAMP_REGISTER[c.id];
-    if (named) {
-      return named.map(function (id) { return D.student(id); }).filter(Boolean);
-    }
+    if (weekOf(c.name)) return campRoster(c);
     return D.STUDENTS.filter(function (s) { return onRoster(c, s); });
   }
 

@@ -42,9 +42,20 @@
      into the label, so every amount and every count now right-aligns into a
      real column. That is why several labels carry a "· ..." tail.
    - Pricing put a 4-row card beside an 8-row card and the grid stretched the
-     short one, leaving ~160px of white above its footer. Pricing and Messages
-     now balance their columns with ui.col; Studio and Policies balance by
-     having the same number of rows per card, so their rows share baselines.
+     short one, leaving ~160px of white above its footer. Pairing the 4-row
+     plans card with the 5-row Fees card instead lets all four cards sit in
+     one plain ui.grid, so both card tops in a row are level by construction
+     rather than by luck — which stacking two ui.col columns could not
+     promise, and did not deliver. Studio and Policies pair cards of near
+     enough the same length for the same reason.
+   - Messages now puts the ten-row Templates card across the full width and
+     the two short reference cards side by side beneath it. Stacked in one
+     ui.col column they could not reach the height of a ten-row list, and
+     Merge fields ended more than half empty.
+   - A card note that runs to six or seven lines stretches its own card and
+     hollows out the card opposite. Policy documents used to enumerate all
+     nine after-school policies in its note; it states the arithmetic only
+     now, and Registration form opposite has no hole in it.
 
    Facts corrected against js/data.js
    - Class times claimed Tuesday ran at 2:15pm, but CLASSES holds a 2:00pm
@@ -72,6 +83,15 @@
      from PRICING and stated in the card note.
    - "Pop-up event · set per event" left Settings silent while Programs and
      the registration picker both quote $45. It is derived from PRICING.pop.
+   - The two largest after-school tiers were labelled "Two 2-hour classes
+     each week" and "Three 2-hour classes each week" — 16 and 24 hours a
+     month, which made a liar of the card's own footnote that the rate per
+     hour falls to $60. A plan key counts sessions and one session is one
+     hour, the same reading as the plans table on Programs, so both halves
+     of every tier label are now arithmetic on the key: 1, 2, 3 and 4 hours
+     a week, 4, 8, 12 and 16 sessions a month. $960 over 16 hours is the $60
+     PRICING holds, and the four rates in PRICING.extraClassRate are now
+     exactly the four prices divided by the four session counts.
    - "Most popular" against the 12-hour plan is not supported by FAMILIES,
      where the 4-session plan is the commonest. The claim is gone; the card
      note gives the per-hour rate instead, read from PRICING.extraClassRate.
@@ -117,6 +137,14 @@
   var PICKUP_RATE = 1;         // "a late fee of $1 per minute"
   var NSD_BASE_HOURS = 3;      // the no-school block PRICING.nsd.base buys
   var NOTICE_DAYS = 30;        // cancellation notice
+
+  /* An after-school plan key counts the sessions a month it buys, and one
+     session is one hour — the same reading as the plans table on Programs.
+     Four weeks to a billing month, so a tier's weekly hours and its monthly
+     sessions are both arithmetic on its key and cannot drift away from the
+     per-hour rate quoted underneath them. */
+  var PLAN_KEYS = ['p4', 'p8', 'p12', 'p16'];
+  var WEEKS_PER_MONTH = 4;
 
   function money(n) { return Grove.money(n, { cents: false }); }
   /* A rate that may carry cents — $67.50 must not round to $68. */
@@ -187,6 +215,17 @@
     amounts.sort(function (a, b) { return a - b; });
     if (amounts.length === 1) return money(amounts[0]) + ' / child';
     return money(amounts[0]) + '–' + money(amounts[amounts.length - 1]) + ' / child';
+  }
+
+  /* One tier of the after-school plan, labelled out of its own key so the
+     label can never contradict the rate: p12 is 12 sessions, 12 sessions is
+     three hours a week, and $780 across those 12 hours is the $65 PRICING
+     holds in extraClassRate. */
+  function planRow(key) {
+    var sessions = Number(key.slice(1));
+    var weekly = sessions / WEEKS_PER_MONTH;
+    return row(weekly + ' hour' + (weekly === 1 ? '' : 's') + ' a week · ' +
+      sessions + ' sessions a month', money(P.as.plans[key]));
   }
 
   /* The registration fee shared by everything that is not after-school and
@@ -294,16 +333,11 @@
     var plans = ui.card({
       title: 'After-school plans',
       head: editHead('After-school plans'),
-      note: 'The four tiers a family chooses from. The rate per hour falls from ' +
+      note: 'The ' + PLAN_KEYS.length + ' tiers a family chooses from, priced a month at a time. One session is one hour, so the rate per hour falls from ' +
         rate(P.as.extraClassRate.p4) + ' to ' + rate(P.as.extraClassRate.p16) +
         ' as the plan grows. A change applies to new enrolments immediately; existing families keep their agreed rate until you move them deliberately, and are given ' +
         NOTICE_DAYS + ' days’ notice.'
-    }, ui.kv([
-      row('One 1-hour class each week', money(P.as.plans.p4) + ' / month'),
-      row('One 2-hour class each week', money(P.as.plans.p8) + ' / month'),
-      row('Two 2-hour classes each week', money(P.as.plans.p12) + ' / month'),
-      row('Three 2-hour classes each week', money(P.as.plans.p16) + ' / month')
-    ]));
+    }, ui.kv(PLAN_KEYS.map(planRow)));
 
     var rest = ui.card({
       title: 'Everything else',
@@ -342,30 +376,40 @@
         money(PICKUP_RATE) + ' / minute')
     ]));
 
-    var discounts = ui.card({
-      title: 'Discounts',
-      head: editHead('Discounts'),
-      note: 'The first three apply automatically at registration and on every billing run. The rest are applied to one family by an admin, and every one is recorded on the ledger with who applied it.'
-    }, ui.kv([
+    /* Split in two so the note counts the automatic ones rather than saying
+       "the first three" and hoping a fourth is never added. */
+    var AUTOMATIC = [
       row('Sibling relief', P.as.siblingRelief),
       row('Multi-class · a second class in the same week', '10%'),
-      row('Full-term prepay · paid before the term starts', '5%'),
+      row('Full-term prepay · paid before the term starts', '5%')
+    ];
+    var BY_HAND = [
       row('Staff family', '100%'),
       row('Scholarship · owner approval', 'Set per family'),
       row('Goodwill · recorded with a reason', 'Set per family', null, 'mute')
-    ]));
+    ];
 
-    /* Everything else is twice the height of the plans card, and Discounts is
-       taller than Fees. Stacking them in two columns keeps both columns the
-       same length instead of stretching the short card. */
-    return ui.grid(2, [ui.col([plans, rest]), ui.col([fees, discounts])]);
+    var discounts = ui.card({
+      title: 'Discounts',
+      head: editHead('Discounts'),
+      note: 'The first ' + AUTOMATIC.length + ' apply themselves at registration and on every billing run, and reach the family as their own line on the invoice rather than as a quietly smaller total. The rest are applied to one family at a time by an admin, a scholarship only with the owner’s approval, and every one of those is recorded on the ledger with who applied it and why.'
+    }, ui.kv(AUTOMATIC.concat(BY_HAND)));
+
+    /* Four rows against five, then eight against six. Pairing the two short
+       cards and then the two long ones puts both card tops of a row at the
+       same y — the guarantee ui.grid gives and two stacked ui.col columns,
+       whose seam lands wherever the first card in each happens to end, do
+       not. */
+    return ui.grid(2, [plans, fees, rest, discounts]);
   }
 
   /* ---- 3 · Policies --------------------------------------------------------
      The rules half of the old "Policies & fees", plus the registration-form
      fields that were stranded on the dropped Programs tab. Every card holds
      five single-line rows, so the values line up as a column and the two
-     cards in a row share their baselines. */
+     cards in a row share their baselines — and every note is kept to two or
+     three lines for the same reason, since a note is the one part of a card
+     that can stretch it past its neighbour. */
 
   /* The one list every program's policy set is built from. The counts shown
      on the Policy documents card are arithmetic on these arrays — they cannot
@@ -424,11 +468,10 @@
     var docs = ui.card({
       title: 'Policy documents',
       head: editHead('Policy documents'),
-      note: 'Written here, attached per program in the program builder. The after-school set is the full ' +
-        asCount + ' — ' + BASE_POLICIES.join(', ') + '. Camps and pop-ups leave out ' +
-        CAMP_DROPS.length + ' of them (' + CAMP_DROPS.join('; ') + ') and add ' +
-        andList(CAMP_ADDS) + '. A private class adds ' + andList(PRIV_ADDS) +
-        ' on top of the full set. Re-signing a new version never blocks attendance.'
+      note: 'Written here, attached per program in the program builder. Camps and pop-ups leave out ' +
+        CAMP_DROPS.length + ' of the after-school set and add ' + andList(CAMP_ADDS) +
+        '; a private class adds ' + PRIV_ADDS.length +
+        ' more on top of the full set. Re-signing a new version never blocks attendance.'
     }, ui.kv([
       row(D.program('as').name, asCount + ' policies'),
       row(shared, campCount + ' policies'),
@@ -500,17 +543,26 @@
       })
     );
 
+    /* One group per thing a template writes about, so every template in the
+       list above has the fields it needs — the make-up pair, the waitlist
+       offer and the three billing emails included. */
     var merge = ui.card({
       title: 'Merge fields',
-      note: 'Available in every template.'
+      note: 'Available in every template, on email and text alike.'
     }, ui.kv([
       row('Family', '{{family_name}} · {{contact_first}} · {{balance}}'),
       row('Child', '{{child_first}} · {{child_class}} · {{next_session}}'),
+      row('Billing', '{{invoice_total}} · {{due_date}} · {{pay_link}}'),
+      row('Make-up', '{{credit_count}} · {{credit_expiry}}'),
+      row('Waitlist', '{{waitlist_position}} · {{offer_expires}}'),
       row('Studio', '{{studio_name}} · {{studio_phone}} · {{portal_link}}')
     ]));
 
-    /* Ten template rows against three switches: the two short cards stack in
-       one column rather than leaving the switches card mostly empty. */
-    return ui.grid(2, [templates, ui.col([when, merge])]);
+    /* Ten template rows cannot be balanced by two short cards stacked beside
+       them, so the list takes the full width and the two reference cards sit
+       under it as an ordinary pair — near enough the same height as each
+       other, and neither stretched. */
+    return ui.grid(null, [templates]) +
+      '<div class="section">' + ui.grid(2, [when, merge]) + '</div>';
   }
 })();

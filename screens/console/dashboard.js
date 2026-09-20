@@ -12,10 +12,17 @@
        Sessions is now the length of the list underneath it, the waitlist
        figure is the queue itself, outstanding is the same total across the
        same four families as Billing, and revenue is the invoices Billing
-       counts as collected
-     - the failed-payments notice named the Johnson family, whose July invoice
-       is paid. It reads the unpaid invoices, so it names Okafor, Smith and
-       Delgado and totals what they owe
+       counts as collected. Attendance was the last literal — 94% "down 2
+       points on June", against the 91% the Attendance report averages out of
+       the same column. It is that mean now, over the children who have a
+       figure recorded, so the two screens print one number
+     - the failed-payments notice was a typed family name. It reads the unpaid
+       invoices instead, so it names whoever owes and totals what they owe —
+       the same money, over the same families, as the Outstanding tile below
+       it and as Billing. It split them into "declined cards" and no card,
+       which was true of the declined invoice only: the two past-due ones are
+       fees on a card that was never refused. The split is the one the desk
+       acts on — who has a card to charge, and who has none
      - the over-capacity notice now says what the console does about it: while
        the Thursday class is over, nobody on its queue can be offered a place —
        which is the rule the Requests screen already enforces, and the reason
@@ -69,6 +76,19 @@
   }
   function owingFamilies() {
     return D.FAMILIES.filter(function (f) { return f.balance > 0; });
+  }
+  function noCardSaved(i) { return /none/i.test(String(i.method)); }
+
+  /* ---- attendance ------------------------------------------------------------
+     '96%' -> 96, '—' -> null. The Attendance report averages this same column
+     the same way, so the strip and the report cannot disagree. */
+
+  function attPct(s) {
+    var n = parseFloat(String(s.att));
+    return isNaN(n) ? null : n;
+  }
+  function withAttendance() {
+    return D.STUDENTS.filter(function (s) { return attPct(s) !== null; });
   }
 
   /* ---- classes -------------------------------------------------------------- */
@@ -143,12 +163,12 @@
 
     body: function () {
       var owed = unpaidInvoices();
-      var retry = owed.filter(function (i) { return i.kind === 'bad'; });
-      var noCard = owed.filter(function (i) { return /none/i.test(String(i.method)); });
+      var noCard = owed.filter(noCardSaved);
+      var onCard = owed.filter(function (i) { return !noCardSaved(i); });
 
       var moneyText = names(owed.map(function (i) { return i.fam; })) + ' owe ' +
         money(sum(owed, function (i) { return i.amt; })) + ' in unpaid invoices. ' +
-        retry.length + ' are declined cards the desk can retry' +
+        onCard.length + (onCard.length === 1 ? ' has' : ' have') + ' a card the desk can charge' +
         (noCard.length === 1
           ? '; the ' + noCard[0].fam + ' family has no card saved.'
           : (noCard.length ? '; ' + names(noCard.map(function (i) { return i.fam; })) + ' have no card saved.' : '.'));
@@ -170,6 +190,8 @@
         });
       })).join('');
 
+      var recorded = withAttendance();
+
       var stats = ui.statbar([
         {
           label: 'Revenue MTD',
@@ -188,8 +210,11 @@
         },
         {
           label: 'Attendance',
-          value: '94%',
-          sub: 'down 2 points on June',
+          value: recorded.length
+            ? Math.round(sum(recorded, attPct) / recorded.length) + '%'
+            : '—',
+          sub: 'across ' + recorded.length + (recorded.length === 1 ? ' child' : ' children') +
+            ' with a record',
           tone: 'grove'
         },
         {

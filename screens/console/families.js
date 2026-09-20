@@ -48,15 +48,22 @@
      - a family with no thread showed a full empty panel where a family with
        one shows a single notice; both are one notice now
      - make-up credits are counted off the MAKEUPS rows a child holds rather
-       than STUDENTS.mk, which credits Ava with three against two absences and
-       Cillian with one against none. The count and the rows behind it are on
-       the same screen here, and the family portal counts them the same way
+       than the STUDENTS.mk tally. The count and the rows behind it sit on the
+       same screen here, so the number has to be the length of the list under
+       it; the family portal counts them the same way
      - the child's record named the guardian and their phone number twice, in
        two cards side by side. Who to call is on the family card, and Safety
        says so
      - the child's record is two columns of two cards (ui.col) rather than two
        rows, so the columns end level instead of one card ending in white
-     - the membership paragraph carried an inline max-width. */
+     - the membership paragraph carried an inline max-width.
+
+   Fixed in the final pass:
+     - the "Skip automatic billing" helper line described the family as
+       already invoiced by hand, with the switch off, an Autopay on pill in
+       the header and an automatic charge in Billing that failed. It describes
+       the default and what flipping the switch changes, the way the row below
+       it does. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -118,10 +125,10 @@
   }
 
   /* Every make-up credit a child holds, counted off the MAKEUPS rows rather
-     than STUDENTS.mk. The rows and the count appear on the same screen here,
-     and STUDENTS.mk does not always agree with them — it credits Ava with
-     three against two absences and Cillian with one against none. The family
-     portal counts them off the same rows. */
+     than the STUDENTS.mk tally. The rows and the count appear on the same
+     screen here, so the number has to be the length of the list drawn under
+     it rather than a second figure kept beside it. The family portal counts
+     them off the same rows. */
   function creditsOf(name) {
     return D.MAKEUPS.filter(function (m) { return m.child === name; });
   }
@@ -456,7 +463,7 @@
           ${raw(ui.toggleRow({
             id: 'fam-skip-auto',
             title: 'Skip automatic billing',
-            sub: 'This family is invoiced by hand. They are listed for manual handling, never silently dropped.',
+            sub: 'Automatic billing is the default. Switched on, the family is invoiced by hand — listed for manual handling, never silently dropped.',
             on: false
           }))}
           ${raw(ui.toggleRow({

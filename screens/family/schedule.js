@@ -108,7 +108,7 @@
   }
 
   /* The class a credit was earned in. The credit carries the day and the
-     start time ("Wed 15 Jul · 3:15pm"), which is enough to find it, and with
+     start time ("Mon 13 Jul · 3:15pm"), which is enough to find it, and with
      it the room and the teacher the make-up hour belongs to. */
   function missedClass(m) {
     var bits = String(m.missed).split(' · ');
@@ -143,8 +143,8 @@
   }
 
   /* The family's regular week. Emma's after-school place and her camp week
-     are class records; Lucas's Tuesday exists only on his own record, so it
-     is read from there rather than guessed at. */
+     are read from their class records; Lucas's Wednesday hour is read from
+     his own student record, which carries his day, time and room. */
   function sessions() {
     var emma = D.student('emma');
     var lucas = D.student('lucas');

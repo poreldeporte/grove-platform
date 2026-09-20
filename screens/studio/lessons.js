@@ -32,7 +32,15 @@
        two things the header cannot hold — the store and the tutorial — plus
        the other plans written for the same room.
      - The tutorial card's note about video hosting was a build note showing in
-       the product. Removed. */
+       the product. Removed.
+     - The tutorial card's 'Also used in' row printed the tutorial's own linked
+       class, which for every attached tutorial is the class you are already
+       looking at. It now derives the OTHER plans written around the same
+       tutorial, so the row can only ever name a session that is not this one.
+     - The store card's footnote said the desk lays out what a session needs.
+       Nothing in the data says what a single lesson uses, and the card is the
+       studio store — as its title says — so the note says that instead, and
+       anything under its minimum sorts to the top where the request lives. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -270,6 +278,13 @@
       var p = plan(ctx);
       var tut = p.tut === 'None' ? null : tutorial(p.tut);
 
+      /* Where else this tutorial is taught. Derived from the plans, never from
+         the tutorial's own linked class — that is this plan's class, which the
+         page header has already said. */
+      var alsoIn = (tut ? D.LESSON_PLANS.filter(function (o) {
+        return o.id !== p.id && o.tut === p.tut;
+      }) : []).map(function (o) { return o.cls; });
+
       var notice = ui.notice(p.status === 'Draft'
         ? {
             kind: 'warn',
@@ -283,11 +298,17 @@
             action: { label: 'Message the desk', msg: 'The desk has been messaged about this plan' }
           });
 
+      /* The studio store, which is what the title promises — no per-lesson list
+         exists to show. The rows that need acting on sort to the top. */
+      var stock = D.INVENTORY.slice().sort(function (a, b) {
+        return (a.on < a.min ? 0 : 1) - (b.on < b.min ? 0 : 1);
+      });
+
       var materials = ui.card({
         title: 'What the store holds today',
         head: ui.btn({ label: 'Request supplies', kind: 'quiet', size: 'sm', to: 'sSupplies' }),
-        note: 'The desk lays out what a session needs before you teach it. Anything in red is under the minimum the studio keeps — raise a supply request.'
-      }, ui.kv(D.INVENTORY.map(function (i) {
+        note: 'The whole store, short items first — not a list of what this one lesson uses. Anything in red is under the minimum the studio keeps, so raise a supply request before you teach.'
+      }, ui.kv(stock.map(function (i) {
         return {
           k: i.item,
           v: esc(i.on + ' on hand'),
@@ -309,8 +330,8 @@
             ['Added by', esc(tut.by)],
             {
               k: 'Also used in',
-              v: tut.linked === 'Not linked' ? 'No other class' : esc(tut.linked),
-              tone: tut.linked === 'Not linked' ? 'mute' : null
+              v: alsoIn.length ? esc(alsoIn.join(' · ')) : 'No other session',
+              tone: alsoIn.length ? null : 'mute'
             },
             { k: 'Watch', v: 'Before you teach it', tone: 'mute' }
           ])

@@ -86,8 +86,9 @@
   }
 
   /* The class record behind a child's enrolment string, when there is one.
-     Lucas's Tuesday exists only on his own record, so this comes back empty
-     for him and the teacher row is simply not shown. */
+     Both Johnson children sit in a class CLASSES holds, so each gets a teacher
+     row. An enrolment string that is not a day-and-room pair — a waitlisted
+     place, or several days at once — comes back empty and the row is dropped. */
   function classFor(s) {
     var parts = String(s.cls).split(' · ');
     var head = parts[0].split(' ');
@@ -264,7 +265,8 @@
     crumbTitle: 'Add a child',
     eyebrow: 'a new young artist',
     title: 'Add a child',
-    sub: 'Their name, their birthday and a photo is all we need to put them on a roster.',
+    sub: 'A name and a birthday are all we need to put them on a roster. The photo, the allergies ' +
+         'and the number we call first are what a teacher needs at the door.',
     actions: [
       { label: 'Message the studio', to: 'fMessages' }
     ],

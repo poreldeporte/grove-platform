@@ -21,11 +21,12 @@
    Changes from the visual review:
      - make-up credits are counted off the D.MAKEUPS rows this screen lists,
        never off STUDENTS.mk. The record used to print s.mk as a total above
-       those rows, and the two disagree in the dataset: Ava Smith's record
-       says three credits where MAKEUPS holds two, Cillian Brennan's says one
-       where it holds none, and Emma's two are one available and one already
-       booked. Family → Children counts the same rows the same way, so the
-       portals now tell one story.
+       those rows. The two agree in the dataset now, but a total on screen is
+       still the count of the rows on screen, and the rows carry a state the
+       single number cannot: Emma's two credits are one available and one
+       already booked, which is not two the family can spend. Family →
+       Children counts the same rows the same way, so the portals tell one
+       story.
      - those rows were the last two lines of a key/value list, with nothing to
        say which side was the missed class and which the make-up. Each is now
        a row that says it was missed, why, when the credit expires and where
@@ -41,6 +42,12 @@
        know" together in one stack, where the odd one out read as a styling
        slip rather than a different kind of fact. They are two groups now,
        each with its own heading and count.
+     - the note screen was one wide card with a half-width Student select, a
+       strip of bare card beside it and the page finishing a third of the way
+       up the frame. It is the compose shape Console → New message already
+       uses: the child, and what is already known about that child, stack in
+       the narrow column, and the note box fills the wide one, so the two
+       columns finish together however long the note runs.
      - the Procedure card's footnote — "You see alerts only for children in
        classes you are assigned to" — was not true of the list under it. This
        screen lists every child on the books, and Lucas Johnson is in nobody's
@@ -91,9 +98,9 @@
   }
 
   /* Every make-up credit this child holds, and the line that counts them.
-     Counted off these rows rather than taken from STUDENTS.mk, because a
-     credit that has already been booked is not one the family can still use
-     and STUDENTS.mk disagrees with the rows for two children. */
+     Counted off these rows rather than taken from STUDENTS.mk: the count on
+     screen is the count of the rows on screen, and a credit that has already
+     been booked is not one the family can still use. */
   function credits(s) {
     return D.MAKEUPS.filter(function (m) { return m.child === s.name; });
   }
@@ -364,7 +371,9 @@
     }
   });
 
-  /* ---- the note ------------------------------------------------------------- */
+  /* ---- the note -------------------------------------------------------------
+     Narrow column: who the note is about, and what the record already says
+     about them. Wide column: the note itself, growing to meet them. */
 
   Grove.screen('sStudentNote', {
     surface: 'studio',
@@ -375,26 +384,53 @@
     sub: 'Notes stay on the student record and are visible to assigned staff and the office.',
 
     body: function (ctx) {
-      var picked = D.student(ctx.params.id);
-      var names = D.STUDENTS.map(function (s) { return s.name; });
+      /* Opened from the list, the header action carries no id. The select
+         falls back to the first child on the books and the card beside it
+         reads that same child, so the two never say different things. */
+      var s = D.student(ctx.params.id) || D.STUDENTS[0];
+      var started = s.att !== '—';
 
-      var card = ui.card({
-        title: 'The note',
+      var who = ui.card({
+        title: 'Student',
         note: 'Every note reaches the assigned staff and the office. There is no separate visibility setting to remember.'
-      }, ui.fields(2, [
-        ui.field({
-          label: 'Student',
-          control: ui.select({ options: names, value: picked ? picked.name : names[0] })
-        }),
-        ui.field({
-          label: 'Note',
-          span: true,
-          hint: 'Written after class, read before the next one.',
-          control: ui.textarea({ placeholder: 'What happened, and anything the next teacher should know' })
+      }, ui.field({
+        label: 'Child',
+        control: ui.select({
+          options: D.STUDENTS.map(function (k) { return k.name; }),
+          value: s.name
         })
+      }));
+
+      var about = ui.card({
+        title: 'About ' + firstName(s.name),
+        head: s.flag
+          ? ui.pill(s.flagKind === 'bad' ? 'Medical alert' : 'Needs to know', s.flagKind)
+          : ui.pill('No alerts', 'ok'),
+        note: 'Anything medical belongs on the safety card, where it travels with the child to camp and to any make-up class.',
+        foot: ui.btn({ label: 'Open the record', kind: 'quiet', size: 'sm', to: 'sStudent', id: s.id })
+      }, ui.kv([
+        ['Age', String(s.age)],
+        ['Class', esc(s.cls)],
+        ['Family', esc(s.family) + ' family'],
+        s.flag
+          ? { k: 'Safety', v: esc(s.flag), tone: s.flagKind === 'bad' ? 'clay' : null }
+          : { k: 'Safety', v: 'Nothing on file', tone: 'mute' },
+        started
+          ? ['Attendance', esc(s.att)]
+          : { k: 'Attendance', v: 'Not started yet', tone: 'mute' }
       ]));
 
-      return ui.grid(null, [card]) + ui.formActions([
+      var note = ui.card({
+        title: 'The note',
+        fill: true,
+        note: 'Written after class, read before the next one. Say what happened, and what the next teacher should do about it.'
+      }, ui.field({
+        grow: true,
+        label: 'Note',
+        control: ui.textarea({ placeholder: 'What happened, and anything the next teacher should know' })
+      }));
+
+      return ui.grid('aside', [ui.col([who, about]), note]) + ui.formActions([
         { label: 'Save note', kind: 'primary', msg: 'Note saved to the student record' },
         { label: 'Cancel', to: 'sStudents' }
       ]);

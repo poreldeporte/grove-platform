@@ -33,6 +33,15 @@
 
    Every amount is computed from Grove.data.PRICING; policy wording is verbatim.
 
+   An after-school package is hours a week, not a loose number: 4 classes a
+   month is one hour a week, 8 is two, and the timetable is what those hours
+   are spent on. So step 2 ticks one class per weekly hour, defaults to the
+   classes that add up to the package exactly, offers only the packages the
+   age group can actually be made to add up to, and will not hand step 3 a
+   booking whose classes and package describe different things. Ages 12+ take
+   their two hours as a single 2-hour class, which is why the arithmetic is
+   done in hours rather than in sittings.
+
    A waitlisted place is charged nothing. When the class you chose is full the
    running total itemises the invoice that would follow a place being offered
    and then says, in the same card, that today's figure is zero — so the plum
@@ -70,6 +79,36 @@
   function row(k, v, tone) { return { k: k, v: esc(v), tone: tone || null }; }
   function plural(n, one, many) { return n === 1 ? one : many; }
   function hint(text) { return '<p class="hint">' + esc(text) + '</p>'; }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function uniq(list) {
+    var out = [];
+    list.forEach(function (x) { if (out.indexOf(x) === -1) out.push(x); });
+    return out;
+  }
+  var WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
+  function word(n) { return WORDS[n] === undefined ? String(n) : WORDS[n]; }
+  function hoursWord(n) { return word(n) + plural(n, ' hour', ' hours'); }
+
+  /* Class lengths are read off the timetable rather than stored: "3:15–4:15pm"
+     is one hour, "4:30–6:30pm" is two. The meridiem is often only on the end
+     of the range, so the start borrows it. */
+  function minutesAt(text, fallbackMer) {
+    var pm = /pm/i.test(text), am = /am/i.test(text);
+    var bits = String(text).replace(/[^0-9:]/g, '').split(':');
+    var hh = parseInt(bits[0], 10) || 0;
+    var mm = parseInt(bits[1], 10) || 0;
+    if (!am && !pm) { pm = fallbackMer === 'pm'; am = !pm; }
+    if (pm && hh < 12) hh += 12;
+    if (am && hh === 12) hh = 0;
+    return hh * 60 + mm;
+  }
+  function classHours(c) {
+    if (!c) return 0;
+    var ends = String(c.time).split('–');
+    if (ends.length < 2) return 0;
+    var mer = /pm/i.test(ends[1]) ? 'pm' : 'am';
+    return (minutesAt(ends[1], mer) - minutesAt(ends[0], mer)) / 60;
+  }
 
   /* ---- flow state ---------------------------------------------------------- */
 
@@ -101,8 +140,10 @@
       on: String(cur) === String(value)
     });
   }
-  function check(id, title, sub) {
-    return ui.choice({ id: id, title: title, sub: sub, on: Grove.toggle(id, false) });
+  function check(id, title, sub, def, price) {
+    return ui.choice({
+      id: id, title: title, sub: sub, price: price, on: Grove.toggle(id, !!def)
+    });
   }
 
   /* ---- the family and the children ------------------------------------------ */
@@ -143,19 +184,17 @@
     return null;
   }
 
+  /* A month is billed as four weeks, which is what the package names count:
+     4 classes a month is one hour a week, 8 is two, and so on. The 12+ group
+     takes its two hours as one 2-hour class, which is why the packages are
+     measured in hours here rather than in sittings. */
+  var WEEKS = 4;
   var PLAN_KEYS = ['p4', 'p8', 'p12', 'p16'];
+  function planClasses(k) { return Number(k.slice(1)); }
+  function planHours(k) { return planClasses(k) / WEEKS; }
   /* The "assigned by age group" line used to end all four of these. It is said
      once, on the age-group card, instead of four times here. */
-  var PLAN_SUB = {
-    p4: 'One 1-hour class a week',
-    p8: 'Two hours a week, or two 1-hour classes',
-    p12: 'Three hours a week',
-    p16: 'Four hours a week'
-  };
-  function planKey() {
-    var cur = pick('rPlan', 'p8');
-    return PLAN_KEYS.indexOf(cur) === -1 ? 'p8' : cur;
-  }
+  function planSub(k) { return cap(hoursWord(planHours(k))) + ' a week'; }
   function planLabel(key) { return key.slice(1) + ' Classes / Month'; }
 
   function asBands() {
@@ -175,23 +214,82 @@
     var b = asBand();
     return classesFor('as').filter(function (c) { return c.band === b; });
   }
-  function asClass() {
-    var list = asClassList(), found = byId(list, pick('rClass', '')), i;
-    if (found) return found;
-    for (i = 0; i < list.length; i++) if (places(list[i]) > 0) return list[i];
-    return list[0] || null;
+  /* Hours a week the age group actually runs, and every total those classes
+     can be combined into. A package is only offered when the age group can be
+     made to add up to it exactly — ages 12+ run one 2-hour class, so there is
+     no way to buy one hour a week in that group. */
+  function asBandHours() {
+    return asClassList().reduce(function (t, c) { return t + classHours(c); }, 0);
   }
-  function classLabel(c) { return c ? c.day + ' ' + c.time + ' · ' + c.room : 'No place chosen'; }
+  function asBandSums() {
+    var sums = [0];
+    asClassList().forEach(function (c) {
+      var hrs = classHours(c), grown = sums.slice();
+      sums.forEach(function (s) { grown.push(s + hrs); });
+      sums = uniq(grown);
+    });
+    return sums;
+  }
+  function asPlanKeys() {
+    var sums = asBandSums();
+    var fits = PLAN_KEYS.filter(function (k) { return sums.indexOf(planHours(k)) !== -1; });
+    return fits.length ? fits : PLAN_KEYS;
+  }
+  function planKey() {
+    var fits = asPlanKeys();
+    var fallback = fits.indexOf('p8') === -1 ? fits[fits.length - 1] : 'p8';
+    var cur = pick('rPlan', fallback);
+    return fits.indexOf(cur) === -1 ? fallback : cur;
+  }
 
-  /* True when the chosen after-school class has no place left, which is the
-     one state where nothing at all is charged today. */
-  function asWaiting() {
-    var c = asClass();
-    return !!c && !places(c);
+  /* One weekly place per class ticked. The package says how many hours a week
+     it buys, so the classes ticked by default are the first ones in the age
+     group that add up to exactly that. */
+  function classKey(c) { return 'rClass-' + c.id; }
+  function asDefaultIds() {
+    var want = planHours(planKey()), used = 0, out = [];
+    asClassList().forEach(function (c) {
+      var hrs = classHours(c);
+      if (used + hrs <= want) { out.push(c.id); used += hrs; }
+    });
+    return out;
   }
-  function asWaitPosition() {
-    var c = asClass();
-    return c ? c.wl + 1 : 0;
+  function asClasses() {
+    var def = asDefaultIds();
+    return asClassList().filter(function (c) {
+      return Grove.toggle(classKey(c), def.indexOf(c.id) !== -1);
+    });
+  }
+  function asHours() {
+    return asClasses().reduce(function (t, c) { return t + classHours(c); }, 0);
+  }
+  /* Positive when the package still has hours left to place, negative when
+     more has been ticked than it covers. Zero is the only state the review
+     step can describe without contradicting itself. */
+  function asGap() { return planHours(planKey()) - asHours(); }
+
+  function classLabel(c) { return c ? c.day + ' ' + c.time + ' · ' + c.room : 'No place chosen'; }
+  function classesLabel() {
+    var list = asClasses();
+    if (!list.length) return 'No place chosen';
+    if (list.length === 1) return classLabel(list[0]);
+    return list.map(function (c) { return c.day + ' ' + c.time; }).join(' and ');
+  }
+
+  /* True when any class in the booking has no place left, which is the one
+     state where nothing at all is charged today. */
+  function asFull() {
+    return asClasses().filter(function (c) { return !places(c); });
+  }
+  function asWaiting() { return asFull().length > 0; }
+  /* Lower case, so it reads as the tail of a sentence; cap() it where it
+     starts one. Positions come from each class's own waitlist length. */
+  function asWaitText() {
+    var full = asFull();
+    if (full.length === 1) return 'number ' + (full[0].wl + 1) + ' on the list';
+    return full.map(function (c) {
+      return 'number ' + (c.wl + 1) + ' on ' + c.day;
+    }).join(' and ');
   }
 
   function campClass() {
@@ -270,10 +368,16 @@
       fee = P.as.regFee * n;
       relief = P.as.regFee * 0.5 * (n - 1);
       total = base + fee - relief;
-      c = asClass();
-      rows.push(row('Plan', planLabel(planKey())));
+      var asList = asClasses(), gap = asGap();
+      rows.push(row('Plan', planLabel(planKey()) + ' · ' + hoursWord(planHours(planKey())) + ' a week'));
       rows.push(row('Age group', 'Ages ' + asBand()));
-      rows.push(c ? row('Class', classLabel(c)) : row('Class', 'Not chosen', 'mute'));
+      rows.push(asList.length
+        ? row(plural(asList.length, 'Class', 'Classes'), classesLabel())
+        : row('Class', 'Not chosen', 'mute'));
+      /* The package and the classes ticked are two ways of saying the same
+         thing, so when they do not match the card says which way. */
+      if (gap > 0) rows.push(row('Still to place', hoursWord(gap) + ' a week', 'clay'));
+      if (gap < 0) rows.push(row('More than the package covers', hoursWord(-gap) + ' a week', 'clay'));
       rows.push(row('Children', String(n)));
       rows.push(row('Tuition', m(base) + ' a month'));
       rows.push(row('Registration fee', m(fee)));
@@ -758,16 +862,24 @@
 
   function childCard(kid, i, span) {
     var f = fam();
-    var title = 'Child ' + (i + 1) + (kid ? ' · ' + kid.name.split(' ')[0] : '');
-    var band = kid ? 'Age ' + kid.age + ' · ages ' + kid.band + ' band' : '';
+    var who = kid ? kid.name.split(' ')[0] : '';
+    var title = 'Child ' + (i + 1) + (kid ? ' · ' + who : '');
     var notes = kid && kid.flag ? kid.flag : '';
+    /* The age and the band are facts on the child's record, so they sit in the
+       card head where the record speaks. They used to hang under the empty
+       date-of-birth box, where they read as something that box had told us. */
+    var flags = [];
+    if (kid) {
+      flags.push('<span class="mute">' + esc('Age ' + kid.age + ' · ages ' + kid.band + ' band') + '</span>');
+    }
+    /* Only the last card offers Remove, so the button does what it says. */
+    if (kidCount() > 1 && i === kidCount() - 1) {
+      flags.push(ui.btn({ label: 'Remove', kind: 'quiet', size: 'sm', act: 'rKids', n: kidCount() - 1 }));
+    }
     return ui.card({
       span: span,
       title: title,
-      /* Only the last card offers Remove, so the button does what it says. */
-      head: kidCount() > 1 && i === kidCount() - 1
-        ? ui.btn({ label: 'Remove', kind: 'quiet', size: 'sm', act: 'rKids', n: kidCount() - 1 })
-        : null
+      head: flags.length ? '<span class="inline">' + flags.join('') + '</span>' : null
     }, ui.fields(2, [
       ui.field({
         label: 'First name',
@@ -777,15 +889,23 @@
         label: 'Last name',
         control: ui.input({ value: kid ? kid.name.split(' ').slice(1).join(' ') : f.name, placeholder: 'Last name' })
       }),
+      /* Date of birth, gender and grade are the three things the studio does
+         not hold, so they are the three blanks on an otherwise filled card.
+         The selects open on a prompt rather than on their first option, which
+         had the CHILD 2 · LUCAS card answering "Girl" on his behalf. */
       ui.field({
         label: 'Date of birth', control: ui.input({ placeholder: 'DD MMM YYYY' }),
-        hint: band
+        hint: kid
+          ? 'Not on file yet — the age above comes from ' + who + '’s record.'
+          : 'We use this to place them in the right age group.'
       }),
       ui.field({
         label: 'Gender',
-        control: ui.select({ options: ['Girl', 'Boy', 'Non-binary', 'Prefer not to say'] })
+        control: ui.select({
+          options: ['Choose…', 'Girl', 'Boy', 'Non-binary', 'Prefer not to say']
+        })
       }),
-      ui.field({ label: 'Grade', control: ui.select({ options: GRADES }) }),
+      ui.field({ label: 'Grade', control: ui.select({ options: ['Choose…'].concat(GRADES) }) }),
       ui.field({ label: 'School', control: ui.input({ placeholder: 'Coconut Grove Elem.' }) }),
       ui.field({
         label: 'Permission to use their image', span: true,
@@ -869,15 +989,21 @@
 
   function stepAs() {
     var cur = planKey();
+    var offered = asPlanKeys();
+    var withheld = PLAN_KEYS.length - offered.length;
     var planCard = ui.card({
       title: 'Choose a package',
       note: 'One-time registration fee: ' + m0(P.as.regFee) + ' a child · ' + P.as.siblingRelief +
-        ' · applies to all packages. Tuition reserves the place rather than being priced ' +
-        'per class attended.'
-    }, ui.choices(null, PLAN_KEYS.map(function (k) {
+        ' · applies to every package here. Tuition reserves the place rather than being priced ' +
+        'per class attended.' +
+        (withheld
+          ? ' Ages ' + asBand() + ' are scheduled ' + hoursWord(asBandHours()) +
+            ' a week, so the only packages offered are the ones those classes add up to.'
+          : '')
+    }, ui.choices(null, offered.map(function (k) {
       return tile('rPlan', k, cur, {
         title: planLabel(k),
-        sub: PLAN_SUB[k],
+        sub: planSub(k),
         price: m0(P.as.plans[k])
       });
     })));
@@ -896,18 +1022,23 @@
       });
     })));
 
-    var chosen = asClass();
+    /* One tick per weekly place. The package is the hours; these are where the
+       hours go, so the card counts them off against the package rather than
+       letting the two drift apart. */
     var list = asClassList();
+    var def = asDefaultIds();
+    var want = planHours(cur);
+    var got = asHours();
     var classCard = ui.card({
-      title: 'Choose your class',
+      title: plural(def.length, 'Choose your class', 'Choose your classes'),
+      head: '<span class="mute">' +
+        esc((got ? word(got) : 'none') + ' of ' + hoursWord(want) + ' placed') + '</span>',
       note: 'These become your child’s fixed places for the program year. Places update live.'
     }, list.length
       ? ui.choices(null, list.map(function (c) {
-        return tile('rClass', c.id, chosen ? chosen.id : '', {
-          title: c.day + ' ' + c.time,
-          sub: c.name + ' · ' + c.room + ' · ' + c.staff,
-          price: placeLabel(c)
-        });
+        return check(classKey(c), c.day + ' ' + c.time,
+          c.name + ' · ' + c.room + ' · ' + c.staff,
+          def.indexOf(c.id) !== -1, placeLabel(c));
       }))
       : ui.empty('No class open for this age group', 'Choose a different age group, or message the studio.'));
 
@@ -923,9 +1054,11 @@
 
     if (!asWaiting()) return main;
 
+    var full = asFull();
     return ui.notice({
       kind: 'warn',
-      title: 'That class is full — you would be number ' + asWaitPosition() + ' on the waitlist',
+      title: plural(full.length, 'That class is full', 'Those classes are full') +
+        ' — you would be ' + asWaitText(),
       text: 'Join the waitlist and nothing is charged. When a place opens you get 24 hours ' +
         'to accept it. Nobody is turned away.'
     }) + sec(main);
@@ -954,7 +1087,10 @@
       note: 'A full week is ' + m0(P.camp.week) + '. Individual days are ' + m0(P.camp.day) +
         ' each, so four days or more is always worth taking the week.'
     }, ui.choices(2, DAYS.map(function (d) {
-      return check('rcDay-' + d, d, days.length === DAYS.length ? 'Part of the full week' : m0(P.camp.day));
+      /* campDays() starts every day on, so the tiles have to start ticked too
+         — otherwise the total says "Full week" over five empty boxes. */
+      return check('rcDay-' + d, d,
+        days.length === DAYS.length ? 'Part of the full week' : m0(P.camp.day), true);
     })));
 
     var end = campEndHour();
@@ -1196,22 +1332,29 @@
   function bookingRows(p) {
     var rows = [], names = kidNames(), c, ev, hrs;
     if (p === 'as') {
-      c = asClass();
-      /* The room is named once, on its own row, rather than repeated after
-         every child's day and time. */
+      var asList = asClasses();
+      /* The room and the instructor are named once, on their own rows, rather
+         than repeated after every child's days and times. */
+      var days = asList.map(function (x) { return x.day + ' ' + x.time; }).join(' and ');
       names.forEach(function (nm) {
-        rows.push(row(nm, c ? c.day + ' ' + c.time : 'No place chosen', c ? null : 'clay'));
+        rows.push(asList.length ? row(nm, days) : row(nm, 'No place chosen', 'clay'));
       });
-      rows.push(row('Plan', planLabel(planKey())));
+      rows.push(row('Plan', planLabel(planKey()) + ' · ' + hoursWord(planHours(planKey())) + ' a week'));
       rows.push(row('Age group', 'Ages ' + asBand()));
-      if (c) {
-        rows.push(row('Room', c.room));
-        rows.push(row('Instructor', c.staff));
-        rows.push(row('Places', placeLabel(c)));
+      if (asList.length) {
+        var rooms = uniq(asList.map(function (x) { return x.room; }));
+        var staff = uniq(asList.map(function (x) { return x.staff; }));
+        rows.push(row(plural(rooms.length, 'Room', 'Rooms'), rooms.join(' and ')));
+        rows.push(row(plural(staff.length, 'Instructor', 'Instructors'), staff.join(' and ')));
+        var placeLabels = uniq(asList.map(function (x) { return placeLabel(x); }));
+        rows.push(row('Places', placeLabels.length === 1
+          ? placeLabels[0]
+          : asList.map(function (x) { return x.day + ' ' + placeLabel(x); }).join(' · ')));
       }
       if (asWaiting()) {
-        rows.push(row('Waitlist', 'Number ' + asWaitPosition() + ' on the list'));
-        rows.push(row('First class', 'The week after a place is offered'));
+        rows.push(row('Waitlist', cap(asWaitText())));
+        rows.push(row('First class', plural(asFull().length,
+          'The week after a place is offered', 'The week after the places are offered')));
       } else {
         rows.push(row('First class', FIRST_CLASS));
       }
@@ -1428,7 +1571,8 @@
         : whoSub;
     }
     if (s === 1) {
-      if (p === 'as') return 'Places update live. If the one you want is full you can join the waitlist — we do not turn families away.';
+      if (p === 'as') return 'A package is hours a week, and each class you tick is one of them. ' +
+        'Places update live — if a class you want is full you can join the waitlist, and we do not turn families away.';
       if (p === 'camp') return 'Camp runs ' + campHours() + ' every day. Add extra hours on any day if you need a longer one.';
       if (p === 'nsd') return 'For teacher workdays and county holidays. Three hours is standard; extend by the hour if you need to.';
       if (p === 'priv') return 'One-to-one with an instructor at ' + m0(P.priv.hourly) + ' an hour, up to ' +
@@ -1455,8 +1599,21 @@
       };
     }
     if (s === 1) {
-      if (p === 'as' && asWaiting()) {
-        return { label: 'Join the waitlist', kind: 'primary', act: 'rStep', n: 2 };
+      if (p === 'as') {
+        /* The review step can only describe a booking whose classes add up to
+           the package, so step 2 does not hand it one that does not. */
+        var gap = asGap();
+        if (gap > 0) {
+          return { label: (asHours() ? 'Place ' + hoursWord(gap) + ' more' : 'Choose ' + hoursWord(gap)) + ' a week',
+            msg: 'Your package covers ' + hoursWord(planHours(planKey())) + ' a week' };
+        }
+        if (gap < 0) {
+          return { label: 'Take off ' + hoursWord(-gap) + ' a week',
+            msg: 'Your package covers ' + hoursWord(planHours(planKey())) + ' a week' };
+        }
+        if (asWaiting()) {
+          return { label: 'Join the waitlist', kind: 'primary', act: 'rStep', n: 2 };
+        }
       }
       return {
         label: p === 'bday' ? 'Continue to the review' : 'Continue to policies',

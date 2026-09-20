@@ -34,11 +34,22 @@
      - the control band carried a search box and nothing else while every
        other list screen carries filters as well.
 
-   Two things were left alone on purpose:
-     - Grove.data.STAFF credits the owner with 2 classes and Grove.data.CLASSES
-       assigns her none. Both screens count off the timetable, so the record
-       can never show a number the list beside it contradicts. Reports still
-       prints the literal 2; the literal is the figure with nothing behind it.
+   Fixed after the final sweep:
+     - the timetable footnote claimed an instructor's lesson plans follow the
+       classes assigned to them, and two of Lauren's own rows disprove it: a
+       draft plan and a filmed tutorial both name a Wed 4:30pm class she does
+       not teach, and which no one teaches. The claim is gone. In its place,
+       any plan or tutorial naming a day and a time the person does not teach
+       is marked on the row and counted in that card's footnote. Nothing is
+       hidden and nothing is invented — the row still reads as Grove.data
+       writes it, with the mismatch said out loud.
+     - Supply requests was half empty: two short rows stretched to match the
+       taller column beside them, which left the footnote stranded at the foot
+       of the card. The two columns now have the Access card to deal with,
+       which is the short card they needed to finish level. It keeps a band of
+       its own only on a record where dealing it in would unbalance them.
+
+   Left alone on purpose:
      - the Private programme dot is blue because --prog-private is blue in
        css/tokens.css. A screen may not hard-code a colour, and the same class
        is drawn with the same dot on Classes, the Dashboard and Today, so the
@@ -96,6 +107,48 @@
     return n;
   }
   function sessionLabel(n) { return n + (n === 1 ? ' session' : ' sessions'); }
+
+  /* A lesson plan and a tutorial each name the class they belong to as free
+     text rather than by id. Where that text carries a day and a start time it
+     can be checked against the classes this person actually holds; a camp
+     week or a private lesson names no time, so there is nothing to check and
+     nothing is claimed. The studio never runs two classes at the same clock
+     time, so the hour and minute settle it and the am/pm is not compared. */
+  var DAY_AT = /\b(Mon|Tue|Wed|Thu|Fri|Sat)\b[^0-9]{0,4}(\d{1,2}(?::\d{2})?)\s*[ap]m/;
+
+  function startsAt(c) { return String(c.time).split('–')[0].replace(/[^0-9:]/g, ''); }
+
+  function runsOn(c, day) {
+    var t = dayTokens(c);
+    var from = WEEK.indexOf(t[0]);
+    var to = t.length > 1 ? WEEK.indexOf(t[t.length - 1]) : from;
+    if (from === -1 || to < from) return false;
+    var i = WEEK.indexOf(day);
+    return i >= from && i <= to;
+  }
+
+  function offTimetable(s, label) {
+    var m = DAY_AT.exec(String(label));
+    if (!m) return false;
+    return !assigned(s).filter(function (c) {
+      return runsOn(c, m[1]) && startsAt(c) === m[2];
+    }).length;
+  }
+
+  function offMark(s, label) {
+    return offTimetable(s, label)
+      ? ' <span class="clay">· not on their timetable</span>'
+      : '';
+  }
+
+  /* Counted off the rows the card is showing, never written down. */
+  function offCount(s, list, key) {
+    return list.filter(function (r) { return offTimetable(s, r[key]); }).length;
+  }
+  function offNote(n, why) {
+    return n + ' of these ' + (n === 1 ? 'names a class' : 'name classes') +
+      ' not on their timetable. ' + why;
+  }
 
   function prog(c) {
     return D.program(c.prog) || { short: c.prog, color: 'var(--ink-45)' };
@@ -249,7 +302,7 @@
           note: mine.length
             ? 'A class that runs Monday to Friday is five sessions, which is why ' +
               mine.length + (mine.length === 1 ? ' class comes' : ' classes come') +
-              ' to ' + sessionLabel(sessions) + '. An instructor sees only the classes assigned here — their Today, roster, attendance and lesson plans all follow this list.'
+              ' to ' + sessionLabel(sessions) + '. An instructor sees only the classes assigned here — their Today, roster and attendance all follow this list.'
             : 'Assign a class and it appears here, and in their Today, roster and attendance.'
         }, mine.length
           ? ui.rows(mine.map(function (c) {
@@ -287,15 +340,18 @@
 
       var plans = D.LESSON_PLANS.filter(function (p) { return p.teacher === s.name; });
       if (plans.length) {
+        var planOff = offCount(s, plans, 'cls');
         cards.push({
-          w: 1 + plans.length,
+          w: (planOff ? 2 : 1) + plans.length,
           html: ui.card({
             title: 'Lesson plans',
-            flush: true
+            flush: true,
+            note: planOff ? offNote(planOff, 'A plan is written against the class it is for, ' +
+              'which is not always a class they are running now.') : null
           }, ui.rows(plans.map(function (p) {
             return {
               title: esc(p.lesson),
-              sub: esc(p.cls + ' · ' + p.date),
+              sub: esc(p.cls + ' · ' + p.date) + offMark(s, p.cls),
               end: ui.pill(p.status, p.kind),
               to: 'lessonPlan', id: p.id
             };
@@ -305,17 +361,20 @@
 
       var tutorials = D.TUTORIALS.filter(function (t) { return t.by === s.name; });
       if (tutorials.length) {
+        var tutOff = offCount(s, tutorials, 'linked');
         cards.push({
-          w: 1 + tutorials.length,
+          w: (tutOff ? 2 : 1) + tutorials.length,
           html: ui.card({
             title: 'Tutorials they filmed',
-            flush: true
+            flush: true,
+            note: tutOff ? offNote(tutOff, 'A tutorial stays linked to the class it was filmed for, ' +
+              'long after that class has moved on.') : null
           }, ui.rows(tutorials.map(function (t) {
             return {
               title: esc(t.name),
               sub: esc(t.len + ' · ' + (t.linked === 'Not linked'
                 ? 'not linked to a class'
-                : 'linked to ' + t.linked)),
+                : 'linked to ' + t.linked)) + offMark(s, t.linked),
               end: muted('filmed ' + t.date),
               to: 'teaching'
             };
@@ -386,7 +445,16 @@
             ${raw(ui.btn({ label: 'Revoke access', kind: 'danger', msg: 'Prototype — nothing was revoked' }))}
           </div>`);
 
-      return '<div class="section">' + stats + balanced(cards) + '</div>' +
+      /* Access is a short card and every record has one. Dealt in with the
+         rest it is usually the card that lets the two columns finish level;
+         on a record with little else it would unbalance them instead, and
+         then it keeps a full-width band of its own. */
+      var apart = deal(cards);
+      var together = deal(cards.concat([{ w: 2, html: access }]));
+      if (together.gap <= apart.gap) {
+        return '<div class="section">' + stats + columns(together) + '</div>';
+      }
+      return '<div class="section">' + stats + columns(apart) + '</div>' +
         '<div class="section">' + access + '</div>';
     }
   });
@@ -394,19 +462,25 @@
   /* Lay the record's cards into two columns that end at roughly the same
      place. The timetable leads the left column; the rest are dealt heaviest
      first to whichever column is shorter, so a two-row card is never parked
-     beside a tall one with a third of a card of white underneath it. */
-  function balanced(cards) {
-    if (!cards.length) return '';
-    if (cards.length === 1) return cards[0].html;
+     beside a tall one with a third of a card of white underneath it.
 
+     A card's weight is its head, its rows and its footnote — the parts that
+     take up height — which is why a card gains weight when the footnote below
+     appears. `gap` is how far apart the two columns finish; a lone card takes
+     the full width and is stretched by nothing, so its gap is nought. */
+  function deal(cards) {
     var a = [cards[0].html], b = [], wa = cards[0].w, wb = 0;
     cards.slice(1).sort(function (x, y) { return y.w - x.w; }).forEach(function (c) {
       if (wb < wa) { b.push(c.html); wb += c.w; } else { a.push(c.html); wa += c.w; }
     });
+    return { a: a, b: b, gap: b.length ? Math.abs(wa - wb) : 0 };
+  }
 
+  function columns(d) {
+    if (!d.b.length) return d.a.join('');
     return ui.grid(2, [
-      a.length > 1 ? ui.col(a) : a[0],
-      b.length > 1 ? ui.col(b) : b[0]
+      d.a.length > 1 ? ui.col(d.a) : d.a[0],
+      d.b.length > 1 ? ui.col(d.b) : d.b[0]
     ]);
   }
 

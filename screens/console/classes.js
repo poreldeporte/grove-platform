@@ -163,7 +163,8 @@
     title: 'Classes',
     sub: function () {
       if (Grove.tab('classes', 'List') !== 'Calendar') {
-        return 'Every class across all six programs. A class generates dated sessions; enrolments attach to the class, attendance to the session.';
+        return 'Every class across all ' + Object.keys(D.PROGRAMS).length +
+          ' programs. A class generates dated sessions; enrolments attach to the class, attendance to the session.';
       }
       var away = datedElsewhere();
       var base = 'Week of 27 July 2026. A session with nobody teaching it is flagged on its block.';
