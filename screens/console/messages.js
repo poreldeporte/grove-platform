@@ -16,18 +16,42 @@
        TRANSCRIPTS sat unread in the data file.
      - "Open family" used to open the Johnson record whichever thread you were
        in. It opens the family the conversation is actually with.
-     - the announcement's "Email copy" card held two rows, so it is folded into
-       "Record", and "Families reached" is dropped — it was a literal.
      - "Pinned" and "Live" were both green and indistinguishable. Pinned is
        amber now; the three statuses are otherwise unchanged.
-     - the new-message form is the client's screenshot fixed: two cards in one
-       ui.grid(2), which stretches them to exactly equal heights instead of
-       leaving the "To" card an orphaned strip beside a taller message box. */
+
+   Fixed after the visual review:
+     - the announcements list is ordered pinned, then live newest first, then
+       scheduled, so an unpublished post is no longer filed between published
+       ones. The date column is "Posted" and a scheduled post reads "Not yet"
+       rather than showing a date in the past under a "Published" heading.
+     - the thread's right column no longer claimed Tobi was waitlisted for the
+       Monday class he attends. Each child's standing is read from STUDENTS,
+       which is what the family record shows, so the panel agrees with the
+       conversation. (Grove.data.WAITLIST w1 still files Tobi under Monday —
+       see the report; that row, not this screen, is the wrong one.)
+     - the thread panel is three cards in one grid__col, so the column fills
+       beside the transcript instead of ending in 350px of white. The reply
+       moved into its own card, so its label is a card title like every other
+       label on the screen rather than bold body text, and consecutive
+       messages from one sender are grouped under a single name.
+     - the compose screen opens with "Choose a family" rather than a family
+       nobody picked, the message box grows to the height of the column, and
+       the page carries the conversations that are actually waiting.
+     - the announcement page stated the same three facts in three places. The
+       "Record" card is gone (its one new fact moved into "Who sees it"), and
+       the page ends with the other announcements instead of 400px of cream.
+     - an announcement that names a child is called out: announcements are
+       public, and one child's credit balance does not belong in one. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
   var ANN_KIND = { 'Pinned': 'amber', 'Live': 'ok', 'Scheduled': null };
+  var ANN_RANK = { 'Pinned': 0, 'Live': 1, 'Scheduled': 2 };
+  var MONTHS = {
+    Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
+    Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12
+  };
 
   function thr(ctx) {
     var id = ctx.params.id;
@@ -39,6 +63,45 @@
   }
   function famNamed(name) {
     return D.FAMILIES.filter(function (f) { return f.name === name; })[0] || D.FAMILIES[0];
+  }
+  function kidsOf(name) {
+    return D.STUDENTS.filter(function (s) { return s.family === name; });
+  }
+  function threadFor(name) {
+    return D.THREADS.filter(function (t) { return t.fam === name; })[0];
+  }
+
+  /* A scheduled announcement has not gone out, so it has no posted date. */
+  function isPosted(a) { return a.status !== 'Scheduled'; }
+
+  function dayNum(when) {
+    var p = String(when).split(' ');
+    var d = parseInt(p[0], 10), m = MONTHS[p[1]], y = parseInt(p[2], 10);
+    if (isNaN(d) || !m || isNaN(y)) return 0;
+    return y * 10000 + m * 100 + d;
+  }
+
+  /* Pinned first, then live newest first, then anything not posted yet. */
+  function annSorted() {
+    return D.ANNOUNCEMENTS.slice().sort(function (a, b) {
+      var ra = ANN_RANK[a.status], rb = ANN_RANK[b.status];
+      if (ra === undefined) ra = 1;
+      if (rb === undefined) rb = 1;
+      if (ra !== rb) return ra - rb;
+      return dayNum(b.when) - dayNum(a.when);
+    });
+  }
+
+  /* An announcement is public. If its wording names a child on the register,
+     that is a private fact sitting in front of every family in the audience. */
+  function childNamedIn(a) {
+    var hit = null;
+    D.STUDENTS.forEach(function (s) {
+      if (hit) return;
+      var first = s.name.split(' ')[0];
+      if (new RegExp('\\b' + first + '\\b').test(a.body)) hit = s;
+    });
+    return hit;
   }
 
   /* ---- messages: conversations + announcements ---------------------------- */
@@ -101,19 +164,19 @@
 
   function announcementsTab() {
     var q = Grove.query('announcements');
-    var rows = D.ANNOUNCEMENTS.filter(function (a) {
+    var rows = annSorted().filter(function (a) {
       return Grove.match(q, a.head, a.aud, a.by, a.body);
     });
 
     var table = ui.table(
-      ['Headline', 'Audience', { label: 'Published', shrink: true }, 'By', { label: 'Status', shrink: true }],
+      ['Headline', 'Audience', { label: 'Posted', shrink: true }, 'By', { label: 'Status', shrink: true }],
       rows.map(function (a) {
         return {
           to: 'announcement', id: a.id,
           cells: [
             ui.two(a.head, a.body),
             ui.mute(a.aud),
-            ui.mute(a.when),
+            ui.mute(isPosted(a) ? a.when : 'Not yet'),
             ui.mute(a.by),
             ui.pill(a.status, ANN_KIND[a.status])
           ]
@@ -134,25 +197,45 @@
      family message sits in the wide half of grid--sidebar, a studio message in
      the wide half of grid--aside, each beside an empty cell. Family messages
      are tinted plum and studio messages grove, which is what those two colours
-     mean everywhere else in the product. */
+     mean everywhere else in the product. Consecutive messages from the same
+     person are grouped: only the first carries the name. */
 
   function transcript(t) {
     var lines = D.TRANSCRIPTS[t.id] || [];
     if (!lines.length) {
       return ui.empty('No messages yet', 'Nothing has been sent to this family.');
     }
+    var prev = '';
     return lines.map(function (m) {
       var mine = m.m === 'us';
       var day = m.d ? h`<p class="section-title">${m.d}</p>` : '';
+      var grouped = !m.d && prev === m.m;
+      prev = m.m;
       var bubble = ui.notice({
         kind: mine ? 'ok' : 'warn',
-        title: (mine ? 'Studio' : t.who) + ' · ' + m.s,
+        title: grouped ? m.s : (mine ? 'Studio' : t.who) + ' · ' + m.s,
         text: m.t
       });
       return day + (mine
         ? ui.grid('aside', ['<div></div>', bubble])
         : ui.grid('sidebar', [bubble, '<div></div>']));
     }).join('');
+  }
+
+  /* One child, as the register has them: the class they are in, or the class
+     they are waiting for. Nothing here is typed by hand. */
+  function childRow(s) {
+    var waiting = s.cls.indexOf('Waitlisted') === 0;
+    var end = '';
+    if (waiting) end = ui.pill('Waitlist', 'warn');
+    else if (s.flag) end = ui.pill(s.flag, s.flagKind === 'bad' ? 'bad' : 'warn');
+    else if (s.mk) end = ui.mute(s.mk === 1 ? '1 make-up credit' : s.mk + ' make-up credits');
+    return {
+      title: esc(s.name),
+      sub: esc(s.cls),
+      end: end,
+      to: 'studentRecord', id: s.id
+    };
   }
 
   var threadDef = {
@@ -174,41 +257,58 @@
     body: function (ctx) {
       var t = thr(ctx);
       var f = famNamed(t.fam);
-      var kids = D.STUDENTS.filter(function (s) { return s.family === t.fam; });
-      var waiting = D.WAITLIST.filter(function (w) { return w.fam === t.fam; });
+      var kids = kidsOf(t.fam);
 
-      var flags = h`<div class="inline">
+      var flags = h`<div class="flags">
         ${raw(t.unread ? ui.pill('Unread', 'warn') : ui.pill('Answered', 'ok'))}
         ${raw(ui.pill('Private to this family'))}
       </div>`;
 
-      var conversation = ui.card({ title: 'Conversation' }, h`<div class="stack stack--lg">
-        <div class="stack">${raw(transcript(t))}</div>
-        <div class="stack">
-          ${raw(ui.field({ label: 'Reply', control: ui.textarea({ placeholder: 'Write a reply…' }) }))}
-          ${raw(ui.btns([
-            { label: 'Send reply', kind: 'primary', msg: 'Sent to the ' + t.fam + ' family' }
-          ]))}
-        </div>
-      </div>`);
+      var conversation = ui.card({ title: 'Conversation' },
+        h`<div class="stack">${raw(transcript(t))}</div>`);
 
-      var about = ui.card({
-        title: 'This family',
-        note: 'A reply is private to this family. Studio-wide news belongs in Announcements.'
-      }, ui.kv([
+      var reply = ui.card({
+        title: 'Reply',
+        fill: true,
+        note: 'A reply is private to this family. Studio-wide news belongs in Announcements.',
+        foot: ui.btn({
+          label: 'Send reply',
+          kind: 'primary',
+          msg: 'Sent to the ' + t.fam + ' family'
+        })
+      }, ui.field({
+        grow: true,
+        label: 'Message to ' + t.who,
+        control: ui.textarea({ placeholder: 'Write a reply…' })
+      }));
+
+      var contact = ui.card({ title: 'This family' }, ui.kv([
         ['Guardian', esc(f.guardian)],
         ['Email', esc(f.email)],
-        ['Children', kids.length
-          ? esc(kids.map(function (s) { return s.name; }).join(', '))
-          : 'None enrolled'],
-        { k: 'Balance', v: esc(Grove.money(f.balance)), tone: f.balance > 0 ? 'clay' : null },
-        ['Status', esc(f.status)],
-        waiting.length
-          ? ['On a waitlist', esc(waiting[0].child + ' · ' + waiting[0].cls)]
-          : { k: 'On a waitlist', v: 'Nobody', tone: 'mute' }
+        ['Phone', esc(f.phone)],
+        { k: 'Status', v: esc(f.status), tone: f.status === 'Active' ? null : 'clay' }
       ]));
 
-      return flags + '<div class="section">' + ui.grid('sidebar', [conversation, about]) + '</div>';
+      var children = ui.card({ title: 'Children', flush: true },
+        kids.length
+          ? ui.rows(kids.map(childRow))
+          : ui.empty('Nobody on the register', 'The family has an account but no child is enrolled.'));
+
+      var account = ui.card({
+        title: 'Account',
+        note: 'Invoices and payment methods live on the family record.'
+      }, ui.kv([
+        ['Plan', esc(f.plan)],
+        { k: 'Balance', v: esc(Grove.money(f.balance)), tone: f.balance > 0 ? 'clay' : null },
+        ['Autopay', f.autopay ? 'On' : 'Off'],
+        ['Payment method', esc(f.card)],
+        ['With us since', esc(f.since)]
+      ]));
+
+      return flags + ui.grid('sidebar', [
+        ui.col([conversation, reply]),
+        ui.col([contact, children, account])
+      ]);
     }
   };
 
@@ -221,8 +321,9 @@
   Grove.screen('thread', threadDef);
 
   /* ---- new message --------------------------------------------------------
-     The two cards sit in one ui.grid(2), so they are exactly the same height.
-     That is the inconsistency the client screenshotted. */
+     The recipient and the conversations already waiting stack in the narrow
+     column; the message box fills the wide one, so the two columns finish
+     together however long the note is. */
 
   Grove.screen('newMessage', {
     surface: 'console',
@@ -232,6 +333,9 @@
     sub: 'A private conversation with one family. For studio-wide news use Announcements instead.',
 
     body: function () {
+      var PICK = 'Choose a family';
+      var unread = D.THREADS.filter(function (t) { return t.unread; });
+
       var to = ui.card({
         title: 'To',
         note: 'It arrives in the family portal under Messages. No other family can see it.'
@@ -239,24 +343,38 @@
         ui.field({
           label: 'Family',
           control: ui.select({
-            value: 'Johnson family',
-            options: D.FAMILIES.map(function (f) { return f.name + ' family'; })
+            value: PICK,
+            options: [PICK].concat(D.FAMILIES.map(function (f) { return f.name + ' family'; }))
           })
         }),
         ui.field({
           label: 'Subject',
-          control: ui.input({ placeholder: 'e.g. Emma’s Wednesday place' })
+          control: ui.input({ placeholder: 'e.g. a change of day' })
         })
       ]));
 
-      var message = ui.card({ title: 'Message' }, ui.fields(null, [
-        ui.field({
-          label: 'Message',
-          control: ui.textarea({ placeholder: 'Write to the family' })
-        })
-      ]));
+      var waiting = ui.card({
+        title: 'Waiting for a reply',
+        flush: true,
+        note: unread.length + ' of ' + D.THREADS.length + ' conversations are unanswered. Answering in the thread keeps the whole history in one place.'
+      }, unread.length
+        ? ui.rows(unread.map(function (t) {
+          return {
+            title: esc(t.fam + ' family'),
+            sub: esc(t.last),
+            end: ui.mute(t.when),
+            to: 'thread', id: t.id
+          };
+        }))
+        : ui.empty('Everyone has been answered', 'Nothing is waiting on the studio.'));
 
-      return ui.grid(2, [to, message]) + ui.formActions([
+      var message = ui.card({ title: 'Message', fill: true }, ui.field({
+        grow: true,
+        label: 'Message to the family',
+        control: ui.textarea({ placeholder: 'Write to the family' })
+      }));
+
+      return ui.grid('aside', [ui.col([to, waiting]), message]) + ui.formActions([
         { label: 'Send message', kind: 'primary', msg: 'Message sent' },
         { label: 'Cancel', to: 'messages' }
       ]);
@@ -273,10 +391,20 @@
     title: function (ctx) { return ann(ctx).head; },
     sub: function (ctx) {
       var a = ann(ctx);
-      return 'Posted ' + a.when + ' by ' + a.by;
+      return isPosted(a)
+        ? 'Posted ' + a.when + ' by ' + a.by
+        : 'Not posted yet — written ' + a.when + ' by ' + a.by;
     },
     actions: function (ctx) {
-      var pinned = ann(ctx).status === 'Pinned';
+      var a = ann(ctx);
+      if (!isPosted(a)) {
+        return [
+          { label: 'Discard', kind: 'danger', msg: 'Prototype — nothing was discarded' },
+          { label: 'Post now', msg: 'Posted to every family home' },
+          { label: 'Edit', kind: 'primary', msg: 'Prototype — no form yet' }
+        ];
+      }
+      var pinned = a.status === 'Pinned';
       return [
         { label: 'Take down', kind: 'danger', msg: 'Prototype — nothing was taken down' },
         { label: pinned ? 'Unpin' : 'Pin to top', msg: pinned ? 'Unpinned' : 'Pinned to every family home' },
@@ -286,32 +414,56 @@
 
     body: function (ctx) {
       var a = ann(ctx);
+      var named = childNamedIn(a);
+      var others = annSorted().filter(function (x) { return x.id !== a.id; });
 
-      var flags = h`<div class="inline">
+      var flags = h`<div class="flags">
         ${raw(ui.pill(a.status, ANN_KIND[a.status]))}
-        ${raw(ui.pill(a.aud))}
         ${raw(ui.pill('Public to parents'))}
       </div>`;
+
+      var warning = '';
+      if (named) {
+        var t = threadFor(named.family);
+        warning = ui.notice({
+          kind: 'bad',
+          title: 'This names ' + named.name,
+          text: 'Everyone in ' + a.aud + ' can read it. Anything about one child belongs in a message to that family.',
+          action: t
+            ? { label: 'Message the ' + named.family + ' family', to: 'thread', id: t.id }
+            : { label: 'Write to the family', to: 'newMessage' }
+        });
+      }
 
       var post = ui.card({
         title: 'What families see',
         note: 'Announcements are read-only for families. If someone needs to reply, they use Messages.'
-      }, ui.notice({ kind: 'ok', title: a.head, text: a.body }));
+      }, ui.notice({ kind: 'ok', title: a.head, text: a.body }) + warning);
 
-      var who = ui.card({ title: 'Who sees it' }, ui.kv([
+      var who = ui.card({
+        title: 'Who sees it',
+        note: 'A pinned post stays at the top of the family home screen until it is unpinned.'
+      }, ui.kv([
         ['Audience', esc(a.aud)],
         ['Where', 'Top of the family home screen'],
-        ['Pinned', a.status === 'Pinned' ? 'Yes' : 'No']
+        ['Sent by email', isPosted(a) ? 'Yes' : 'Will send when it goes out']
       ]));
 
-      var record = ui.card({ title: 'Record' }, ui.kv([
-        ['Posted', esc(a.when)],
-        ['Author', esc(a.by)],
-        ['Status', esc(a.status)],
-        ['Sent by email', a.status === 'Scheduled' ? 'Will send on posting' : 'Yes']
-      ]));
+      var more = ui.card({
+        title: 'Other announcements',
+        flush: true,
+        note: 'Pinned first, then the most recent. Anything not posted yet is at the end — no family can see it.'
+      }, ui.rows(others.map(function (x) {
+        return {
+          title: esc(x.head),
+          sub: esc(x.aud + ' · ' + (isPosted(x) ? x.when : 'not posted yet')),
+          end: ui.pill(x.status, ANN_KIND[x.status]),
+          to: 'announcement', id: x.id
+        };
+      })));
 
-      return flags + '<div class="section">' + ui.grid(3, [post, who, record]) + '</div>';
+      return flags + ui.grid('sidebar', [post, who]) +
+        '<div class="section">' + more + '</div>';
     }
   });
 })();

@@ -65,23 +65,24 @@
 
   var STUDENTS = [
     { id: 'emma',    name: 'Emma Johnson',    age: 8,  band: '8–11', family: 'Johnson',  cls: 'Mon 3:15pm · Studio 2',      flag: 'Allergy · peanuts',        flagKind: 'bad',  att: '96%',  mk: 2 },
-    { id: 'lucas',   name: 'Lucas Johnson',   age: 10, band: '8–11', family: 'Johnson',  cls: 'Tue 4:30pm · Studio 3',      flag: 'Asthma · inhaler in bag',  flagKind: 'bad',  att: '91%',  mk: 0 },
-    { id: 'zara',    name: 'Zara Okafor',     age: 11, band: '8–11', family: 'Okafor',   cls: 'Wed 4:30pm · Studio 1',      flag: '',                         flagKind: '',     att: '88%',  mk: 1 },
-    { id: 'tobi',    name: 'Tobi Okafor',     age: 9,  band: '8–11', family: 'Okafor',   cls: 'Waitlisted · Wed 4:30pm',    flag: '',                         flagKind: '',     att: '—',    mk: 0 },
+    { id: 'lucas',   name: 'Lucas Johnson',   age: 10, band: '8–11', family: 'Johnson',  cls: 'Wed 3:15pm · Studio 2',      flag: 'Asthma · inhaler in bag',  flagKind: 'bad',  att: '91%',  mk: 0 },
+    { id: 'zara',    name: 'Zara Okafor',     age: 11, band: '8–11', family: 'Okafor',   cls: 'Wed 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '88%',  mk: 1 },
+    { id: 'tobi',    name: 'Tobi Okafor',     age: 9,  band: '8–11', family: 'Okafor',   cls: 'Waitlisted · Mon 3:15pm',    flag: '',                         flagKind: '',     att: '—',    mk: 0 },
     { id: 'mia',     name: 'Mia Chen',        age: 6,  band: '5–7',  family: 'Chen',     cls: 'Camp week 4 · Clay Room',    flag: 'Tree nuts',                flagKind: 'bad',  att: '100%', mk: 0 },
     { id: 'noah',    name: 'Noah Rivera',     age: 7,  band: '5–7',  family: 'Rivera',   cls: 'Mon 2:15pm · Studio 1',      flag: '',                         flagKind: '',     att: '93%',  mk: 1 },
     { id: 'ava',     name: 'Ava Smith',       age: 8,  band: '8–11', family: 'Smith',    cls: 'Mon 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '85%',  mk: 3 },
     { id: 'sophia',  name: 'Sophia Martinez', age: 8,  band: '8–11', family: 'Martinez', cls: 'Mon, Wed, Thu',              flag: 'Requires quiet corner',    flagKind: 'warn', att: '98%',  mk: 0 },
     { id: 'iker',    name: 'Iker Delgado',    age: 5,  band: '5–7',  family: 'Delgado',  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—',    mk: 0 },
+    { id: 'luz',     name: 'Luz Delgado',     age: 7,  band: '5–7',  family: 'Delgado',  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—',    mk: 0 },
     { id: 'cillian', name: 'Cillian Brennan', age: 12, band: '12+',  family: 'Brennan',  cls: 'Thu 4:30pm · 2-hour',        flag: '',                         flagKind: '',     att: '79%',  mk: 1 }
   ];
 
   var CLASSES = [
     { id: 'c1',  prog: 'as',   name: '1 hour · After-School',   day: 'Mon',     time: '2:15–3:15pm',     room: 'Studio 1',   band: '5–7',  staff: 'Lauren Ortiz',  en: 11, cap: 12, wl: 0 },
-    { id: 'c2',  prog: 'as',   name: '1 hour · After-School',   day: 'Mon',     time: '3:15–4:15pm',     room: 'Studio 2',   band: '8–11', staff: 'Lauren Ortiz',  en: 12, cap: 12, wl: 5 },
+    { id: 'c2',  prog: 'as',   name: '1 hour · After-School',   day: 'Mon',     time: '3:15–4:15pm',     room: 'Studio 2',   band: '8–11', staff: 'Lauren Ortiz',  en: 12, cap: 12, wl: 3 },
     { id: 'c3',  prog: 'as',   name: '1 hour · After-School',   day: 'Tue',     time: '2:00–3:00pm',     room: 'Studio 1',   band: '5–7',  staff: 'Marisol Vega',  en: 8,  cap: 12, wl: 0 },
-    { id: 'c4',  prog: 'as',   name: '1 hour · After-School',   day: 'Wed',     time: '3:15–4:15pm',     room: 'Studio 2',   band: '8–11', staff: 'Lauren Ortiz',  en: 12, cap: 12, wl: 4 },
-    { id: 'c5',  prog: 'as',   name: '2 hour · After-School',   day: 'Thu',     time: '4:30–6:30pm',     room: 'Studio 3',   band: '12+',  staff: 'Marisol Vega',  en: 13, cap: 12, wl: 3 },
+    { id: 'c4',  prog: 'as',   name: '1 hour · After-School',   day: 'Wed',     time: '3:15–4:15pm',     room: 'Studio 2',   band: '8–11', staff: 'Lauren Ortiz',  en: 12, cap: 12, wl: 2 },
+    { id: 'c5',  prog: 'as',   name: '2 hour · After-School',   day: 'Thu',     time: '4:30–6:30pm',     room: 'Studio 3',   band: '12+',  staff: 'Marisol Vega',  en: 13, cap: 12, wl: 1 },
     { id: 'c6',  prog: 'camp', name: 'Summer Camp · Week 4',    day: 'Mon–Fri', time: '10:00am–1:00pm',  room: 'Studio 1',   band: '5–7',  staff: 'Lauren Ortiz',  en: 18, cap: 20, wl: 0 },
     { id: 'c7',  prog: 'camp', name: 'Summer Camp · Week 4',    day: 'Mon–Fri', time: '10:00am–1:00pm',  room: 'Clay Room',  band: '8–11', staff: 'Marisol Vega',  en: 14, cap: 16, wl: 0 },
     { id: 'c8',  prog: 'camp', name: 'Summer Camp · Week 5',    day: 'Mon–Fri', time: '10:00am–1:00pm',  room: 'Studio 1',   band: '5–7',  staff: 'Unassigned',    en: 9,  cap: 20, wl: 0 },
@@ -114,21 +115,21 @@
   var WAITLIST = [
     { id: 'w1', cls: 'Mon 3:15pm · Ages 8–11', child: 'Tobi Okafor',     fam: 'Okafor',   joined: '14 Jul', pos: 1 },
     { id: 'w2', cls: 'Mon 3:15pm · Ages 8–11', child: 'Ines Duarte',     fam: 'Duarte',   joined: '16 Jul', pos: 2 },
-    { id: 'w3', cls: 'Wed 4:30pm · Ages 8–11', child: 'Sami Haddad',     fam: 'Haddad',   joined: '18 Jul', pos: 1 },
+    { id: 'w3', cls: 'Wed 3:15pm · Ages 8–11', child: 'Sami Haddad',     fam: 'Haddad',   joined: '18 Jul', pos: 1 },
     { id: 'w4', cls: 'Thu 4:30pm · 2-hour',    child: 'Cillian Brennan', fam: 'Brennan',  joined: '20 Jul', pos: 1 },
     { id: 'w5', cls: 'Mon 3:15pm · Ages 8–11', child: 'Bea Whitlock',    fam: 'Whitlock', joined: '22 Jul', pos: 3 },
-    { id: 'w6', cls: 'Wed 4:30pm · Ages 8–11', child: 'Otis Lund',       fam: 'Lund',     joined: '25 Jul', pos: 2 }
+    { id: 'w6', cls: 'Wed 3:15pm · Ages 8–11', child: 'Otis Lund',       fam: 'Lund',     joined: '25 Jul', pos: 2 }
   ];
 
   var MAKEUPS = [
-    { id: 'm0',  child: 'Mia Chen',        missed: 'Tue 21 Jul · 4:30pm', reason: 'Requested Fri 31 Jul, 10:00am', expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
+    { id: 'm0',  child: 'Mia Chen',        missed: 'Tue 21 Jul · 2:00pm', reason: 'Requested Fri 31 Jul, 10:00am', expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
     { id: 'm0b', child: 'Sophia Martinez', missed: 'Mon 20 Jul · 3:15pm', reason: 'Requested Wed 5 Aug, 4:30pm',   expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
     { id: 'm1',  child: 'Emma Johnson',    missed: 'Wed 15 Jul · 3:15pm', reason: 'Illness, reported 26 hrs ahead',expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
     { id: 'm2',  child: 'Emma Johnson',    missed: 'Mon 6 Jul · 3:15pm',  reason: 'Family travel',                 expires: '31 Jul', status: 'Booked',            kind: 'info', booked: 'Fri 31 Jul · 10:00am' },
     { id: 'm3',  child: 'Ava Smith',       missed: 'Mon 13 Jul · 3:15pm', reason: 'Illness',                       expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
     { id: 'm4',  child: 'Ava Smith',       missed: 'Mon 20 Jul · 3:15pm', reason: 'No reason given',               expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
     { id: 'm6',  child: 'Noah Rivera',     missed: 'Mon 6 Jul · 2:15pm',  reason: 'Public holiday',                expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
-    { id: 'm7',  child: 'Zara Okafor',     missed: 'Wed 8 Jul · 4:30pm',  reason: 'Illness',                       expires: '31 Jul', status: 'Expiring',          kind: 'warn', booked: 'No eligible class has space' }
+    { id: 'm7',  child: 'Zara Okafor',     missed: 'Wed 8 Jul · 3:15pm',  reason: 'Illness',                       expires: '31 Jul', status: 'Expiring',          kind: 'warn', booked: 'No eligible class has space' }
   ];
 
   var INVENTORY = [
@@ -241,7 +242,7 @@
 
   var ACTIVITY = [
     { at: '10:42', what: 'Rey M. took a $400 camp payment — Chen family' },
-    { at: '10:15', what: 'Waitlist offer accepted — Tobi Okafor, Wed 4:30pm' },
+    { at: '10:15', what: 'Waitlist offer accepted — Tobi Okafor, Mon 3:15pm' },
     { at: '09:58', what: 'Lauren O. clocked in' },
     { at: '09:31', what: 'Absence reported — Emma Johnson, make-up credit issued' },
     { at: '08:47', what: 'New registration — Delgado family, 2 children' },

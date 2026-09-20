@@ -5,9 +5,9 @@
    PROGRAMS (the list)
      - The old cards carried a status pill ("Enrolling", "Running", "1 open")
        and three figures each (enrolled, a per-program unit, MTD revenue).
-       None of that exists in Grove.data, so it is gone. A card now says what
-       the program is, what it costs (read from PRICING) and how many classes
-       run it (counted from CLASSES).
+       None of that exists in Grove.data, so it is gone. A card now says who
+       the program is for, what it costs (read from PRICING), how full it is
+       and how many classes run it (both counted from CLASSES).
      - "Copy a program" no longer opens a form. Its four selects — classes and
        times, pricing and plans, age ranges and capacity, policies — each had
        one sensible answer, copy it, and its fifth field was a text input used
@@ -31,14 +31,33 @@
      - The plans table lost its four per-row "Edit" links, which all opened
        the same record. Its "Add-on / hr" column is now "Extra class", which
        is what PRICING.as.extraClassRate actually holds.
-     - Every card opens this one builder, as the previous build did. */
+     - Every card opens this one builder, as the previous build did.
+
+   FIXED AFTER VISUAL REVIEW
+     - The facts now sit at the top of each program card and the description
+       sits underneath as the card note, so the hairline between two kv rows
+       lands at the same y in every card of a row. Previously a two- or
+       three-line description above the facts pushed that rule up and down.
+     - The No-School Day price line was the width of the whole row. It now
+       reads the way registration reads it, "$100 a day, then $28 an hour".
+     - The badge PNGs are gone. The wordmark inside them was an illegible
+       smudge at 32px and two of the six are off-palette. A program is marked
+       the way it is marked on every other screen: ui.dot(program.color).
+     - The builder's two form cards now carry the same number of hint lines in
+       the same rows, so their fields line up across the page and the shorter
+       card no longer holds a 70px blank band.
+     - The Eligibility note lost a changelog sentence about "two switches"
+       that meant nothing to a studio owner, and an invented waitlist length.
+     - "1 hour and 2 hour" is now "1 hour or 2 hours". */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
   var ORDER = ['as', 'camp', 'nsd', 'priv', 'bday', 'pop'];
 
-  /* What each program is, in the same words families are shown at registration. */
+  /* What each program is, in the same words families are shown at
+     registration. Kept character-for-character identical to the copy in
+     screens/registration/pick.js on purpose. */
   var BLURB = {
     as: 'A fixed weekly place across the school year, billed month to month. Four to sixteen sessions a month, split how you like.',
     camp: 'Full days of making through the summer and school breaks. Take a whole week or pick individual days.',
@@ -70,7 +89,7 @@
         Grove.money(p.day, { cents: false }) + ' a day';
     }
     if (id === 'nsd') {
-      return Grove.money(p.base, { cents: false }) + ' for three hours, then ' +
+      return Grove.money(p.base, { cents: false }) + ' a day, then ' +
         Grove.money(p.extraHour, { cents: false }) + ' an hour';
     }
     if (id === 'priv') {
@@ -84,13 +103,25 @@
     return fee ? Grove.money(fee, { cents: false }) : 'None';
   }
 
+  function agesLine(id) {
+    return uniq(classesOf(id).map(function (c) { return c.band; })).join(' · ');
+  }
+
+  /* Summed from the same class rows the card footer counts, so this card, the
+     Classes screen and Reports → Programs cannot disagree. */
+  function placesLine(id) {
+    var en = 0, cap = 0;
+    classesOf(id).forEach(function (c) { en += c.en; cap += c.cap; });
+    return en + ' of ' + cap + (cap === 1 ? ' place' : ' places');
+  }
+
   /* ---- programs ----------------------------------------------------------- */
 
   Grove.screen('programs', {
     surface: 'console',
     eyebrow: 'what you run',
     title: 'Programs',
-    sub: 'Six programs. Open one to change what families see, who it is for and what it costs.',
+    sub: 'Six programs. Open one to change its price, ages and description.',
     actions: [
       { label: 'Copy a program', msg: 'Program copied · classes created, nobody enrolled' },
       { label: 'New program', kind: 'primary', to: 'programBuilder' }
@@ -102,16 +133,16 @@
         var n = classesOf(id).length;
         return ui.card({
           title: p.name,
-          head: '<img src="' + esc(p.badge) + '" alt="" style="width:36px;height:36px">',
+          head: ui.dot(p.color),
+          note: BLURB[id],
           foot: '<span class="mute">' + esc(n === 1 ? '1 class running' : n + ' classes running') + '</span>' +
             ui.btn({ label: 'Open', kind: 'quiet', size: 'sm', to: 'programBuilder' })
-        }, h`<div class="stack">
-          <p class="hint">${BLURB[id]}</p>
-          ${raw(ui.kv([
-            ['Price', esc(priceLine(id))],
-            ['Registration fee', esc(feeLine(id))]
-          ]))}
-        </div>`);
+        }, ui.kv([
+          ['Ages', esc(agesLine(id))],
+          ['Price', esc(priceLine(id))],
+          ['Registration fee', esc(feeLine(id))],
+          ['Enrolled', esc(placesLine(id))]
+        ]));
       }));
     }
   });
@@ -120,7 +151,8 @@
 
   var PLAN_KEYS = ['p4', 'p8', 'p12', 'p16'];
 
-  /* How a family may spread the sessions they have bought. */
+  /* How a family may spread the sessions they have bought. One session is one
+     hour, which is what the plan keys count. */
   var PLAN_PATTERN = {
     p4: 'One 1-hour class per week',
     p8: 'One 2-hour, or two 1-hour',
@@ -133,6 +165,11 @@
     'Drop-off & pick-up', 'Health & safety', 'Medical emergencies',
     'Payment terms', 'Release of liability', 'Agreement'
   ];
+
+  /* "2 hour" is how the class name spells it; a select should not. */
+  function hoursLabel(t) {
+    return t.indexOf('1 ') === 0 ? t : t + 's';
+  }
 
   Grove.screen('programBuilder', {
     surface: 'console',
@@ -150,54 +187,55 @@
       var cls = classesOf('as');
 
       var bands = uniq(cls.map(function (c) { return c.band; })).join(' · ');
-      var lengths = uniq(cls.map(function (c) { return String(c.name).split(' · ')[0]; }));
-      var length = lengths.length === 2 ? lengths[0] + ' and ' + lengths[1] : lengths.join(' · ');
+      var lengths = uniq(cls.map(function (c) { return String(c.name).split(' · ')[0]; })).map(hoursLabel);
+      var length = lengths.length > 1
+        ? lengths.slice(0, -1).join(', ') + ' or ' + lengths[lengths.length - 1]
+        : lengths[0];
+      var lengthOptions = lengths.concat(lengths.length > 1 ? [length] : []);
       var places = uniq(cls.map(function (c) { return String(c.cap); })).join(' / ');
       var days = uniq(cls.map(function (c) { return c.day; })).join(', ');
       var rooms = uniq(cls.map(function (c) { return c.room; })).join(', ');
 
+      /* Identity and Eligibility are one ui.grid(2) row, so they stretch to a
+         shared height. They are built to need the same height: one hint line
+         each, in the last field of each card, and a note of the same length.
+         That is what keeps the field rows level across the page. */
       var identity = ui.card({
         title: 'Identity',
         note: 'The colour beside this program — on every tag, dot and calendar entry — is set when the program is created and is not changed here.'
-      }, h`<div class="stack">
-        <p class="hint">How the program appears everywhere in the platform.</p>
-        ${raw(ui.fields(null, [
-          ui.field({
-            label: 'Program name',
-            control: ui.input({ value: p.name }),
-            hint: 'Shown to families'
+      }, ui.fields(null, [
+        ui.field({
+          label: 'Program name',
+          control: ui.input({ value: p.name })
+        }),
+        ui.field({
+          label: 'What families should know',
+          control: ui.textarea({
+            value: BLURB.as,
+            placeholder: 'One or two sentences for the registration page'
           }),
-          ui.field({
-            label: 'What families should know',
-            control: ui.textarea({
-              value: BLURB.as,
-              placeholder: 'One or two sentences for the registration page'
-            })
-          })
-        ]))}
-      </div>`);
+          hint: 'Shown to families on the registration page.'
+        })
+      ]));
 
       var who = ui.card({
         title: 'Eligibility and capacity',
-        note: 'Every program handles a full class the same way: the family joins a waitlist of eight rather than being turned away, and registration shows how many places are left. Those were two switches. They are now the default.'
-      }, h`<div class="stack">
-        <p class="hint">Who can enrol, and what happens when a class is full.</p>
-        ${raw(ui.fields(null, [
-          ui.field({
-            label: 'Age bands',
-            control: ui.select({ value: bands, options: [bands, '5–6 · 7–9 · 10+', 'No age grouping'] })
-          }),
-          ui.field({
-            label: 'Session length',
-            control: ui.select({ value: length, options: ['1 hour', '2 hour', length] })
-          }),
-          ui.field({
-            label: 'Places per class',
-            control: ui.input({ value: places }),
-            hint: 'Read from the classes already running.'
-          })
-        ]))}
-      </div>`);
+        note: 'Every program handles a full class the same way: the family joins the waitlist rather than being turned away, and registration shows how many places are left.'
+      }, ui.fields(null, [
+        ui.field({
+          label: 'Age bands',
+          control: ui.select({ value: bands, options: [bands, 'No age grouping'] })
+        }),
+        ui.field({
+          label: 'Session length',
+          control: ui.select({ value: length, options: lengthOptions })
+        }),
+        ui.field({
+          label: 'Places per class',
+          control: ui.input({ value: places }),
+          hint: 'Read from the classes already running.'
+        })
+      ]));
 
       var planRows = PLAN_KEYS.map(function (k) {
         var sessions = k.slice(1);

@@ -63,7 +63,7 @@
     var S = Grove.state;
     var surface = Grove.nav.surface(S.surface);
     if (!surface.rail) return '';
-    var role = Grove.role();
+    var who = Grove.persona(S.surface);
     var current = Grove.nav.currentFor(S.screen);
     var foot = Grove.nav.footItems(S.surface);
 
@@ -79,10 +79,10 @@
         return railItem(i, current);
       }).join('') + '</div>' : '')}
       <div class="rail__user">
-        <span class="rail__avatar">${role.init}</span>
+        <span class="rail__avatar">${who.init}</span>
         <span class="rail__user-text">
-          <span class="rail__user-name">${role.name}</span>
-          <span class="rail__user-role">${role.role}</span>
+          <span class="rail__user-name">${who.name}</span>
+          <span class="rail__user-role">${who.role}</span>
         </span>
       </div>
     </nav>`;
@@ -141,7 +141,7 @@
 
   Grove.shell = function (def) {
     var S = Grove.state;
-    var ctx = { params: S.params, state: S, role: Grove.role() };
+    var ctx = { params: S.params, state: S, role: Grove.role(), persona: Grove.persona(S.surface) };
     var body = def.body ? def.body(ctx) : '';
 
     return h`<div class="app">

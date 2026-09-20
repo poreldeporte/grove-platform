@@ -173,6 +173,13 @@
 
   Grove.setViewport = function (vp) { state.viewport = vp; Grove.draw(); };
 
+  /* Whose view the current portal shows. */
+  var PERSONA = { console: 'admin', studio: 'teacher', family: 'parent' };
+  Grove.persona = function (surface) {
+    var id = PERSONA[surface || state.surface];
+    return Grove.data.ROLES.filter(function (r) { return r.id === id; })[0] || Grove.role();
+  };
+
   /* --- text search helper -------------------------------------------------- */
 
   Grove.match = function (q) {

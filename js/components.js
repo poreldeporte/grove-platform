@@ -59,10 +59,16 @@
     }
     return h`<section class="${raw(cls)}"${raw(style)}>
       ${raw(head)}
-      <div class="card__body${raw(o.flush ? ' card__body--flush' : '')}">${raw(body || '')}</div>
+      <div class="card__body${raw(o.flush ? ' card__body--flush' : '')}${raw(o.fill ? ' card__body--fill' : '')}">${raw(body || '')}</div>
       ${raw(o.note ? '<p class="card__note">' + esc(o.note) + '</p>' : '')}
       ${raw(o.foot ? '<div class="card__foot">' + o.foot + '</div>' : '')}
     </section>`;
+  };
+
+  /* A grid cell containing several stacked cards, for balancing a two-column
+     screen whose columns hold different amounts of content. */
+  C.col = function (cards) {
+    return h`<div class="grid__col">${raw([].concat(cards).join(''))}</div>`;
   };
 
   C.grid = function (cols, cards) {
@@ -265,7 +271,7 @@
 
   /** @param {{label, hint?, span?, control:string}} o */
   C.field = function (o) {
-    return h`<div class="field${raw(o.span ? ' field--span' : '')}">
+    return h`<div class="field${raw(o.span ? ' field--span' : '')}${raw(o.grow ? ' field--grow' : '')}">
       <label class="label">${o.label}</label>
       ${raw(o.control)}
       ${raw(o.hint ? '<p class="hint">' + esc(o.hint) + '</p>' : '')}
