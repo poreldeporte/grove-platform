@@ -275,77 +275,93 @@
     `;
   }
 
+  /* ---- classes to make up ---------------------------------------------------
+     Written for a parent who is not confident with a screen. Every missed
+     class states, in a sentence, what happened and what to do about it, with
+     the button on the same line. The old version was an admin table — Missed
+     / Reason / Expires / Status — above a six-figure tally, with the only
+     action hidden in the header of an explainer card halfway down the page.
+
+     "Credit" is gone from the parent's side of the product. It is the
+     studio's word for the entitlement; a parent has "a class to make up". */
+
+  function whenMissed(m) {
+    return String(m.missed).split(' · ')[0];
+  }
+  function whyMissed(m) {
+    var why = String(m.reason).split(',')[0].toLowerCase();
+    return why.indexOf('requested') === 0 ? 'you asked to move it' : why;
+  }
+
   function absenceTab() {
     var list = credits();
     var open = byStatus(list, 'Available');
     var booked = byStatus(list, 'Booked');
 
-    var table = ui.table(
-      [{ label: 'Missed', shrink: true }, 'Reason', { label: 'Expires', shrink: true }, { label: 'Status', shrink: true }],
-      list.map(function (m) {
-        return {
-          cells: [
-            ui.two(m.missed, m.child),
-            ui.mute(m.reason),
-            ui.mute(m.expires),
-            ui.pill(m.status, PILL[m.kind]) +
-              (m.booked ? '<div class="cell-sub">' + esc(m.booked) + '</div>' : '')
-          ]
-        };
-      }),
-      {
-        emptyTitle: 'No make-up credits',
-        emptyText: 'Nothing has been missed, so there is nothing to rebook.'
-      }
-    );
+    var lead = open.length
+      ? ui.notice({
+          kind: 'warn',
+          title: plural(open.length, 'One class to make up', open.length + ' classes to make up'),
+          text: firstName(open[0].child) + ' can take an extra class to make up for the one missed on ' +
+                whenMissed(open[0]) + '. Please book it before ' + expiry(open) + '.',
+          action: { label: 'Book a make-up class', kind: 'primary', to: 'fBookMakeup' }
+        })
+      : ui.notice({
+          kind: 'ok',
+          title: 'Nothing to book',
+          text: 'Every missed class has been made up. If one is coming up, tell us at least 24 hours ahead.'
+        });
 
-    /* Two credits, one of them already spent, is the thing a parent gets
-       wrong. The sum is spelled out rather than left to a single figure. */
-    var standing = ui.card({ title: 'This term so far' }, ui.kv([
-      ['Credits in total', esc(list.length)],
-      ['Still to book', esc(open.length)],
-      ['Already booked', esc(booked.length)],
-      ['They expire', esc(expiry(open.length ? open : list))]
-    ].concat(kids().map(function (s) {
-      return [s.name, esc(s.att) + ' attended'];
-    }))));
+    var rows = list.map(function (m) {
+      var isOpen = m.status === 'Available';
+      return {
+        title: esc(firstName(m.child) + ' missed ' + whenMissed(m)),
+        sub: esc('Her ' + String(m.missed).split(' · ')[1] + ' class — ' + whyMissed(m)),
+        end: isOpen
+          ? ui.btn({ label: 'Book a make-up', kind: 'primary', size: 'sm', to: 'fBookMakeup' })
+          : h`<span class="strong">${'Booked for ' + m.booked}</span>` +
+            ui.btn({ label: 'Change', kind: 'quiet', size: 'sm', to: 'fMessages' })
+      };
+    });
 
-    var rule = ui.card({
-      title: 'How make-ups work',
-      head: ui.btn({ label: 'Book a make-up', kind: 'primary', size: 'sm', to: 'fBookMakeup' }),
-      flush: true
-    }, ui.rows([
+    var rule = ui.card({ title: 'How a make-up class works', flush: true }, ui.rows([
       {
-        title: 'Tell us at least 24 hours ahead',
-        sub: 'The missed class comes back to you as a make-up credit.'
+        title: 'Tell us 24 hours ahead',
+        sub: 'Then the missed class comes back to you and you can book another hour instead.'
       },
       {
-        title: 'Use it before it expires',
-        sub: esc('Credits on this page expire ' + expiry(list) + '. We cannot carry them into the autumn term.')
+        title: 'Use it before ' + expiry(list),
+        sub: 'Classes cannot be carried into the autumn term.'
       },
       {
-        title: 'A credit is a class, not money',
-        sub: 'It has no cash value and it cannot come off your bill.'
-      },
-      {
-        title: 'If the studio closes, the credit is automatic',
-        sub: 'You do not have to ask for it, and it lands the same day.'
+        title: 'If the studio closes, we do it for you',
+        sub: 'You do not have to ask, and it lands the same day.'
       }
     ]));
 
     return h`
-      ${raw(ui.toolbar({ tabs: scheduleTabs(), count: tallies(list) }))}
-      ${raw(ui.card({ flush: true }, table))}
-      <div class="section">${raw(ui.grid(2, [standing, rule]))}</div>
+      ${raw(ui.toolbar({ tabs: scheduleTabs() }))}
+      ${raw(lead)}
+      <div class="section">${raw(ui.card({ title: 'Classes missed this term', flush: true },
+        rows.length ? ui.rows(rows) : ui.empty('Nothing missed', 'There is nothing to make up.')))}</div>
+      <div class="section">${raw(rule)}</div>
     `;
   }
 
-  /* ---- book a make-up -------------------------------------------------------- */
+  /* ---- book a make-up --------------------------------------------------------
+     One question: which hour? The hours the studio has opened come first, and
+     "a different day" is the last option in the same list rather than a third
+     radio dressed as a slot, so a parent who needs another day can see that
+     asking is allowed. The button sits in a bar pinned to the bottom of the
+     screen, because on the old layout it was below a three-step explainer and
+     people missed it. */
 
   Grove.on('pickSlot', function (d) { Grove.setFilter('makeupSlot', d.id); });
+  Grove.on('pickDay', function (d) { Grove.flip('mkday-' + d.id, false); });
 
-  /* An hour that already holds one of this family's booked credits is not
-     open to them, whatever the places say. */
+  var ASK = 'slot-ask';
+  var WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
   function slots() {
     var taken = credits().filter(function (m) { return m.status === 'Booked' && m.booked; });
     return HOURS.map(function (s) {
@@ -359,7 +375,7 @@
   }
   function firstOpen() {
     var free = slots().filter(function (s) { return !s.taken; })[0];
-    return free ? free.id : 'slot-ask';
+    return free ? free.id : ASK;
   }
   function chosenSlot() {
     return Grove.filter('makeupSlot', firstOpen());
@@ -368,14 +384,17 @@
     var list = credits();
     return byStatus(list, 'Available')[0] || list[0];
   }
+  function chosenDays() {
+    return WEEK.filter(function (d) { return Grove.toggle('mkday-' + d, false); });
+  }
 
   Grove.screen('fBookMakeup', {
     surface: 'family',
     crumbs: [{ label: 'Schedule', to: 'fSchedule' }],
     crumbTitle: 'Book a make-up',
-    eyebrow: 'make-up credit',
-    title: 'Book a make-up',
-    sub: 'Pick an hour that suits and we will confirm the place, usually the same day. Nothing changes until we confirm.',
+    eyebrow: 'nothing changes until we confirm',
+    title: 'Book a make-up class',
+    sub: 'Choose an hour below. We check the room by hand and write back, usually the same day.',
     actions: [
       { label: 'Message the studio', to: 'fMessages' }
     ],
@@ -383,68 +402,83 @@
     body: function () {
       var c = credit();
       var picked = chosenSlot();
-      var room = where(c);
-      var others = credits().filter(function (m) { return m.id !== c.id; });
+      var day = friday();
+      var asking = picked === ASK;
 
       var options = slots().map(function (s) {
         return ui.choice({
           id: s.id,
+          size: 'lg',
           act: 'pickSlot',
-          title: s.label,
+          title: day + ', ' + s.label,
           sub: s.taken
-            ? firstName(s.taken.child) + '’s other credit is already in this hour'
-            : (room ? room + ' · ' + s.places : s.places),
+            ? firstName(s.taken.child) + ' is already booked into this hour'
+            : s.places,
           on: s.id === picked
         });
       });
       options.push(ui.choice({
-        id: 'slot-ask',
+        id: ASK,
+        size: 'lg',
         act: 'pickSlot',
-        title: 'Neither hour works',
-        sub: 'Ask us to look for another day and we will write back',
-        on: picked === 'slot-ask'
+        title: 'A different day would suit us better',
+        sub: 'Tell us which days work and we will look for an hour',
+        on: asking
       }));
 
-      var open = ui.card({
-        title: 'Open slots on ' + friday(),
-        note: 'Space showing on a class is not a guarantee — we confirm every placement by hand so no room is overbooked.'
-      }, ui.choices(null, options));
+      /* Only asked once "a different day" is chosen, so the screen never puts
+         two questions in front of someone at the same time. */
+      var days = asking
+        ? h`<div class="card-split">
+            <p class="label">Which days could you manage?</p>
+            <p class="hint">Tick as many as you like. We will write back with what we can find.</p>
+            <div class="choices choices--3" style="margin-top:var(--s-3)">${raw(WEEK.map(function (d) {
+              return ui.choice({ id: d, act: 'pickDay', title: d, on: Grove.toggle('mkday-' + d, false) });
+            }).join(''))}</div>
+          </div>`
+        : '';
 
-      var rows = [
-        ['Child', esc(c.child)],
-        ['Missed', esc(c.missed)],
-        ['Reason', esc(c.reason)],
-        ['Expires', esc(c.expires)],
-        { k: 'Status', v: ui.pill(c.status, PILL[c.kind]) }
-      ];
-      if (room) rows.splice(2, 0, ['Room and teacher', esc(room)]);
-      if (others.length === 1) {
-        rows.push({ k: 'Your other credit', v: esc(others[0].booked || others[0].status), tone: 'mute' });
-      } else if (others.length > 1) {
-        rows.push({ k: 'Your other credits', v: esc(tallies(others)), tone: 'mute' });
-      }
+      var choose = ui.card({
+        title: 'Pick an hour',
+        note: 'A place showing here is not held until we confirm it, so no room is ever overbooked.'
+      }, ui.choices(null, options) + days);
 
-      var using = ui.card({ title: 'The credit you are using' }, ui.kv(rows));
-
-      var next = ui.card({ title: 'What happens next', flush: true }, ui.rows([
-        { lead: '1', title: 'You send the request', sub: 'Nothing on your schedule changes yet.' },
-        { lead: '2', title: 'We check the room by hand', sub: 'Usually the same day. We write back either way.' },
-        { lead: '3', title: 'The hour appears in your week', sub: 'The credit is marked booked and the place is yours.' }
+      /* Three plain lines. The old card listed child, missed, room, teacher,
+         reason, expiry, status and the family's other credit — eight rows of
+         the studio's bookkeeping in front of a parent making one choice. */
+      var about = ui.card({ title: 'What this is for' }, ui.kv([
+        ['Who', esc(c.child)],
+        ['Class missed', esc(whenMissed(c) + ' · ' + String(c.missed).split(' · ')[1])],
+        ['Book before', esc(c.expires)]
       ]));
 
+      var label = asking ? 'Ask for another day' : 'Request this hour';
+      var hint = asking
+        ? (chosenDays().length
+            ? 'You have picked ' + chosenDays().join(', ')
+            : 'Tick at least one day above')
+        : 'Nothing on your schedule changes until the studio confirms';
+      var sent = asking
+        ? 'Sent — we will look for another day and write back'
+        : 'Sent — the studio will confirm, usually the same day';
+
+      /* A short reassurance beside the choice, rather than a column of white.
+         Someone unsure whether they are allowed to ask should be able to see
+         that they are, without leaving the page. */
+      var help = ui.card({ title: 'If you are not sure' }, h`
+        <p class="hint">Ring the desk on ${D.STUDIO.phone} or send a message and we will
+        book it for you. Nothing is charged for a make-up class.</p>
+        <div class="btn-group" style="margin-top:var(--s-4)">
+          ${raw(ui.btn({ label: 'Message the studio', to: 'fMessages' }))}
+        </div>
+      `);
+
       return h`
-        ${raw(ui.grid(2, [open, using]))}
-        <div class="section">${raw(next)}</div>
+        ${raw(ui.grid('sidebar', [choose, ui.col([about, help])]))}
         ${raw(ui.formActions([
-          {
-            label: 'Send request',
-            kind: 'primary',
-            msg: picked === 'slot-ask'
-              ? 'Request sent · we will look for another day and write back'
-              : 'Request sent · the studio will confirm, usually the same day'
-          },
+          { label: label, kind: 'primary', msg: sent },
           { label: 'Cancel', to: 'fSchedule' }
-        ]))}
+        ], { sticky: true, hint: hint }))}
       `;
     }
   });

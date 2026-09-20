@@ -277,7 +277,7 @@
       note: 'What families see on receipts, emails and the website footer.'
     }, ui.kv([
       row('Name', 'The Grove Art Studio', 'The Grove Art Studio LLC on invoices'),
-      row('Contact', '(786) 340-9229'),
+      row('Contact', D.STUDIO.phone),
       row('Reply-to address', 'contact@thegroveartstudio.com'),
       row('Opening hours', 'Mon–Fri 9:00–19:00', 'Sat 10:00–16:00'),
       row('Logo', 'Uploaded', 'Shown at the top of every portal'),

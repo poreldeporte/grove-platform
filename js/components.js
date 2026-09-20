@@ -307,7 +307,7 @@
   /** @param {{id, title, sub?, price?, on?, group?}} */
   C.choice = function (o) {
     var on = o.on;
-    return h`<button type="button" class="choice" aria-pressed="${!!on}"
+    return h`<button type="button" class="choice${raw(o.size === 'lg' ? ' choice--lg' : '')}" aria-pressed="${!!on}"
       data-act="${o.act || 'flip'}" data-id="${o.id}" data-on="${!!on}">
       <span class="choice__mark">${raw(Grove.icon('check'))}</span>
       <span class="choice__body">
@@ -334,8 +334,13 @@
     </div>`;
   };
 
-  C.formActions = function (list) {
-    return h`<div class="form-actions">${raw(list.map(C.btn).join(''))}</div>`;
+  /** @param {Array} list  @param {{sticky?:boolean, hint?:string}} o */
+  C.formActions = function (list, o) {
+    o = o || {};
+    return h`<div class="form-actions${raw(o.sticky ? ' form-actions--sticky' : '')}">
+      ${raw(list.map(C.btn).join(''))}
+      ${raw(o.hint ? '<span class="form-actions__hint">' + esc(o.hint) + '</span>' : '')}
+    </div>`;
   };
 
   /* --- steps ---------------------------------------------------------------------- */

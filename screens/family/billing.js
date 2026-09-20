@@ -1,45 +1,48 @@
-/* Family → Billing, and the short form behind the card on file.
+/* Family → Billing, and the card on file.
 
-   A parent needs two things here: what is about to be charged and when, and
-   what has already been charged and why. None of the studio's machinery for
-   producing those numbers appears on this screen — there is no ePayment
-   schedule, no bulk posting run, no per-family exclusions or overrides. A
-   parent does not need to know the studio's billing run exists; they need
-   their own figures. All of that lives in Console → Billing.
+   Written for the parent this portal is actually for: someone in their sixties
+   doing the school run, wary of getting money wrong online, who will ring the
+   studio rather than hunt for a control. Money is where that wariness is
+   sharpest, so the page answers three questions in order and stops:
+   how much, when, and off which card. Everything else is history.
 
-   Every figure on both screens is derived from this family's ledger in
-   js/data.js, so the cards and the table cannot disagree:
-     - tuition          = the positive lines of the opening monthly run (820)
-     - sibling discount = the credit lines of that same run            (−140)
-     - unpaid           = every line still flagged unpaid               (18)
-     - next charge      = tuition + discount + unpaid                  (698)
-   The Next charge card is what is ahead of you; the Balance card and the
-   history table are what is behind you, and no figure now carries both
-   meanings at once.
+   Every figure is still derived from this family's ledger in js/data.js, so
+   the headline, the breakdown and the history cannot disagree:
+     - classes         = the positive lines of the opening monthly run (820)
+     - sibling discount = the negative lines of that same run          (−140)
+     - not yet paid    = every line still flagged unpaid                (18)
+     - next payment    = classes + discount + not yet paid             (698)
 
-   Simplifications against the previous build:
-     - the asymmetric left-one-card / right-two-cards split is a plain
-       three-card grid. Next charge, Payment method and Balance are three
-       equal answers to three questions, so they sit in ui.grid(3) and end
-       level instead of one card stretching to whatever the other column
-       happens to add up to
-     - the plan card carried two relief lines that both read "−$0.00". A
-       discount of nothing is not a line. The one real discount in the
-       ledger is shown once, on Next charge
-     - payment history was five hand-written rows in no particular order,
-       none of which matched the ledger. It is now the family's ledger from
-       js/data.js, newest first, so the history and the balance can never
-       disagree
-     - the receipt page behind each history row is gone. It repeated the row
-       it was opened from, and its breakdown did not reconcile — it listed
-       the full amount as tuition and then subtracted a relief line beneath
-     - the cancellation confirm dialog, its four bullets and its audit-log
-       footer are one header button and one sentence. Nothing changes today
-       either way, and the studio confirms by email
-     - the card form drops the billing-address and autopay groups. Autopay
-       only ever has one sensible answer, so it is the default and is stated
-       on Billing, and the studio does not hold an address — it keeps four
-       digits and a processor token, which the page says plainly. */
+   What changed in this pass:
+     - the page opens with one sentence — "Your next payment is $698.00, on
+       1 Aug 2026" — above the fold, before any breakdown. That is the thing
+       a parent came for
+     - the Balance card is gone. "Owing now" is the $18 line inside the next
+       payment and a row in the history, so it was the same fact told three
+       times, and "Credits since 1 Jul 2026 · −$168.00" was the studio's
+       running tally, not anything a parent can act on
+     - the four-column history table (Date / What / Amount / Status) is one
+       sentence per line: what it was, where it stands, how much. A pill
+       reading "Credit" told a parent nothing; "Sibling discount — Lucas ·
+       You were not charged this" tells them everything
+     - negative amounts are never shown in the colour of money owed. Green is
+       money off or money back, red is the one charge still to pay, and the
+       card note says so in words in case the colour is missed
+     - "Update" was a quiet link in a card header. It is now a labelled
+       button, and the page says plainly that the studio never sees the whole
+       card number
+     - the card page drops "What this card has taken" ($848 settled, −$168
+       credits, $680 to date). That is the studio's bookkeeping, it repeats
+       the history on Billing, and none of it is needed to type in a new card
+     - both pages end in an invitation to ring a person. Changing a card is
+       exactly where a wary parent gives up, and the studio already offers to
+       take it over the phone (Messages, the Delgado thread)
+
+   Jargon removed: credit, autopay, ePayment, posting, status, balance,
+   processor token, "charges settled", "carried over", "applied".
+
+   The desk number matches the one on Schedule → Book a make-up, so a parent
+   is never given two numbers for the same studio. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -50,14 +53,15 @@
   /* The studio's run posts on the 1st; today is 28 July, so the next one is
      1 August — the same date Console → Billing gives for the next run. */
   var NEXT = '1 Aug 2026';
+  var DESK = D.STUDIO.phone;
 
   /* The ledger opens on the day of the monthly run. Totals are counted from
      there and labelled with that date, rather than implying a lifetime figure. */
   function since() { return D.LEDGER[0].d; }
 
-  /* The monthly tuition run posts on a single date — the opening lines of the
-     ledger. Those lines are what recurs, so the Next charge card and the
-     history table below it are reading the same numbers. */
+  /* The monthly run posts on a single date — the opening lines of the ledger.
+     Those lines are what recurs, so the breakdown and the history below it
+     are reading the same numbers. */
   function cycle() {
     var first = since();
     return D.LEDGER.filter(function (l) { return l.d === first; });
@@ -79,8 +83,8 @@
     return D.LEDGER.filter(function (l) { return l.paid; });
   }
 
-  /* The most recent line that actually went to the card. A credit is not a
-     charge, so credits are not candidates. */
+  /* The most recent line that actually went to the card. Money coming off is
+     not a payment taken, so those lines are not candidates. */
   function lastCharge() {
     var taken = charges(settled());
     return taken[taken.length - 1];
@@ -96,6 +100,21 @@
     return names.slice(0, names.length - 1).join(', ') + ' and ' + names[names.length - 1];
   }
 
+  /* 'Visa ···1183 · exp 04/29' → 'Visa ···1183', for use inside a sentence. */
+  function cardName(f) {
+    return String(f.card).split(' · ')[0];
+  }
+  /* '1 Jul 2026' → '1 Jul'. Every line is this year and the card says so. */
+  function shortDate(d) {
+    var p = String(d).split(' ');
+    return p[0] + ' ' + p[1];
+  }
+  function howTaken(f) {
+    return f.autopay
+      ? 'Automatically, on the 1st'
+      : 'By you, each time — we email you when it is due';
+  }
+
   function total(n) {
     return '<span class="strong">' + Grove.money(n) + '</span>';
   }
@@ -103,14 +122,35 @@
     return h`<span class="${raw(tone || '')}">${Grove.money(n)}</span>`;
   }
 
+  /* The ledger is written in the studio's words. A parent is charged for
+     classes, not for tuition, and nothing on their side of the product is
+     called a credit. */
+  function inPlainWords(what) {
+    return String(what)
+      .replace('tuition', 'classes')
+      .replace('Make-up credit applied', 'Money back for a missed class');
+  }
+  /* One line saying where each row stands. A line that is money off or money
+     back says so in words, so the green is never carrying that meaning on its
+     own — the title says which of the two it is. */
+  function standing(l) {
+    if (l.amt < 0) return 'You were not charged this';
+    if (!l.paid) return 'Not paid yet — it joins your ' + NEXT + ' payment';
+    return 'Paid';
+  }
+  function tone(l) {
+    if (l.amt < 0) return 'grove strong';
+    return l.paid ? 'strong' : 'clay strong';
+  }
+
   /* ---- billing --------------------------------------------------------------- */
 
   Grove.screen('fBilling', {
     surface: 'family',
     crumbTitle: 'Billing',
-    eyebrow: 'what you owe, plainly',
+    eyebrow: 'what you pay, and when',
     title: 'Billing',
-    sub: 'Everything you are committed to, in plain numbers, before it is charged.',
+    sub: 'Your next payment, what it is for, and everything you have paid so far.',
     actions: [
       { label: 'Request cancellation', kind: 'danger', msg: 'Request sent · the studio will confirm by email' },
       { label: 'Message the studio', kind: 'primary', to: 'fMessages' }
@@ -119,169 +159,191 @@
     body: function () {
       var f = fam();
       var run = cycle();
-      var tuition = sum(charges(run));   /* the two tuition lines of the run */
+      var tuition = sum(charges(run));   /* the two class lines of the run */
       var relief = sum(credits(run));    /* the sibling discount on that run */
       var open = unpaid();
       var owing = sum(open);
       var nextTotal = tuition + relief + owing;
-      var applied = sum(credits(D.LEDGER));
 
-      /* Ahead of you: the lines that recur, less the discount, plus anything
-         still open — which is exactly what the Balance card says happens to
-         it. Every row is in the table below, so the sum can be checked. */
-      var nextRows = [
-        ['Monthly tuition', Grove.money(tuition)],
+      /* The answer, in one sentence, before anything has to be scrolled or
+         added up. Everything under it is the working. */
+      var headline = ui.notice({
+        title: 'Your next payment is ' + Grove.money(nextTotal) + ', on ' + NEXT,
+        text: f.autopay
+          ? 'It will be taken from your ' + cardName(f) +
+            ' on the day. There is nothing you need to do.'
+          : 'You will need to pay it yourself. We will email you when it is due.'
+      });
+
+      var covers = [
+        ['Classes for ' + kidNames(f), Grove.money(tuition)],
         { k: 'Sibling discount', v: Grove.money(relief), tone: 'grove' }
       ];
-      if (owing) nextRows.push({ k: 'Unpaid, carried over', v: Grove.money(owing), tone: 'clay' });
-      nextRows.push({ k: 'Charged on ' + NEXT, v: total(nextTotal) });
+      if (owing) {
+        covers.push({
+          k: open.length === 1
+            ? inPlainWords(open[0].what) + ', not yet paid'
+            : open.length + ' earlier charges, not yet paid',
+          v: Grove.money(owing),
+          tone: 'clay'
+        });
+      }
+      covers.push({ k: 'Taken on ' + NEXT, v: total(nextTotal) });
 
-      var next = ui.card({
-        title: 'Next charge',
-        note: 'Covers ' + f.plan + ' for ' + kidNames(f) + ', on the same lines as ' + since() +
-          '. Thirty days notice to cancel.'
-      }, ui.kv(nextRows));
+      var what = ui.card({
+        title: 'What that payment is for',
+        note: kidNames(f) + ' have ' + f.plan + ' between them. If you ever want to stop, ' +
+          'we ask for thirty days notice.'
+      }, ui.kv(covers));
 
-      var method = ui.card({
-        title: 'Payment method',
-        head: ui.btn({ label: 'Update', kind: 'quiet', size: 'sm', to: 'fPaymentMethod' }),
-        note: 'The studio never sees your full card number.'
+      /* Changing a card was a quiet link the size of a footnote. It is the one
+         thing a parent comes to this page to change, so it is a labelled
+         button, and the reassurance sits directly under the card number. */
+      var how = ui.card({
+        title: 'How you pay',
+        head: ui.btn({ label: 'Change the card', kind: 'primary', size: 'sm', to: 'fPaymentMethod' }),
+        note: 'The studio never sees your full card number — only the last four digits, ' +
+          'so we can tell your cards apart.'
       }, ui.kv([
-        ['Card', esc(f.card)],
-        ['Autopay', f.autopay ? 'On · taken on the 1st' : 'Off · you pay each charge'],
+        ['Your card', esc(f.card)],
+        ['Payments are taken', howTaken(f)],
         ['Receipts go to', esc(f.email)]
       ]));
 
-      /* Behind you: what is still open today, and what has already come off.
-         No total from the Next charge card is repeated here. */
-      var balance = ui.card({
-        title: 'Balance',
-        note: 'Anything still open is added to the ' + NEXT + ' charge.'
-      }, ui.kv([
-        { k: 'Owing now', v: Grove.money(owing), tone: owing > 0 ? 'clay' : 'mute' },
-        open.length
-          ? ['Open since', esc(open[0].d)]
-          : { k: 'Open since', v: 'Nothing is open', tone: 'mute' },
-        { k: 'Credits since ' + since(), v: Grove.money(applied), tone: 'grove' }
-      ]));
+      /* One line per charge, in a sentence, newest first. The old version was
+         a Date / What / Amount / Status table whose pills read "Credit",
+         "Paid" and "Unpaid" — three words that all mean something different
+         to the studio than they do to a parent. */
+      var lines = D.LEDGER.slice().reverse().map(function (l) {
+        return {
+          lead: esc(shortDate(l.d)),
+          title: esc(inPlainWords(l.what)),
+          sub: esc(standing(l)),
+          end: amount(l.amt, tone(l))
+        };
+      });
 
-      var table = ui.table(
-        ['Date', 'What', { label: 'Amount', align: 'right' }, { label: 'Status', shrink: true }],
-        D.LEDGER.slice().reverse().map(function (l) {
-          var credit = l.amt < 0;
-          return {
-            cells: [
-              ui.mute(l.d),
-              h`<span class="cell-strong">${l.what}</span>`,
-              amount(l.amt, credit ? 'grove' : (l.paid ? '' : 'clay strong')),
-              credit ? ui.pill('Credit', 'ok') : ui.pill(l.paid ? 'Paid' : 'Unpaid', l.paid ? 'ok' : 'bad')
-            ]
-          };
-        }),
-        {
-          emptyTitle: 'Nothing charged yet',
-          emptyText: 'Your first charge appears here the day it is raised.'
-        }
-      );
-
-      /* The note describes the table, not the studio's credit policy. Schedule →
-         Absences & make-ups states the rule in plain words — a make-up credit
-         is a class, not money — so this card does not restate it, and does not
-         claim that a green line is money coming off what you owe. */
       var history = ui.card({
-        title: 'Account history',
+        title: 'Everything so far',
         head: ui.btn({ label: 'Download statement', kind: 'quiet', size: 'sm', msg: 'Statement downloaded' }),
         flush: true,
-        note: 'Everything raised since ' + since() +
-          ', newest first. Credit lines are shown in green.'
-      }, table);
+        note: 'Every charge since ' + since() + ', newest first. A figure in green is money ' +
+          'off or money back — you were not charged it.'
+      }, lines.length
+        ? ui.rows(lines)
+        : ui.empty('Nothing charged yet', 'Your first payment appears here the day it is raised.'));
+
+      /* Money is where somebody who is unsure stops and rings instead. Saying
+         that ringing is fine, on the page, is cheaper than the call being a
+         complaint. */
+      var help = ui.card({
+        title: 'If something does not look right',
+        foot: '<span class="hint">Or ring the desk on ' + esc(DESK) + '</span>' +
+          ui.btn({ label: 'Message the studio', to: 'fMessages' })
+      }, h`<p class="hint">Tell us before you worry about it. We will go through the
+        charge with you, and if it is wrong we will put it right — you do not have to
+        work out which line is which.</p>`);
 
       return h`
-        ${raw(ui.grid(3, [next, method, balance]))}
+        ${raw(headline)}
+        <div class="section">${raw(ui.grid(2, [what, how]))}</div>
         <div class="section">${raw(history)}</div>
+        <div class="section">${raw(help)}</div>
       `;
     }
   });
 
   /* ---- the card on file ---------------------------------------------------------
-     This page used to be one short form above a third of a screen of nothing.
-     What is on file, and what that card has actually taken, are facts the
-     ledger already holds, so they are stated above the form that replaces
-     them. Nothing here is a second version of a number on Billing: the
-     figures are settled charges only, so "Taken to date" is the $680 that
-     Console → Billing also shows as Paid, and the one line that has not
-     settled is named in the note rather than silently counted. */
+     One question: which card should we use? The form is the widest thing on
+     the page, the card being replaced sits beside it so nobody has to
+     remember which one it was, and the Save button is pinned to the bottom of
+     the screen rather than left under the form where it was being missed.
+     Each field says, in words, which number on the card it wants. */
 
   Grove.screen('fPaymentMethod', {
     surface: 'family',
     crumbs: [{ label: 'Billing', to: 'fBilling' }],
-    crumbTitle: 'Payment method',
+    crumbTitle: 'Your card',
     eyebrow: 'how you pay',
-    title: 'Payment method',
-    sub: 'Card details are never stored by the studio — only the last four digits and a processor token.',
+    title: 'Your card',
+    sub: 'The studio never sees your full card number. It goes straight to the payment company, and we keep only the last four digits.',
     actions: [
       { label: 'Message the studio', to: 'fMessages' }
     ],
 
     body: function () {
       var f = fam();
-      var paid = settled();
-      var gross = sum(charges(paid));
-      var applied = sum(credits(paid));
-      var taken = gross + applied;
+      var last = lastCharge();
       var open = unpaid();
       var owing = sum(open);
-      var last = lastCharge();
       var openNote;
 
       if (!open.length) {
-        openNote = 'Nothing is outstanding on this card.';
+        openNote = 'Nothing is waiting to be paid on this card.';
       } else if (open.length === 1) {
-        openNote = Grove.money(owing) + ' from ' + open[0].d + ' (' + open[0].what +
-          ') is still open, and joins the ' + NEXT + ' charge.';
+        openNote = Grove.money(owing) + ' from ' + open[0].d + ' (' + inPlainWords(open[0].what) +
+          ') has not been paid yet. It joins your ' + NEXT + ' payment, on whichever card is here then.';
       } else {
         openNote = Grove.money(owing) + ' across ' + open.length +
-          ' lines is still open, and joins the ' + NEXT + ' charge.';
+          ' charges has not been paid yet. It joins your ' + NEXT +
+          ' payment, on whichever card is here then.';
       }
 
-      var onFile = ui.card({
-        title: 'On file now',
-        note: 'Receipts are emailed the moment a charge goes through.'
-      }, ui.kv([
-        ['Card', esc(f.card)],
-        ['Autopay', f.autopay ? 'On · taken on the 1st' : 'Off · you pay each charge'],
-        ['Receipts go to', esc(f.email)],
-        last
-          ? ['Last charge taken', esc(last.d) + ' · ' + Grove.money(last.amt)]
-          : { k: 'Last charge taken', v: 'Nothing yet', tone: 'mute' }
+      var form = ui.card({
+        title: 'Your new card',
+        note: 'Nothing is charged today. This card is used from your ' + NEXT + ' payment onwards.'
+      }, ui.fields(2, [
+        ui.field({
+          label: 'Card number',
+          hint: 'The long number across the front',
+          span: true,
+          control: ui.input({ placeholder: '16 digits, no spaces' })
+        }),
+        ui.field({
+          label: 'Expiry date',
+          hint: 'The month and year printed under the number',
+          control: ui.input({ placeholder: 'MM / YY' })
+        }),
+        ui.field({
+          label: 'Security code',
+          hint: 'The last three digits on the back',
+          control: ui.input({ placeholder: '3 digits' })
+        }),
+        ui.field({
+          label: 'Name on the card',
+          hint: 'Exactly as it is printed',
+          span: true,
+          control: ui.input({ placeholder: 'As printed on the card' })
+        })
       ]));
 
-      var record = ui.card({
-        title: 'What this card has taken',
+      var onFile = ui.card({
+        title: 'The card you have now',
         note: openNote
       }, ui.kv([
-        ['Charges settled since ' + since(), Grove.money(gross)],
-        { k: 'Credits applied', v: Grove.money(applied), tone: 'grove' },
-        { k: 'Taken to date', v: total(taken) }
+        ['Your card', esc(f.card)],
+        ['Payments are taken', howTaken(f)],
+        ['Receipts go to', esc(f.email)],
+        last
+          ? ['Last payment taken', esc(last.d) + ' · ' + Grove.money(last.amt)]
+          : { k: 'Last payment taken', v: 'Nothing yet', tone: 'mute' }
       ]));
 
-      var card = ui.card({
-        title: 'New card',
-        note: 'Saving replaces ' + f.card + '. Autopay carries over, and nothing is charged today.'
-      }, ui.fields(2, [
-        ui.field({ label: 'Card number', span: true, control: ui.input({ placeholder: '16 digits, no spaces' }) }),
-        ui.field({ label: 'Expiry', control: ui.input({ placeholder: 'MM / YY' }) }),
-        ui.field({ label: 'Security code', control: ui.input({ placeholder: 'CVC' }) }),
-        ui.field({ label: 'Name on card', span: true, control: ui.input({ placeholder: 'As printed on the card' }) })
-      ]));
+      /* The studio already offers this by message. Saying it on the page is
+         the difference between a parent finishing and a parent giving up. */
+      var help = ui.card({
+        title: 'Would you rather not type it in?',
+        foot: '<span class="hint">Ring the desk on ' + esc(DESK) + '</span>' +
+          ui.btn({ label: 'Message the studio', to: 'fMessages' })
+      }, h`<p class="hint">We can take the card over the phone instead. It takes two
+        minutes, and you will not have to type anything.</p>`);
 
       return h`
-        ${raw(ui.grid(2, [onFile, record]))}
-        <div class="section">${raw(card)}</div>
+        ${raw(ui.grid('sidebar', [form, ui.col([onFile, help])]))}
         ${raw(ui.formActions([
-          { label: 'Save card', kind: 'primary', msg: 'Card saved · autopay is on' },
+          { label: 'Save this card', kind: 'primary', msg: 'Card saved · your ' + NEXT + ' payment will use it' },
           { label: 'Cancel', to: 'fBilling' }
-        ]))}
+        ], { sticky: true, hint: 'Nothing is charged today' }))}
       `;
     }
   });

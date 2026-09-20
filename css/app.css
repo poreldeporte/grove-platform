@@ -1259,3 +1259,30 @@ a:hover { color: var(--plum); }
    context a parent reads once, so it gives way to the messages. */
 [data-viewport="phone"] .page--chat .page-sub { display: none; }
 [data-viewport="phone"] .page--chat .page-head { margin-bottom: var(--s-3); }
+
+/* A form's primary action, pinned to the bottom of the viewport while the
+   page scrolls under it. On a long screen the button was landing below the
+   fold, under an explainer, where people simply did not find it. */
+.form-actions--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: var(--s-6);
+  padding: var(--s-4) 0;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -10px 18px -12px rgba(36, 31, 27, 0.18);
+}
+.form-actions__hint {
+  margin-left: auto;
+  align-self: center;
+  font-size: var(--text-sm);
+  color: var(--ink-45);
+  text-align: right;
+}
+
+/* A choice big enough to be an obvious tap target for someone who is not
+   confident with a screen. */
+.choice--lg { padding: var(--s-4) var(--s-5); }
+.choice--lg .choice__title { font-size: var(--text-md); }
+.choice--lg .choice__mark { width: 22px; height: 22px; }

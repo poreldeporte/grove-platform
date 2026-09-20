@@ -211,24 +211,24 @@
     ],
     mt6: [
       { d: '3 days ago', m: 'them', t: 'Sophia will miss Monday — she has a school trip.', s: 'Fri 8:15am' },
-      { d: '', m: 'us', t: 'Noted, thank you for the notice. That is more than 24 hours ahead so a make-up credit has been added.', s: 'Fri 8:50am' },
+      { d: '', m: 'us', t: 'Noted, thank you for the notice. That is more than 24 hours ahead, so Sophia can take the class another time.', s: 'Fri 8:50am' },
       { d: '', m: 'them', t: 'Perfect, thank you.', s: 'Fri 9:02am' }
     ]
   };
 
   var FAMILY_TRANSCRIPT = [
-    { d: '1 July',  m: 'studio', t: 'We are closed for the holiday on 4 July. Monday families, a make-up credit has already been added to your account.', s: '1 Jul' },
+    { d: '1 July',  m: 'studio', t: 'We are closed for the holiday on 4 July. Monday families, we have already added a class for you to take another time.', s: '1 Jul' },
     { d: '18 July', m: 'studio', t: 'Autumn enrollment opens 10 August. Returning families get first refusal on their current day and time for one week.', s: '18 Jul' },
     { d: '21 July', m: 'studio', t: 'Camp week 4 — please send a water bottle, a snack, and clothes that can get properly messy. We are working with clay all week.', s: '21 Jul' },
     { d: '', m: 'us', t: 'Thank you! Emma is very excited about the clay.', s: '21 Jul' },
-    { d: 'Today',   m: 'studio', t: 'We have opened two extra make-up hours this Friday, 10:00 and 11:00. Emma has two credits — grab one if it suits.', s: '2 hrs ago' }
+    { d: 'Today',   m: 'studio', t: 'We have opened two extra make-up hours this Friday, 10:00 and 11:00. Emma has two classes to make up — grab one if it suits.', s: '2 hrs ago' }
   ];
 
   var ANNOUNCEMENTS = [
     { id: 'an1', head: 'Autumn enrollment opens 10 August',         body: 'Returning families get first refusal on their current day and time for one week.', aud: 'All families',      when: '18 Jul 2026', by: 'Sabrina Yanguas', status: 'Pinned',    kind: 'info' },
-    { id: 'an2', head: 'Make-up slots added for Friday',           body: 'Two extra hours this Friday, 10:00 and 11:00. Emma has two credits.',              aud: 'After-School Art',  when: '27 Jul 2026', by: 'Dani Cruz',       status: 'Live',      kind: 'ok' },
+    { id: 'an2', head: 'Extra make-up hours this Friday',           body: 'Two extra hours this Friday, 10:00 and 11:00. Book yours from the portal.',              aud: 'After-School Art',  when: '27 Jul 2026', by: 'Dani Cruz',       status: 'Live',      kind: 'ok' },
     { id: 'an3', head: 'Camp week 4 — what to bring',              body: 'A water bottle, a snack, and clothes that can get properly messy.',                aud: 'Seasonal Camp',     when: '21 Jul 2026', by: 'Dani Cruz',       status: 'Live',      kind: 'ok' },
-    { id: 'an4', head: 'Studio closed 7 September, Labor Day',     body: 'Monday families get an automatic make-up credit.',                                 aud: 'All families',      when: '15 Jul 2026', by: 'Sabrina Yanguas', status: 'Scheduled', kind: 'neutral' },
+    { id: 'an4', head: 'Studio closed 7 September, Labor Day',     body: 'Monday families can take that class another time \u2014 we add it for you.',                                 aud: 'All families',      when: '15 Jul 2026', by: 'Sabrina Yanguas', status: 'Scheduled', kind: 'neutral' },
     { id: 'an5', head: 'New kiln — clay classes back to full size',body: 'Ages 8–11 clay is back to 16 places from August.',                                 aud: 'All families',      when: '2 Jul 2026',  by: 'Sabrina Yanguas', status: 'Live',      kind: 'ok' }
   ];
 
@@ -269,8 +269,18 @@
     { id: 'd5', name: 'Medical and allergy form', version: 'Version 3', published: '1 September 2025',signed: true,  who: 'Sabrina Moore · 4 Sep 2025' }
   ];
 
+  var STUDIO = {
+    name: 'The Grove Art Studio',
+    legal: 'The Grove Art Studio LLC',
+    phone: '(786) 340-9229',
+    email: 'contact@thegroveartstudio.com',
+    hours: 'Mon–Fri 9:00–19:00',
+    hoursWeekend: 'Sat 10:00–16:00'
+  };
+
   Grove.data = {
     today: 'Tuesday, 28 July 2026',
+    STUDIO: STUDIO,
     PROGRAMS: PROGRAMS,
     ROLES: ROLES,
     PRICING: PRICING,

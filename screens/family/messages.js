@@ -37,8 +37,7 @@
      - the transcript is now a conversation pane, not a long document. The
        message list is the only thing that scrolls and the composer is pinned
        under it, so a parent no longer scrolls past the whole history to
-       reply. A studio-wide notice is tinted and labelled "To all families",
-       which is the one thing a 1:1 chat cannot show by position alone.
+       reply.
      - cFamMessage — the single-announcement page — is deleted. Nothing in the
        portal linked to it; it repeated one line of copy that this thread and
        Home both show in full, restated "from the studio" three times, and
@@ -46,12 +45,41 @@
        Art", "sent by: Dani Cruz") that is the studio's plumbing, not a
        parent's business — above roughly 450px of empty cream. Home deleted
        its own announcement page (fNews) for the same reason.
+
+   Written for a parent who is not confident with a screen:
+     - "a tinted message went to every family" told a parent to look for a
+       colour and then work out what it meant. The subtitle now says what the
+       box at the bottom does and what the mark on a message means, in words,
+       and the mark itself reads "Studio news" rather than "To all families" —
+       which was also not quite true of the 27 July post, sent to the
+       After-School families rather than to everyone.
+     - the mark is applied consistently. It used to sit only on the two
+       announcements the transcript did not carry, so the 18 and 21 July
+       lines — which are announcements an1 and an3 word for word — looked
+       like private letters while the same kind of message two days earlier
+       looked like news. A studio line is now marked whenever the studio
+       published something that day.
+     - "credit" is the studio's word for what it owes; a parent has "a class
+       to make up". It is banned everywhere else in the family portal, so a
+       line carrying it — or carrying "slot", where the schedule says "hour" —
+       is put into the parent's words here too. Only the wording changes: the
+       dates, the child and the count are untouched.
+     - the reply box is a box and an unlabelled round button. The subtitle
+       names the button, and the conversation header now names the person who
+       reads what you send — read from STAFF, where the front desk is a real
+       member of staff — instead of the disembodied "usually replies the same
+       day".
+     - the 27 July message says Emma has classes to make up and invites the
+       family to take one of Friday's hours, and there was nothing on the
+       screen to do that with. Booking is now a header action, shown only
+       while a child of this family actually has a class to make up.
 */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
   var STUDIO = 'The Grove Art Studio';
+  var FAMILY = 'johnson';
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   /* The demo's year, read from the dataset rather than written down, so a
@@ -94,6 +122,64 @@
     return D.ANNOUNCEMENTS.filter(function (a) { return a.status !== 'Scheduled'; });
   }
 
+  /* ---- the parent's words ---------------------------------------------------
+     "Credit" is the studio's name for what it owes a family, and it is out of
+     the family portal everywhere else: the schedule says "a class to make up",
+     and it calls an open hour an hour rather than a slot. A message carrying
+     the studio's vocabulary is read back in the parent's, which changes the
+     wording and nothing else. */
+
+  var PLAIN = [
+    [/\bmake-up slots\b/gi, 'make-up hours'],
+    [/\bmake-up credits\b/gi, 'classes to make up'],
+    [/\bmake-up credit\b/gi, 'class to make up'],
+    [/\bcredits\b/gi, 'classes to make up'],
+    [/\bcredit\b/gi, 'class to make up'],
+    [/\badded to your account\b/gi, 'added for you']
+  ];
+
+  function plain(text) {
+    var out = String(text);
+    PLAIN.forEach(function (rule) { out = out.replace(rule[0], rule[1]); });
+    /* A replacement at the head of a sentence must not lower-case it. */
+    if (/^[A-Z]/.test(text)) out = out.charAt(0).toUpperCase() + out.slice(1);
+    return out;
+  }
+
+  /* The person on the other end. "Usually replies the same day" does not say
+     whether anybody is actually there, and that is the doubt that makes a
+     parent ring instead of write. The front desk is a real member of staff,
+     so the conversation header says their name. */
+  function frontDesk() {
+    var who = D.STAFF.filter(function (s) { return s.role === 'Front desk'; })[0];
+    return who ? String(who.name).split(' ')[0] : '';
+  }
+  function repliesLine() {
+    var who = frontDesk();
+    return who
+      ? who + ' at the front desk reads these, usually the same day'
+      : 'The front desk reads these, usually the same day';
+  }
+  function sentLine() {
+    var who = frontDesk();
+    return who
+      ? 'Sent — ' + who + ' at the front desk usually replies the same day'
+      : 'Sent — the studio usually replies the same day';
+  }
+
+  /* Classes this family still has to make up. The booking action appears only
+     while there is one, so the header never offers a parent something they
+     have nothing to use it for. */
+  function toMakeUp() {
+    var names = D.STUDENTS.filter(function (s) {
+      return s.family === D.family(FAMILY).name;
+    }).map(function (s) { return s.name; });
+
+    return D.MAKEUPS.filter(function (m) {
+      return names.indexOf(m.child) !== -1 && m.status === 'Available';
+    });
+  }
+
   /* The transcript, minus any line that cannot be dated. */
   function transcript() {
     var out = [];
@@ -114,8 +200,17 @@
     return published().filter(function (a) {
       return !covered[stamp(a.when)];
     }).map(function (a) {
-      return { at: stamp(a.when), seq: -1, mine: false, notice: true, text: a.head + '. ' + a.body };
+      return { at: stamp(a.when), seq: -1, mine: false, text: a.head + '. ' + a.body };
     });
+  }
+
+  /* The days the studio published news. A studio line on one of those days is
+     news whether the transcript carried it or the thread folded it in, so the
+     same kind of message never appears two different ways. */
+  function newsDays() {
+    var days = {};
+    published().forEach(function (a) { days[stamp(a.when)] = true; });
+    return days;
   }
 
   function messages() {
@@ -127,19 +222,21 @@
 
   /* ---- the conversation ---------------------------------------------------
      One bubble per message: the studio on the left, the family on the right.
-     The studio's name sits in the chat header rather than on every bubble,
-     so the only bubble that needs a label is a studio-wide notice — which is
-     not addressed to this family in particular and should not read as if it
-     were. */
+     The studio's name sits in the chat header rather than on every bubble, so
+     the only bubble that needs a label is one carrying news the studio sent
+     out more widely — which should not read as a letter written to this
+     family in particular. */
 
   function lines() {
+    var news = newsDays();
     return messages().map(function (m) {
+      var broadcast = !m.mine && !!news[m.at];
       return {
         day: dateLabel(m.at),
         mine: m.mine,
-        text: m.text,
-        who: m.notice ? 'To all families' : '',
-        kind: m.notice ? 'notice' : ''
+        text: plain(m.text),
+        who: broadcast ? 'Studio news' : '',
+        kind: broadcast ? 'notice' : ''
       };
     });
   }
@@ -150,18 +247,21 @@
     crumbTitle: 'Messages',
     eyebrow: 'talk to the studio',
     title: 'Messages',
-    sub: 'One conversation with the studio. Anything you write reaches the front desk; a tinted message went to every family.',
-    actions: [
-      { label: 'Report an absence', to: 'fSchedule' }
-    ],
+    sub: 'Write in the box at the bottom and press the round arrow to send. Anything marked “Studio news” also went to other families.',
+
+    actions: function () {
+      var list = [{ label: 'Report an absence', to: 'fSchedule' }];
+      if (toMakeUp().length) list.push({ label: 'Book a make-up class', to: 'fBookMakeup' });
+      return list;
+    },
 
     body: function () {
       return ui.chat({
         name: STUDIO,
         initials: 'GS',
-        status: 'Usually replies the same day',
-        placeholder: 'Message the studio\u2026',
-        send: { label: 'Send', msg: 'Sent \u2014 the studio usually replies the same day' }
+        status: repliesLine(),
+        placeholder: 'Write your message here…',
+        send: { label: 'Send your message', msg: sentLine() }
       }, lines());
     }
   });
