@@ -1,46 +1,85 @@
-/* Console → Teaching (lesson plans, tutorials, training) and the lesson-plan
-   record.
+/* Console → Teaching (lesson plans, tutorials, training documents) and the
+   lesson-plan record.
 
-   Simplifications against the previous build:
-     - the three-card stats band appeared on the Lesson plans tab only, so the
-       table jumped when you switched tabs. The per-tab totals now sit on the
-       tabs themselves and the table never moves.
-     - the Training table carried a Status column reading "Published" on every
-       row. A column with one value is not a column, so it is gone.
-     - the lesson-plan record's six sections are three. Written instructions
-       are left to the staff-facing plan rather than duplicated here, the
-       three-row room-variation table is one line on the plan it actually
-       affects, and the roll-call section is folded in as the plan's
-       instructor.
-     - materials read the studio store in Grove.data.INVENTORY instead of a
-       fixed clay list that was shown on every plan, painting or not.
+   WHO THIS SCREEN IS FOR
+   Sabrina Yanguas owns the studio. She writes the plans her two instructors
+   teach from, records the tutorials and keeps the SOPs current, at a desk with
+   a keyboard. Three dense tables are right for her; what was wrong was the
+   ceremony around them.
 
-   Changes from the visual review:
-     - every list is in a stated order. Lesson plans run by date, earliest
-       first; tutorials and training documents are A to Z, which is what the
-       tutorials tab already looked like and the training tab did not.
-     - Training folded a video's running time into the Kind column, so one
-       column held two different facts and four rows read "PDF" beside two
-       that read "Video · 11 min". Kind and Length are now two columns, the
-       same way the Tutorials tab models them.
-     - the Materials card listed only the items under their minimum, under a
-       footnote saying so, and then coloured one of them black — Smocks at 18
-       against a minimum of 20 is below minimum, the same as the other two.
-       The card now lists the whole store, keys the red off the numbers the
-       way the Inventory screen does, and counts the low items rather than
-       asserting a number.
-     - the plans index promised "instructions and students" that the record
-       never held. The subtitle now describes what a plan actually carries;
-       the register lives on the attendance sheet.
-     - "Room note" was a sentence in a right-aligned value, so it wrapped into
-       a ragged two-line block. It is the card's footnote now.
-     - the three cards ended in 110–140px of dead band because one card had
-       six rows and the others four. They carry comparable content, and the
-       page closes with the other plans written for the same room instead of
-       stopping short.
-     - a plan with no tutorial left that card all but empty beside a full
-       materials card. It now lists what attaching would actually offer —
-       the tutorials linked to no class yet.
+   CUT IN THIS PASS
+     - the lesson-plan record opened with a card called "The lesson" whose five
+       rows were Activity, Class, Date, Room and Instructor. Four of those five
+       are the page header verbatim — the title IS the activity and the sub
+       line IS class · date · room. That card is now the class the plan belongs
+       to, read from the class record: when it runs, the age band, how many
+       children are enrolled and where the class normally sits. Every row is
+       something the header does not already say
+     - the three-pill band under the title. "Published" repeated the header
+       button, "Tutorial attached" repeated the tutorial card and the teacher
+       pill repeated a row of the card underneath it. Where a plan is fine,
+       nothing shows; where it is not, one notice says what is wrong and what
+       staff currently see
+     - the Materials card, which pasted all six shelf lines onto every plan.
+       Nothing in the data links a plan to a material, and "Brushes 42 of 24"
+       is not a number she can act on. What is left is only what is under the
+       minimum she keeps — the same list, the same test and the same framing
+       the Studio portal shows a teacher, so the two portals cannot disagree
+     - a plan's own tutorial field is no longer read as a second source. A
+       tutorial carries the class it is linked to, and that link is what a
+       teacher actually sees, so the plan shows the tutorial its class carries.
+       Two places to set one relationship is one too many
+     - "Other plans for Clay Room" and its fallback "The rest of the diary"
+       were two titles, two notes and a branch for one table. A room with one
+       plan hit the fallback, so the card said different things on different
+       records. It is one card now: the rest of the diary, in date order, with
+       the room on the row
+     - the Training tab's Length column, which read "—" on four of six rows. A
+       column empty two-thirds of the time is not a column; PDF and
+       "Video · 11 min" are one Format. Tutorials keep their Length column,
+       because every tutorial has one
+     - the Tutorials tab's Added by and Date columns, which are one fact: who
+       recorded it and when
+     - "6 of 6 plans". A total of itself says nothing. The count line now
+       carries the figure she can act on — how many plans are not ready, how
+       many tutorials are linked to no class — and only falls back to "3 of 6"
+       while a search is narrowing the table
+
+   THE ONE THING SHE CAME TO DO
+     - the index is a find-and-open screen, so the primary action stays in the
+       header, per tab: New lesson plan, New tutorial, Upload document
+     - the record exists to get a plan ready for staff, so that action is in a
+       bar pinned to the bottom of the viewport with the consequence beside it.
+       It no longer says "Publish to staff", because staff can already open a
+       draft in the Studio portal — it carries a warning there not to teach
+       from it, and marking a plan ready is what removes that warning. The old
+       label promised a visibility change that does not happen
+
+   KEPT DELIBERATELY
+     - the three tables. A studio owner reconciling her week wants rows, not
+       friendly cards, and every column here is one she reads across
+     - Published and Draft. Two states, acted on differently, and the second is
+       the reason the notice and the pinned bar exist
+     - the index's primary action stays in the header. Nothing on that screen
+       is completed — it is where she finds the one record she came for
+
+   READ RATHER THAN RE-TYPED
+     - a plan's class is matched to a class record the way Console → Classes
+       matches it, so a plan and a class cannot claim each other on one screen
+       and not the other. That gives the record its room, its hours, its age
+       band and its places
+     - an After-School class is named by its length in the dataset — "1 hour ·
+       After-School" — which is a duration, not a name. The programme name is
+       what the family portal shows a parent, so it is what shows here
+
+   WHAT THE TWO PORTALS AGREE ON
+     Same three lists, same six records in each. The Studio portal reads plans,
+     tutorials and training documents and cannot edit any of them; this screen
+     says so in the same words. Both sides show only the shelf lines under the
+     minimum, and both say plainly that no plan carries a materials list.
+
+   EVERY FIGURE HERE IS COUNTED FROM THE ROWS ON SCREEN — the tab counts, the
+   plans not ready, the spare tutorials, the short shelf lines. None is typed.
 
    Not fixable from this file: on the lesson-plan record the console rail
    lights nothing, because js/nav.js maps a detail screen to its rail item in
@@ -61,9 +100,9 @@
   EYEBROW[T_TRAIN] = 'how we do things here';
 
   var SUB = {};
-  SUB[T_PLANS] = 'One plan per session: what the class makes, where and when, who teaches it, what the store holds and the tutorial video. Admin writes these — staff read them, and the register stays on the attendance sheet.';
-  SUB[T_TUTS]  = 'Tutorials are reusable videos. Link one to a class and it appears inside that class’s lesson plan automatically — the teacher never has to go looking.';
-  SUB[T_TRAIN] = 'SOPs, manuals and responsibilities for the team. Staff read these; only admin uploads them.';
+  SUB[T_PLANS] = 'One plan per session — what the class makes, who teaches it and the tutorial staff see. You write these; the Studio portal reads them and cannot edit one.';
+  SUB[T_TUTS]  = 'Reusable videos. A tutorial is linked to a class, not to a day, so every lesson plan for that class shows it.';
+  SUB[T_TRAIN] = 'SOPs, manuals and responsibilities. Staff read these in the Studio portal, safety first; only you upload them.';
 
   var NEW = {};
   NEW[T_PLANS] = 'New lesson plan';
@@ -83,9 +122,9 @@
     };
   }
 
-  /* ---- ordering ------------------------------------------------------------
+  /* ---- words and dates -------------------------------------------------------
      Three tables in one screen looked unsorted because none of them said what
-     they were sorted by. Dates sort as dates, names sort A to Z. */
+     it was sorted by. Dates sort as dates, names sort A to Z. */
 
   var MONTHS = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
 
@@ -103,6 +142,9 @@
     return list.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
   }
 
+  /* "One plan is not ready" / "2 plans are not ready". */
+  function count(n, one, many) { return n === 1 ? one : n + ' ' + many; }
+
   /* ---- cells ---------------------------------------------------------------- */
 
   function teacherCell(name) {
@@ -111,7 +153,7 @@
   }
 
   function linkCell(name, blank) {
-    if (name === blank) return ui.mute(name);
+    if (!name || name === blank) return ui.mute(blank);
     return h`<span class="grove">${name}</span>`;
   }
 
@@ -119,19 +161,100 @@
      Updated, so the cell only needs the date. */
   function updatedOn(when) { return String(when).replace(/^Updated\s+/, ''); }
 
-  /* A training row's kind is written "PDF" or "Video · 11 min". The Tutorials
-     tab gives running time its own column; this splits the same fact out so
-     the two tabs model it the same way. */
-  function kindParts(doc) { return String(doc.kind).split('·'); }
-  function docKind(doc) { return kindParts(doc)[0].trim(); }
-  function docLength(doc) {
-    var parts = kindParts(doc);
-    return parts.length > 1 ? parts[1].trim() : '';
+  /* Below the minimum is the numbers, not the status word — the same test the
+     Inventory screen applies and the same one the Studio portal applies, so
+     all three screens agree on which lines are short. */
+  function isBelow(i) { return i.on < i.min; }
+  function shortOfStock() {
+    return D.INVENTORY.filter(isBelow).sort(function (a, b) { return (a.on / a.min) - (b.on / b.min); });
   }
 
-  /* Below the minimum is the numbers, not the status word — the same test the
-     Inventory screen applies, so the two screens agree on which items are low. */
-  function isBelow(i) { return i.on < i.min; }
+  /* ---- a plan's tutorial ------------------------------------------------------
+     A tutorial carries the class it is linked to, and that link is what puts a
+     video inside a teacher's lesson plan. The plan's own tut field is the same
+     relationship written a second time, so the link is read first and the name
+     on the plan is only a fallback for a tutorial linked to nothing. */
+
+  function tutorialFor(p) {
+    var linked = D.TUTORIALS.filter(function (t) { return t.linked === p.cls; })[0];
+    if (linked) return linked;
+    if (!p.tut || p.tut === 'None') return null;
+    return D.TUTORIALS.filter(function (t) { return t.name === p.tut; })[0] || null;
+  }
+  function tutorialName(p) {
+    var t = tutorialFor(p);
+    return t ? t.name : 'None';
+  }
+  function spareTutorials() {
+    return byName(D.TUTORIALS.filter(function (t) { return t.linked === 'Not linked'; }));
+  }
+
+  /* ---- a plan's class ---------------------------------------------------------
+     A plan names its class in free text — 'Camp week 4 · Wed', 'Mon 3:15pm ·
+     ages 8–11', 'Private · Zara O.' — and carries no class id, so the two are
+     matched on what the strings share. These are the rules Console → Classes
+     already uses to find the plans for a class, run the other way round, so a
+     plan and a class cannot claim each other on one screen and not the other. */
+
+  function dayTokens(c) { return String(c.day).split(/[^A-Za-z]+/).filter(Boolean); }
+
+  /* '2:15–3:15pm' → '2:15pm'; '10:00am–1:00pm' → '10:00am'. */
+  function startTime(c) {
+    var parts = String(c.time).split('–');
+    var a = String(parts[0] || '').toLowerCase();
+    if (a.indexOf('am') !== -1 || a.indexOf('pm') !== -1) return a;
+    var b = String(parts[1] || '').toLowerCase();
+    return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
+  }
+  function weekOf(name) {
+    var m = /week \d+/.exec(String(name).toLowerCase());
+    return m ? m[0] : null;
+  }
+  /* 'Private · Zara Okafor' → 'zara'. */
+  function namedChild(name) {
+    var parts = String(name).split('· ');
+    return String(parts[parts.length - 1] || '').split(' ')[0].toLowerCase();
+  }
+
+  /* An After-School record is named by its length — "1 hour · After-School" —
+     which is a duration and not a class name, and the length is already legible
+     in the hours. The programme name is what the rest of the product calls it. */
+  function className(c) {
+    return c.prog === 'as' ? D.program(c.prog).name : c.name;
+  }
+
+  function classForPlan(p) {
+    var text = String(p.cls).toLowerCase();
+    var week = weekOf(text);
+    return D.CLASSES.filter(function (c) {
+      /* Camp runs Mon–Fri in two rooms at the same hour, so the week alone
+         proves nothing and the room decides. */
+      if (week) return weekOf(c.name) === week && c.room === p.room;
+      if (c.prog === 'priv') return text.indexOf(namedChild(c.name)) !== -1;
+      var dayHit = dayTokens(c).filter(function (d) {
+        return text.indexOf(d.toLowerCase()) !== -1;
+      }).length > 0;
+      return dayHit && text.indexOf(startTime(c)) !== -1;
+    })[0] || null;
+  }
+
+  /* ---- what is not ready ------------------------------------------------------
+     Two states, both acted on differently: a draft carries a warning in the
+     Studio portal, and a plan with nobody assigned has no one to read it. */
+
+  function notReady(list) {
+    return list.filter(function (p) {
+      return p.status === 'Draft' || p.teacher === 'Unassigned';
+    });
+  }
+  function whyNotReady(p) {
+    var bits = [];
+    if (p.status === 'Draft') bits.push('still a draft');
+    if (p.teacher === 'Unassigned') bits.push('nobody assigned');
+    return p.lesson + ' (' + p.date + ') — ' + bits.join(', ');
+  }
+
+  var DRAFT_LINE = 'Staff can open a draft in the Studio portal, where it carries a warning not to teach from it.';
 
   /* ---- Teaching ----------------------------------------------------------- */
 
@@ -155,9 +278,10 @@
   function plansTab() {
     var q = Grove.query('plans');
     var all = byDate(D.LESSON_PLANS);
+    var waiting = byDate(notReady(all));
 
     var rows = all.filter(function (p) {
-      return Grove.match(q, p.lesson, p.cls, p.date, p.room, p.teacher, p.tut, p.status);
+      return Grove.match(q, p.lesson, p.cls, p.date, p.room, p.teacher, tutorialName(p), p.status);
     });
 
     var table = ui.table(
@@ -170,7 +294,7 @@
             ui.mute(p.cls),
             ui.mute(p.date),
             teacherCell(p.teacher),
-            linkCell(p.tut, 'None'),
+            linkCell(tutorialName(p), 'None'),
             ui.pill(p.status, p.kind)
           ]
         };
@@ -178,47 +302,64 @@
       { emptyTitle: 'No lesson plans match', emptyText: 'Clear the search to see every plan.' }
     );
 
-    return ui.toolbar({
-      tabs: tabsConfig(),
-      search: { key: 'plans', placeholder: 'Search lesson plans…' },
-      count: rows.length + ' of ' + all.length + ' plans'
-    }) + ui.card({
+    /* Named, dated and counted off the rows themselves, so it cannot outlive
+       the thing it is warning about. Hidden while a search is narrowing the
+       table, where it would describe rows that are not on screen. */
+    var lead = (!q && waiting.length)
+      ? ui.notice({
+          kind: 'warn',
+          title: count(waiting.length, 'One plan is not ready to teach', 'plans are not ready to teach'),
+          text: waiting.map(whyNotReady).join('. ') + '. ' + DRAFT_LINE
+        })
+      : '';
+
+    var card = ui.card({
       flush: true,
       note: 'In date order, the next session first.'
     }, table);
+
+    return ui.toolbar({
+      tabs: tabsConfig(),
+      search: { key: 'plans', placeholder: 'Search lesson plans…' },
+      count: q
+        ? rows.length + ' of ' + all.length + ' plans'
+        : all.length + ' plans' + (waiting.length ? ' · ' + waiting.length + ' not ready' : '')
+    }) + (lead ? lead + '<div class="section">' + card + '</div>' : card);
   }
 
   function tutorialsTab() {
     var q = Grove.query('tutorials');
     var all = byName(D.TUTORIALS);
+    var spare = spareTutorials();
 
     var rows = all.filter(function (t) {
       return Grove.match(q, t.name, t.len, t.linked, t.by, t.date);
     });
 
     var table = ui.table(
-      ['Name', { label: 'Length', shrink: true }, 'Linked to', 'Added by', 'Date'],
+      ['Name', { label: 'Length', shrink: true }, 'Linked to', 'Recorded by'],
       rows.map(function (t) {
         return {
           cells: [
             ui.two(t.name),
             ui.mute(t.len),
             linkCell(t.linked, 'Not linked'),
-            ui.mute(t.by),
-            ui.mute(t.date)
+            ui.mute(t.by + ' · ' + t.date)
           ]
         };
       }),
-      { emptyTitle: 'No tutorials match', emptyText: 'Clear the search to see the whole archive.' }
+      { emptyTitle: 'No tutorials match', emptyText: 'Clear the search to see the whole library.' }
     );
 
     return ui.toolbar({
       tabs: tabsConfig(),
       search: { key: 'tutorials', placeholder: 'Search tutorials…' },
-      count: rows.length + ' of ' + all.length + ' tutorials'
+      count: q
+        ? rows.length + ' of ' + all.length + ' tutorials'
+        : all.length + ' tutorials' + (spare.length ? ' · ' + spare.length + ' linked to no class' : '')
     }) + ui.card({
       flush: true,
-      note: 'Sorted A to Z. Staff see this same list in the tutorial archive, read-only — they cannot upload.'
+      note: 'Sorted A to Z. A tutorial linked to no class shows in no lesson plan. Staff read this same list in the Studio portal and cannot add to it.'
     }, table);
   }
 
@@ -231,20 +372,13 @@
     });
 
     var table = ui.table(
-      [
-        'Document',
-        'Category',
-        { label: 'Kind', shrink: true },
-        { label: 'Length', shrink: true },
-        'Updated'
-      ],
+      ['Document', 'Category', { label: 'Format', shrink: true }, 'Updated'],
       rows.map(function (d) {
         return {
           cells: [
             ui.two(d.name),
             ui.mute(d.cat),
-            ui.mute(docKind(d)),
-            ui.mute(docLength(d) || '—'),
+            ui.mute(d.kind),
             ui.mute(updatedOn(d.when))
           ]
         };
@@ -255,10 +389,12 @@
     return ui.toolbar({
       tabs: tabsConfig(),
       search: { key: 'training', placeholder: 'Search documents…' },
-      count: rows.length + ' of ' + all.length + ' documents'
+      count: q
+        ? rows.length + ' of ' + all.length + ' documents'
+        : all.length + ' documents'
     }) + ui.card({
       flush: true,
-      note: 'Sorted A to Z. A document is only as good as the day it was last read — the Updated column is the one to watch.'
+      note: 'Sorted A to Z here; the Studio portal puts safety first. A document is only as good as the day it was last read — the Updated column is the one to watch.'
     }, table);
   }
 
@@ -274,118 +410,28 @@
       var p = plan(ctx);
       return p.cls + ' · ' + p.date + ' · ' + p.room;
     },
-    /* Two header buttons, not three: attaching a tutorial is the tutorial
-       card's business and sits in that card's head. */
-    actions: function (ctx) {
-      var p = plan(ctx);
-      var list = [{ label: 'Edit plan', msg: 'Prototype — no form yet' }];
-      if (p.status === 'Draft') {
-        list.push({ label: 'Publish to staff', kind: 'primary', msg: 'Published · the instructor can see it now' });
-      } else {
-        list.push({ label: 'Unpublish', msg: 'Unpublished' });
-      }
-      return list;
-    },
 
     body: function (ctx) {
       var p = plan(ctx);
-      var t = tutorialFor(p);
-      var below = D.INVENTORY.filter(isBelow);
+      var c = classForPlan(p);
+      var draft = p.status === 'Draft';
 
-      var flags = h`<div class="inline">
-        ${raw(ui.pill(p.status, p.kind))}
-        ${raw(p.tut === 'None' ? ui.pill('No tutorial') : ui.pill('Tutorial attached', 'ok'))}
-        ${raw(p.teacher === 'Unassigned' ? ui.pill('Needs an instructor', 'bad') : ui.pill(p.teacher))}
-      </div>`;
+      var lead = readiness(p, c);
 
-      /* The room note is a sentence. In a right-aligned value it wrapped into
-         a ragged block, so it reads as the card's footnote instead. */
-      var lessonNote = 'Plans are written by the office; staff read them and cannot edit them.';
-      if (p.room === 'Clay Room') {
-        lessonNote = 'The Clay Room has no sink — there is a wash bucket by the door. ' + lessonNote;
-      }
+      /* Three cards of comparable depth. Stacking the tutorial and the store
+         in one column beside the class left a hand's width of nothing inside
+         the class card, which is the fault this pass is meant to remove. */
+      var cards = [classCard(p, c), tutorialCard(p), shelfCard()];
 
-      var lesson = ui.card({ title: 'The lesson', note: lessonNote }, ui.kv([
-        ['Activity', esc(p.lesson)],
-        ['Class', esc(p.cls)],
-        ['Date', esc(p.date)],
-        ['Room', esc(p.room)],
-        { k: 'Instructor', v: esc(p.teacher), tone: p.teacher === 'Unassigned' ? 'clay' : null }
-      ]));
+      /* The plan is one of a set she is writing, so the record closes on the
+         rest of the diary rather than stopping short. */
+      var others = byDate(D.LESSON_PLANS.filter(function (o) { return o.id !== p.id; }));
 
-      var materials = ui.card({
-        title: 'Materials',
-        head: ui.btn({ label: 'Open inventory', kind: 'quiet', size: 'sm', to: 'inventory' }),
-        note: 'Read from the studio store, so a plan keeps no list of its own. ' +
-          below.length + ' of ' + D.INVENTORY.length +
-          ' items are under their minimum today, in red.'
-      }, ui.kv(D.INVENTORY.map(function (i) {
-        return {
-          k: i.item,
-          v: esc(i.on + ' of ' + i.min),
-          tone: isBelow(i) ? 'clay' : null
-        };
-      })));
-
-      /* With nothing attached, an empty card sat beside a full materials card.
-         It now shows what attaching would offer: the tutorials that belong to
-         no class yet. One already linked is that class's, and taking it would
-         empty their plans. */
-      var free = D.TUTORIALS.filter(function (x) { return x.linked === 'Not linked'; });
-
-      var tutorial = p.tut === 'None'
+      var diary = others.length
         ? ui.card({
-            title: 'Tutorial video',
-            head: ui.btn({ label: 'Attach a tutorial', kind: 'quiet', size: 'sm', act: 'teachTutorials' }),
-            note: free.length
-              ? 'Nothing attached yet. The tutorials above are linked to no class — attach one and it shows in every plan for ' + p.cls + '.'
-              : 'A tutorial is linked to the class, not to the day, so every plan for that class picks it up.'
-          }, free.length
-            ? ui.rows(byName(free).map(function (x) {
-                return {
-                  lead: esc(x.len),
-                  title: esc(x.name),
-                  sub: 'Added by ' + esc(x.by) + ' · ' + esc(x.date)
-                };
-              }))
-            : ui.empty(
-                'No tutorial on this plan',
-                'Every tutorial in the archive already belongs to a class, so there is none spare to attach.'
-              ))
-        : ui.card({
-            title: 'Tutorial video',
-            head: ui.btn({ label: 'Change tutorial', kind: 'quiet', size: 'sm', act: 'teachTutorials' }),
-            note: 'Staff assigned to this class see the video inside their lesson plan without searching for it.'
-          }, ui.kv([
-            ['Attached', esc(p.tut)],
-            ['Length', esc(t ? t.len : '—')],
-            ['Added', esc(t ? t.date : '—')],
-            ['Added by', esc(t ? t.by : '—')],
-            {
-              k: 'Linked to',
-              v: esc(t ? t.linked : '—'),
-              tone: t && t.linked === 'Not linked' ? 'mute' : null
-            }
-          ]));
-
-      var sameRoom = byDate(D.LESSON_PLANS.filter(function (o) {
-        return o.room === p.room && o.id !== p.id;
-      }));
-
-      /* Studio 2 holds a single plan, so that record closed on the card row
-         and half a screen of nothing. Where the room has no sibling, the rest
-         of the diary is the honest close — and the row carries the room. */
-      var others = sameRoom.length ? sameRoom : byDate(D.LESSON_PLANS.filter(function (o) {
-        return o.id !== p.id;
-      }));
-
-      var roomCard = others.length
-        ? ui.card({
-            title: sameRoom.length ? 'Other plans for ' + p.room : 'The rest of the diary',
+            title: 'The rest of the diary',
             flush: true,
-            note: sameRoom.length
-              ? 'Every other plan the office has written for this room, in date order.'
-              : 'No other plan is written for ' + p.room + ', so this is the whole diary, in date order.'
+            note: 'Every other plan you have written, in date order. Drafts included.'
           }, ui.table(
             ['Date', 'Lesson', 'Class', 'Teacher', { label: 'Status', shrink: true }],
             others.map(function (o) {
@@ -393,7 +439,7 @@
                 to: 'lessonPlan', id: o.id,
                 cells: [
                   ui.mute(o.date),
-                  ui.two(o.lesson, sameRoom.length ? null : o.room),
+                  ui.two(o.lesson, o.room),
                   ui.mute(o.cls),
                   teacherCell(o.teacher),
                   ui.pill(o.status, o.kind)
@@ -403,19 +449,170 @@
           ))
         : '';
 
-      return h`${raw(flags)}
-        <div class="section">${raw(ui.grid(3, [lesson, materials, tutorial]))}</div>
-        ${raw(roomCard ? '<div class="section">' + roomCard + '</div>' : '')}`;
+      /* One bar, pinned, with the consequence written beside it. Nothing here
+         takes money or removes a person, but a plan going out to two
+         instructors with the wrong day on it is her mistake to unpick. */
+      var bar = ui.formActions(draft
+        ? [
+            { label: 'Mark ready to teach', kind: 'primary', msg: 'Marked ready to teach · the draft warning is gone from the Studio portal' },
+            { label: 'Edit plan', msg: 'Prototype — no form yet' }
+          ]
+        : [
+            { label: 'Edit plan', kind: 'primary', msg: 'Prototype — no form yet' },
+            { label: 'Move back to draft', msg: 'Moved back to draft · staff now see a warning not to teach from it' }
+          ], {
+        sticky: true,
+        hint: draft
+          ? DRAFT_LINE
+          : 'Ready to teach · ' + (p.teacher === 'Unassigned' ? 'nobody is assigned to it' : p.teacher + ' sees it with no warning')
+      });
+
+      return h`${raw(lead)}
+        <div class="section">${raw(ui.grid(3, cards))}</div>
+        ${raw(diary ? '<div class="section">' + diary + '</div>' : '')}
+        ${raw(bar)}`;
     }
   });
+
+  /* Where a plan is ready, nothing shows. Where it is not, one line says what
+     is wrong and what staff are looking at in the meantime. */
+  function readiness(p, c) {
+    var draft = p.status === 'Draft';
+    var open = p.teacher === 'Unassigned';
+    if (!draft && !open) return '';
+
+    var title = draft && open
+      ? 'A draft with nobody to teach it'
+      : (draft ? 'This plan is still a draft' : 'Nobody is assigned to teach this');
+
+    var bits = [];
+    if (draft) bits.push(DRAFT_LINE + ' Marking it ready removes that warning.');
+    if (open) {
+      bits.push(c && c.staff !== 'Unassigned'
+        ? c.staff + ' teaches ' + className(c) + ' on ' + c.day + ', so the plan has a reader as soon as you put a name on it.'
+        : 'Nobody teaches this class either, so no one in the Studio portal is looking for it.');
+    }
+
+    return ui.notice({ kind: 'warn', title: title, text: bits.join(' ') });
+  }
+
+  /* The class, not the header again. Every row here is something the title and
+     the sub line do not already carry. */
+  function classCard(p, c) {
+    if (!c) {
+      return ui.card({
+        title: 'The class',
+        note: 'A plan names its class as text. Until that text matches a class you keep, there is no room booked, no register and no places to read.'
+      }, ui.empty(
+        'No class record matches this plan',
+        'Nothing in Classes is written as “' + p.cls + '”.'
+      ));
+    }
+
+    var rows = [
+      ['Class', esc(className(c))],
+      ['Runs', esc(c.day + ' · ' + c.time)],
+      { k: 'Room', v: esc(c.room), tone: c.room === p.room ? null : 'clay' }
+    ];
+    if (c.band && c.band !== '—') rows.push(['Ages', esc(c.band)]);
+    rows.push(['Enrolled', esc(c.en + ' of ' + c.cap)]);
+    rows.push({
+      k: 'Instructor',
+      v: esc(p.teacher),
+      tone: p.teacher === 'Unassigned' ? 'clay' : null
+    });
+
+    /* Where the plan and the class differ, that is the note. Where they
+       agree, the note is why these rows can be trusted. */
+    var note = 'Everything but the instructor is read from the class record, so the plan and the timetable cannot drift apart.';
+    if (c.room !== p.room) {
+      note = 'This session is in ' + p.room + '; the class normally runs in ' + c.room + '.';
+    } else if (p.teacher !== 'Unassigned' && c.staff !== p.teacher) {
+      note = c.staff + ' normally teaches this class, so tell them both.';
+    }
+
+    return ui.card({
+      title: 'The class',
+      head: ui.btn({ label: 'Open the class', kind: 'quiet', size: 'sm', to: 'classRecord', id: c.id }),
+      note: note
+    }, ui.kv(rows));
+  }
+
+  /* A tutorial belongs to the class, not to the day, so this card says what
+     changing one would do to every other plan for the same class. */
+  function tutorialCard(p) {
+    var t = tutorialFor(p);
+    var spare = spareTutorials();
+
+    if (t) {
+      var rows = [{
+        lead: ui.timechip(t.len),
+        title: esc(t.name),
+        sub: esc('Recorded by ' + t.by + ' · ' + t.date),
+        msg: 'Tutorial opened'
+      }];
+      if (spare.length) {
+        rows.push({
+          title: esc(count(spare.length, 'One tutorial is linked to no class', 'tutorials are linked to no class')),
+          sub: 'No lesson plan shows one until it is linked.',
+          end: ui.btn({ label: 'See them', kind: 'quiet', size: 'sm', act: 'teachTutorials' })
+        });
+      }
+      return ui.card({
+        title: 'Tutorial video',
+        note: 'Linked to ' + p.cls + ', not to this day, so changing it changes every plan for that class.'
+      }, ui.rows(rows));
+    }
+
+    return ui.card({
+      title: 'Tutorial video',
+      note: spare.length
+        ? 'No tutorial is linked to this class. Link one of these and it shows in every plan for ' + p.cls + ', this one included.'
+        : 'No tutorial is linked to this class, and every tutorial you have already belongs to another one.'
+    }, spare.length
+      ? ui.rows(spare.map(function (x) {
+          return {
+            title: esc(x.name),
+            sub: esc(x.len + ' · recorded by ' + x.by),
+            end: ui.btn({
+              label: 'Link',
+              kind: 'quiet',
+              size: 'sm',
+              msg: 'Linked · every plan for ' + p.cls + ' shows it now'
+            })
+          };
+        }))
+      : ui.empty(
+          'No tutorial for this class',
+          'Record one and link it, and every plan for ' + p.cls + ' picks it up.'
+        ));
+  }
+
+  /* Only what is under the minimum she keeps. The fully stocked lines are the
+     Inventory screen's job, and they are not numbers she can act on today. */
+  function shelfCard() {
+    var short = shortOfStock();
+    return ui.card({
+      title: 'Under the minimum',
+      head: ui.btn({ label: 'Open inventory', kind: 'quiet', size: 'sm', to: 'inventory' }),
+      flush: true,
+      note: 'Nothing links a plan to its materials, so this is the whole store: ' +
+        short.length + ' of ' + D.INVENTORY.length + ' lines are under the minimum you keep.'
+    }, short.length
+      ? ui.rows(short.map(function (i) {
+          return {
+            title: esc(i.item),
+            sub: esc(i.on + ' on the shelf, under the ' + i.min + ' you keep · ' + i.supplier + ' · ' + i.cost),
+            to: 'inventoryItem',
+            id: i.id
+          };
+        }))
+      : ui.empty('The store is stocked', 'Nothing is under the minimum you keep.'));
+  }
 
   function plan(ctx) {
     var id = ctx && ctx.params ? ctx.params.id : null;
     return D.LESSON_PLANS.filter(function (p) { return p.id === id; })[0] || byDate(D.LESSON_PLANS)[0];
-  }
-
-  function tutorialFor(p) {
-    return D.TUTORIALS.filter(function (t) { return t.name === p.tut; })[0];
   }
 
   Grove.on('teachTutorials', function () {

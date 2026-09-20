@@ -1,24 +1,43 @@
-/* Console → Classes (list + week calendar) and the class record.
+/* Console → Classes (list + week calendar), one class record, and cancelling
+   one dated session.
 
-   Simplifications against the previous build:
-     - the separate "This week" calendar page is now the Calendar tab of this
-       screen, so one header, one tab rail and one container serve both views
-     - the two chip groups (eight chips on one line) are one group: programme.
-       The status chips — "Has space", "Full or over", "Unassigned" — only
-       restated what the Enrolled and Teacher columns already say, and the old
-       programme group silently dropped Private, Birthday and Pop-Up
-     - the week stepper (‹ Today ›) is gone; it never changed the grid, it only
-       raised a toast
-     - the record's four header actions are two. "Cancel a session" sits in the
-       class card it belongs to, and the roster is on the page rather than a
-       jump into the Studio portal
-     - "Term", "Sessions generated" and the four-week attendance block were the
-       same hardcoded numbers on every class, so they are not shown
-     - the List tab's search box is gone. Twelve rows behind seven programme
-       chips do not need full-text search, and while it was there the toolbar
-       wrapped: the result count fell onto a thin band of its own, while the
-       Calendar tab put the same count on the toolbar row. Both tabs now read
-       the same way, and the placeholder can no longer be clipped mid-word
+   Fitted to Sabrina, the owner. She is at a desk with a keyboard, she reads
+   tables, and she comes here for two things: who is in a room, and whether a
+   room is over its capacity. Density is right on this screen. Ceremony is not.
+
+   What this pass cut:
+     - the seven programme chips. Twelve classes fit on one screen without
+       scrolling, so the answer was always "All programs". The programme is
+       already named in full under every class name, which is what the chips
+       were being read for
+     - "The class" card on the record. Programme, When, Room, Ages, Teacher and
+       Places were a third printing of the eyebrow, the sub and the flag pills
+       sitting directly above them
+     - "What a place costs" on the record — five rows of prices she cannot
+       change here and that are identical for every class in the programme. The
+       record states once, in the sub, that it follows the programme price
+     - the header's "Lesson plan" button. It opened the same plan the Lesson
+       plans card already lists: two controls, one decision
+     - the over-capacity line that sat as a note UNDER the twelve-row table.
+       It is now a notice above the table, naming the room, with the way in
+     - "64 of 80 places" under each calendar day, which adds up five unrelated
+       rooms. The day foot now reads "15 places left" — the part she can sell —
+       and a day holding an over-capacity class is flagged in its own head
+
+   What this pass added:
+     - over capacity is unmistakable in every view: a clay notice above the
+       table and above the week, a pill on the day card that holds it, a clay
+       line on the row itself, and the count in the toolbar
+     - "Cancel a session" was a small red button that fired a toast. It is now
+       a screen that asks which date and says plainly what cancelling does —
+       how many children get a class to make up, who is told, that no money
+       moves, whose shift disappears — with the action in a sticky bar
+     - the week is no longer a literal list of dates. Monday, the six day
+       columns, "Today" and every session date are worked out from
+       Grove.data.today, so moving the dataset's today moves the calendar
+     - a child's make-up credits used to be dropped from the roster whenever
+       they also had a safety flag. Credits are on the detail line now, so the
+       flag and the credits can both be seen
 
    Everything counted here is counted off the rows being shown. Where the
    dataset holds fewer records than the class enrolls, the card says so ("3 of
@@ -29,9 +48,9 @@
 
   var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   var WEEK_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  /* The week that contains Grove.data.today — Tuesday 28 July 2026. */
-  var WEEK_DATES = ['27 Jul', '28 Jul', '29 Jul', '30 Jul', '31 Jul', '1 Aug'];
-  var TODAY_DAY = 'Tue';
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June',
+                     'July', 'August', 'September', 'October', 'November', 'December'];
 
   /* The mapping the Requests screen uses, so a credit reads the same colour on
      both screens. */
@@ -42,11 +61,50 @@
     'Expiring': 'bad'
   };
 
-  /* ---- small helpers ------------------------------------------------------ */
+  Grove.on('pickSession', function (d) { Grove.setFilter('cancelSession', d.id); });
+
+  /* ---- the calendar --------------------------------------------------------
+     The dataset states its own today, so Monday, the six day columns, the
+     "Today" pill and every session date are worked out from it rather than
+     written down. */
+
+  function today() {
+    var m = /(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/.exec(String(D.today));
+    var mo = m ? MONTHS.indexOf(m[2].slice(0, 3)) : -1;
+    if (!m || mo === -1) return new Date();
+    return new Date(parseInt(m[3], 10), mo, parseInt(m[1], 10));
+  }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function monday() { var t = today(); return addDays(t, -((t.getDay() + 6) % 7)); }
+  function shortDate(d) { return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+  /* Sunday is not a studio day, so it never indexes into WEEK. */
+  function dayOf(d) { return WEEK[(d.getDay() + 6) % 7] || 'Sun'; }
+  function weekDates() {
+    var m = monday();
+    return WEEK.map(function (day, i) { return shortDate(addDays(m, i)); });
+  }
+  function weekLabel() {
+    var m = monday();
+    return m.getDate() + ' ' + MONTHS_LONG[m.getMonth()] + ' ' + m.getFullYear();
+  }
+  function longLabel(d) {
+    var i = WEEK.indexOf(dayOf(d));
+    return (i === -1 ? 'Sunday' : WEEK_LONG[i]) + ' ' + shortDate(d);
+  }
+  function awayText(d) {
+    var n = Math.round((d.getTime() - today().getTime()) / 86400000);
+    if (n <= 0) return 'today';
+    if (n === 1) return 'tomorrow';
+    if (n < 7) return 'in ' + n + ' days';
+    var w = Math.round(n / 7);
+    return 'in ' + w + (w === 1 ? ' week' : ' weeks');
+  }
+
+  /* ---- small helpers ------------------------------------------------------- */
 
   function prog(c) { return D.program(c.prog) || { name: c.prog, short: c.prog, color: 'var(--ink-45)' }; }
 
-  function money(n) { return Grove.money(n, { cents: false }); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
   /* '2:15–3:15pm' -> '2:15pm'; '10:00am–1:00pm' -> '10:00am'. */
   function startTime(c) {
@@ -95,26 +153,55 @@
     var m = /(\d{1,2}\s[A-Z][a-z]{2})\b/.exec(String(c.name));
     return m ? m[1] : null;
   }
+  function datedAt(c) {
+    var text = datedFor(c);
+    var m = text ? /(\d{1,2})\s([A-Z][a-z]{2})/.exec(text) : null;
+    var mo = m ? MONTHS.indexOf(m[2]) : -1;
+    if (!m || mo === -1) return null;
+    return new Date(today().getFullYear(), mo, parseInt(m[1], 10));
+  }
 
   function thisWeek(c) {
     var d = datedFor(c);
-    return !d || WEEK_DATES.indexOf(d) !== -1;
+    return !d || weekDates().indexOf(d) !== -1;
   }
 
   function datedElsewhere() {
     return D.CLASSES.filter(function (c) { return !thisWeek(c); });
   }
 
+  /* The next few dates a class runs. The dataset has no session records, so
+     they are walked forward from today across the class's own days. */
+  function sessionDates(c, limit) {
+    var one = datedAt(c);
+    if (one) return [one];
+    var out = [], start = today();
+    for (var i = 0; i < 28 && out.length < limit; i++) {
+      var d = addDays(start, i);
+      if (runsOn(c, dayOf(d))) out.push(d);
+    }
+    return out;
+  }
+  function dateKey(d) {
+    return 'd' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  function isOver(c) { return c.en > c.cap; }
+  function overBy(c) { return c.en - c.cap; }
+  function placesLeft(c) { return Math.max(0, c.cap - c.en); }
+
   function fillKind(c) {
-    return c.en > c.cap ? 'bad' : (c.en === c.cap ? 'amber' : null);
+    return isOver(c) ? 'bad' : (c.en === c.cap ? 'amber' : null);
   }
 
   function fill(c) {
-    var over = c.en - c.cap;
     return h`<div class="stack stack--sm">
       <div>${raw(ui.pill(c.en + '/' + c.cap, fillKind(c)))}</div>
       ${raw(ui.meter(c.en, c.cap))}
-      ${raw(over > 0 ? '<div class="cell-sub">' + esc(over + ' over · a make-up booking') + '</div>' : '')}
+      ${raw(isOver(c)
+        ? '<div class="cell-sub clay">' +
+          esc(plural(overBy(c), 'child over capacity', 'children over capacity')) + '</div>'
+        : '')}
     </div>`;
   }
 
@@ -142,6 +229,30 @@
     return shown === total ? total + ' ' + word : shown + ' of ' + total + ' ' + word;
   }
 
+  /* The one thing she must act on, written off the rows on screen: it names
+     the room, and it goes away when the class it is talking about does. */
+  function overNotice(list) {
+    if (!list.length) return '';
+    if (list.length === 1) {
+      var c = list[0];
+      return ui.notice({
+        kind: 'bad',
+        title: 'Over capacity · ' + c.room + ' · ' + c.day + ' ' + c.time,
+        text: c.en + ' children booked into a room set for ' + c.cap +
+          '. A make-up booking landed after the last enrollment, so moving the make-up ' +
+          'clears the room and no enrolled child loses their place.',
+        action: { label: 'Open the class', to: 'classRecord', id: c.id }
+      });
+    }
+    return ui.notice({
+      kind: 'bad',
+      title: plural(list.length, 'class is over capacity', 'classes are over capacity'),
+      text: list.map(function (c) {
+        return c.room + ' · ' + c.day + ' ' + startTime(c) + ' · ' + c.en + ' of ' + c.cap;
+      }).join('; ') + '. Moving the make-up booking clears each one without touching an enrolled child.'
+    });
+  }
+
   /* ---- Classes ------------------------------------------------------------ */
 
   function tabRail() {
@@ -149,12 +260,6 @@
       key: 'classes',
       items: [{ label: 'List', count: D.CLASSES.length }, { label: 'Calendar' }]
     };
-  }
-
-  function chipItems() {
-    var items = ['All programs'];
-    Object.keys(D.PROGRAMS).forEach(function (k) { items.push(D.PROGRAMS[k].short); });
-    return items;
   }
 
   Grove.screen('classes', {
@@ -167,7 +272,8 @@
           ' programs. A class generates dated sessions; enrollments attach to the class, attendance to the session.';
       }
       var away = datedElsewhere();
-      var base = 'Week of 27 July 2026. A session with nobody teaching it is flagged on its block.';
+      var base = 'Week of ' + weekLabel() +
+        '. A room over its capacity is flagged on the day that holds it, and a session with nobody teaching it on its own block.';
       if (!away.length) return base;
       return base + ' ' + away.map(function (c) { return c.name; }).join(' and ') +
         (away.length === 1 ? ' is dated outside this week, so it is' : ' are dated outside this week, so they are') +
@@ -183,21 +289,10 @@
     }
   });
 
-  /* The over-capacity line is written off the rows on screen, so it names the
-     class it is talking about and disappears when that class is filtered out. */
-  function overNote(list) {
-    if (!list.length) return null;
-    var names = list.map(function (c) { return c.day + ' ' + startTime(c); }).join(', ');
-    return names + (list.length === 1 ? ' is ' : ' are ') +
-      'over capacity: a make-up booking landed in a full class. Rebalancing moves the make-up rather than the enrolled child.';
-  }
-
   function listTab() {
-    var chip = Grove.filter('classes', 'All programs');
-
-    var rows = D.CLASSES.filter(function (c) {
-      return chip === 'All programs' || prog(c).short === chip;
-    });
+    var rows = D.CLASSES;
+    var over = rows.filter(isOver);
+    var unstaffed = rows.filter(function (c) { return c.staff === 'Unassigned'; });
 
     var table = ui.table(
       ['Class', 'When', 'Room', 'Ages', 'Teacher', 'Enrolled', { label: 'Waitlist', align: 'right', shrink: true }],
@@ -217,31 +312,31 @@
             c.wl ? ui.pill(String(c.wl), 'warn') : '<span class="mute">—</span>'
           ]
         };
-      }),
-      {
-        emptyTitle: 'No classes in that program',
-        emptyText: 'Choose another programme, or go back to all programs.'
-      }
+      })
     );
 
-    return ui.toolbar({
+    var bar = ui.toolbar({
       tabs: tabRail(),
-      filters: { key: 'classes', items: chipItems() },
-      count: rows.length + ' of ' + D.CLASSES.length + ' classes'
-    }) + ui.card({
-      flush: true,
-      note: overNote(rows.filter(function (c) { return c.en > c.cap; }))
-    }, table);
+      count: plural(rows.length, 'class', 'classes') +
+        (unstaffed.length ? ' · ' + plural(unstaffed.length, 'needs a teacher', 'need a teacher') : '')
+    });
+    var lead = overNotice(over);
+    var card = ui.card({ flush: true }, table);
+
+    return bar + lead + (lead ? '<div class="section">' + card + '</div>' : card);
   }
 
   function entryRow(c) {
     var p = prog(c);
+    var who = c.staff === 'Unassigned'
+      ? '<span class="clay">Unassigned</span>'
+      : esc(c.staff);
     return {
       lead: esc(startTime(c)),
       title: ui.dot(p.color) + ' ' + esc(c.name),
-      sub: esc(c.room) + ' · ' + (c.staff === 'Unassigned'
-        ? '<span class="clay">Unassigned</span>'
-        : esc(c.staff)),
+      sub: esc(c.room) + ' · ' + who + (isOver(c)
+        ? ' · <span class="clay strong">' + esc(overBy(c) + ' over capacity') + '</span>'
+        : ''),
       end: ui.pill(c.en + '/' + c.cap, fillKind(c)),
       to: 'classRecord', id: c.id
     };
@@ -252,25 +347,28 @@
      leaves under a tall neighbour. Each card closes on its own footer, so what
      is left reads as the end of the card. */
   function calendarTab() {
+    var dates = weekDates();
+    var here = D.CLASSES.filter(thisWeek);
+    var over = here.filter(isOver);
     var total = 0;
 
     var days = WEEK.map(function (day, i) {
-      var list = D.CLASSES.filter(function (c) {
-        return thisWeek(c) && runsOn(c, day);
-      }).sort(byTime);
+      var list = here.filter(function (c) { return runsOn(c, day); }).sort(byTime);
       total += list.length;
 
-      var en = 0, cap = 0;
-      list.forEach(function (c) { en += c.en; cap += c.cap; });
+      var left = 0;
+      list.forEach(function (c) { left += placesLeft(c); });
+      var heavy = list.filter(isOver);
 
       var head = h`<span class="inline">
-        ${raw(day === TODAY_DAY ? ui.pill('Today', 'ok') : '')}
-        <span class="mute">${WEEK_DATES[i]}</span>
+        ${raw(heavy.length ? ui.pill(heavy.length + ' over capacity', 'bad') : '')}
+        ${raw(day === dayOf(today()) ? ui.pill('Today', 'ok') : '')}
+        <span class="mute">${dates[i]}</span>
       </span>`;
 
       var foot = list.length
-        ? '<span class="mute">' + esc(list.length === 1 ? '1 session' : list.length + ' sessions') + '</span>' +
-          '<span class="num">' + esc(en + ' of ' + cap + ' places') + '</span>'
+        ? '<span class="mute">' + esc(plural(list.length, 'session', 'sessions')) + '</span>' +
+          '<span class="num">' + esc(left ? plural(left, 'place left', 'places left') : 'No places left') + '</span>'
         : null;
 
       return ui.card({
@@ -281,13 +379,23 @@
       }, list.length ? ui.rows(list.map(entryRow)) : ui.empty('Studio closed'));
     });
 
-    return ui.toolbar({
+    var bar = ui.toolbar({
       tabs: tabRail(),
-      count: total + ' sessions this week'
-    }) + ui.grid(2, days);
+      count: plural(total, 'session this week', 'sessions this week') +
+        (over.length ? ' · ' + over.length + ' over capacity' : '')
+    });
+    var lead = overNotice(over);
+    var grid = ui.grid(2, days);
+
+    return bar + lead + (lead ? '<div class="section">' + grid + '</div>' : grid);
   }
 
-  /* ---- class record -------------------------------------------------------- */
+  /* ---- class record --------------------------------------------------------
+     What she came for is the roster, so the roster is the first and widest
+     card. The old "The class" card under it repeated the eyebrow, the sub and
+     the three flag pills; the old price card listed four monthly rates she
+     cannot change from here, so the record states in one line that it follows
+     the programme's prices. */
 
   var recordDef = {
     surface: 'console',
@@ -296,18 +404,16 @@
     title: function (ctx) { return cls(ctx).name; },
     sub: function (ctx) {
       var c = cls(ctx);
-      return c.day + ' · ' + c.time + ' · ' + c.room;
+      return c.day + ' · ' + c.time + ' · ' + c.room + '. A place here is priced on ' +
+        prog(c).name + ' — the same for every class in the programme — and the prices are set under Programs.';
     },
 
     /* The class already has an instructor on almost every record, so asking
        for one is only the primary action when there is nobody teaching it. */
     actions: function (ctx) {
       var c = cls(ctx);
-      var plans = lessonsFor(c);
       return [
-        plans.length
-          ? { label: 'Lesson plan', to: 'lessonPlan', id: plans[0].id }
-          : { label: 'Lesson plans', to: 'teaching' },
+        { label: 'Cancel a session', kind: 'danger', to: 'classCancel', id: c.id },
         c.staff === 'Unassigned'
           ? { label: 'Assign an instructor', kind: 'primary', msg: 'Assigned · the instructor sees the class now' }
           : { label: 'Edit class', kind: 'primary', msg: 'Prototype — no form yet' }
@@ -316,13 +422,12 @@
 
     body: function (ctx) {
       var c = cls(ctx);
-      var p = prog(c);
       var kids = roster(c);
       var waiting = waitlist(c);
       var plans = lessonsFor(c);
       var credits = makeupsFor(c);
 
-      var flags = h`<div class="inline">
+      var flags = h`<div class="flags">
         ${raw(ui.pill(placesLine(c), fillKind(c)))}
         ${raw(bandLine(c) ? ui.pill(bandLine(c)) : '')}
         ${raw(c.staff === 'Unassigned'
@@ -330,43 +435,28 @@
           : ui.pill(c.staff, 'ok'))}
       </div>`;
 
-      var over = c.en > c.cap
+      var over = isOver(c)
         ? ui.notice({
             kind: 'bad',
-            title: 'Over capacity by ' + (c.en - c.cap),
-            text: 'A make-up booking landed here after the last enrollment. Rebalancing moves the make-up, not the enrolled child.',
-            action: { label: 'Rebalance', msg: 'Prototype — nothing was moved' }
+            title: 'Over capacity by ' + overBy(c),
+            text: c.en + ' children are booked into ' + c.room + ', which is set for ' + c.cap +
+              '. A make-up booking landed here after the last enrollment. Moving the make-up clears ' +
+              'the room; no enrolled child loses their place and no money moves.',
+            action: { label: 'Move the make-up', msg: 'Prototype — nothing was moved' }
           })
         : '';
-
-      /* Class-level facts, so the card says class. The button cancels one
-         dated session, which is the only cancellation this page can mean. */
-      var details = ui.card({
-        title: 'The class',
-        head: ui.btn({
-          label: 'Cancel a session',
-          kind: 'danger',
-          size: 'sm',
-          msg: 'Prototype — nothing was cancelled'
-        })
-      }, ui.kv([
-        ['Programme', esc(p.name)],
-        ['When', esc(c.day + ' · ' + c.time)],
-        ['Room', esc(c.room)],
-        ['Ages', esc(c.band)],
-        { k: 'Teacher', v: esc(c.staff), tone: c.staff === 'Unassigned' ? 'clay' : null },
-        { k: 'Places', v: esc(c.en + ' of ' + c.cap), tone: c.en > c.cap ? 'clay' : null }
-      ]));
 
       var rosterCard = ui.card({
         title: 'Roster',
         head: '<span class="mute">' + esc(countOf(kids.length, c.en, 'enrolled')) + '</span>',
         flush: true,
-        note: (kids.length && kids.length < c.en
-          ? 'The prototype carries records for ' + kids.length + ' of the ' + c.en +
-            ' children enrolled. '
-          : '') +
-          'Safety notes are shown to every teacher on this roster and on the attendance sheet.'
+        note: kids.length
+          ? (kids.length < c.en
+              ? 'The prototype carries records for ' + kids.length + ' of the ' + c.en +
+                ' children enrolled. '
+              : '') +
+            'Safety notes here are the ones every teacher sees on this roster and on the attendance sheet.'
+          : ''
       }, kids.length
         ? ui.rows(kids.map(kidRow))
         : ui.empty('No children linked yet', 'Enrollment counts come from the class; children are linked as they register.')
@@ -376,7 +466,7 @@
         title: 'Waitlist',
         head: c.wl ? ui.pill(countOf(waiting.length, c.wl, 'waiting'), 'warn') : '',
         flush: true,
-        note: 'Nobody is turned away. A place that frees up goes to the first name on the list.' +
+        note: 'Nobody is turned away. A place that frees up goes to the first name on the list, at the usual price.' +
           (waiting.length && waiting.length < c.wl
             ? ' The prototype names the first ' + waiting.length + ' of the ' + c.wl + '.'
             : '')
@@ -385,15 +475,9 @@
         : ui.empty('Nobody waiting', 'Every child who asked for this class has a place.')
       );
 
-      var cost = ui.card({
-        title: 'What a place costs',
-        note: 'Prices are set on the program, so every ' + p.name +
-          ' class charges the same. They are edited under Programs.'
-      }, ui.kv(costRows(c)));
-
       var lessons = ui.card({
         title: 'Lesson plans',
-        head: '<span class="mute">' + esc(plans.length === 1 ? '1 plan' : plans.length + ' plans') + '</span>',
+        head: '<span class="mute">' + esc(plural(plans.length, 'plan', 'plans')) + '</span>',
         flush: true,
         note: 'Plans are written under Teaching and published to the instructor before the session.'
       }, ui.rows(plans.map(function (lp) {
@@ -405,9 +489,18 @@
         };
       })));
 
+      /* Of the four credit states, two are waiting on her — one to approve,
+         one with nowhere left to place it. That pair is the head of the card;
+         the rest of the vocabulary stays on the rows, coloured the way
+         Requests colours it, because Requests is where a credit is settled. */
+      var needs = credits.filter(function (m) {
+        return m.status === 'Awaiting approval' || m.status === 'Expiring';
+      });
       var makeups = ui.card({
         title: 'Make-ups from this class',
-        head: '<span class="mute">' + esc(credits.length === 1 ? '1 credit' : credits.length + ' credits') + '</span>',
+        head: '<span class="inline">' +
+          (needs.length ? ui.pill(needs.length + ' need you', 'warn') : '') +
+          '<span class="mute">' + esc(plural(credits.length, 'credit', 'credits')) + '</span></span>',
         flush: true,
         note: 'A missed session becomes a credit counted in classes, never in money. Credits are placed from Requests.'
       }, ui.rows(credits.map(function (m) {
@@ -419,24 +512,24 @@
         };
       })));
 
-      /* Only the cards that have something in them. Price is always there, so
-         the row is never empty; when all three are, the two short ones stack
-         in one cell so the row finishes level. */
-      var extras = [];
-      if (plans.length) extras.push(lessons);
-      extras.push(cost);
-      if (credits.length) extras.push(makeups);
+      /* Only the cards that hold something. The roster leads, because who is
+         in the room is what she came for. When all four are here they split in
+         order — the two people cards left, the two paper ones right — which
+         happens to put the same number of rows in each column, and never
+         leaves the one-line lesson plan card wearing the stretch. */
+      var cards = [rosterCard];
+      if (c.wl || waiting.length) cards.push(waitCard);
+      if (plans.length) cards.push(lessons);
+      if (credits.length) cards.push(makeups);
 
-      var second = extras.length === 1
-        ? ui.grid(null, extras)
-        : (extras.length === 2
-            ? ui.grid(2, extras)
-            : ui.grid(2, [ui.col([extras[0], extras[1]]), extras[2]]));
+      var body;
+      if (cards.length === 1) body = ui.grid(null, cards);
+      else if (cards.length === 2) body = ui.grid(2, cards);
+      else if (cards.length === 3) body = ui.grid(3, cards);
+      else body = ui.grid(2, [ui.col([cards[0], cards[1]]), ui.col([cards[2], cards[3]])]);
 
       return flags +
-        (over ? '<div class="section">' + over + '</div>' : '') +
-        '<div class="section">' + ui.grid(3, [details, rosterCard, waitCard]) + '</div>' +
-        '<div class="section">' + second + '</div>';
+        (over ? over + '<div class="section">' + body + '</div>' : body);
     }
   };
 
@@ -448,16 +541,15 @@
 
   Grove.screen('classRecord', recordDef);
 
-  /* A child with nothing to flag carries their make-up credits rather than a
-     bare dash floating in the white. */
   function kidRow(k) {
+    var bits = ['Age ' + k.age, 'attendance ' + k.att];
+    if (k.mk) bits.push(plural(k.mk, 'class to make up', 'classes to make up'));
     var row = {
       title: esc(k.name),
-      sub: esc('Age ' + k.age + ' · attendance ' + k.att),
+      sub: esc(bits.join(' · ')),
       to: 'studentRecord', id: k.id
     };
     if (k.flag) row.end = ui.pill(k.flag, k.flagKind);
-    else if (k.mk) row.end = ui.mute(k.mk === 1 ? '1 make-up credit' : k.mk + ' make-up credits');
     return row;
   }
 
@@ -470,6 +562,126 @@
       to: 'requests'
     };
   }
+
+  /* ---- cancel one session ---------------------------------------------------
+     This was a small red button in a card header that fired a toast. It
+     cancels an hour for a room full of children, issues every one of them a
+     class to make up and messages every family, and Sabrina has nobody to undo
+     it for her — so it asks which date and states, before she commits, exactly
+     what will happen. The button sits in a bar pinned to the bottom of the
+     viewport, never below the explanation. */
+
+  Grove.screen('classCancel', {
+    surface: 'console',
+    crumbs: [{ label: 'Classes', to: 'classes' }],
+    crumbTitle: 'Cancel a session',
+    eyebrow: 'one date, not the class',
+    title: 'Cancel a session',
+    sub: function (ctx) {
+      var c = cls(ctx);
+      return c.name + ' · ' + c.day + ' · ' + c.time + ' · ' + c.room +
+        '. The class keeps running. Only the date you pick here is called off.';
+    },
+
+    body: function (ctx) {
+      var c = cls(ctx);
+      var dates = sessionDates(c, 4);
+      var keys = dates.map(dateKey);
+      var picked = Grove.filter('cancelSession', keys[0]);
+      if (keys.indexOf(picked) === -1) picked = keys[0];
+      var when = dates[keys.indexOf(picked)] || null;
+
+      var pick = ui.card({
+        title: 'Which session?',
+        note: dates.length
+          ? 'The next dates this class runs, worked out from its day and time. The prototype does not hold ' +
+            'individual sessions, so a date already moved or covered will not show as different here.'
+          : ''
+      }, dates.length
+        ? ui.choices(null, dates.map(function (d, i) {
+            return ui.choice({
+              id: keys[i],
+              act: 'pickSession',
+              title: longLabel(d),
+              /* The hour and the room are the same on every option and are
+                 already in the page sub, so the only thing that differs
+                 between these four lines is how far off the date is. */
+              sub: awayText(d),
+              on: keys[i] === picked
+            });
+          }))
+        : ui.empty('No dated session', 'This class has no further date in the studio calendar.')
+      );
+
+      var lines = [];
+      if (c.en) {
+        lines.push({
+          title: esc(plural(c.en, 'child gets a class to make up', 'children get a class to make up')),
+          sub: esc(whoLine(c))
+        });
+        lines.push({
+          title: c.en === 1 ? 'Their family is told' : 'Their families are told',
+          sub: esc('A message goes out naming ' + (when ? longLabel(when) : 'the date') +
+            ', with how to book the make-up.')
+        });
+        lines.push({
+          title: 'No money moves',
+          sub: 'A make-up credit is counted in classes, never in money. Nothing is refunded and nothing is charged.'
+        });
+      } else {
+        lines.push({
+          title: 'Nobody is enrolled yet',
+          sub: 'No message goes out, no credit is issued and no money moves either way.'
+        });
+      }
+      lines.push({
+        title: esc(c.room + ' frees up'),
+        sub: esc(c.time + ' on that date opens for a private class or a make-up hour.')
+      });
+      if (c.staff !== 'Unassigned') {
+        lines.push({
+          title: esc(c.staff + ' loses the shift'),
+          sub: 'The hour comes off their schedule. Check it against their week before you confirm.'
+        });
+      }
+
+      var what = ui.card({
+        title: 'What cancelling does',
+        flush: true,
+        note: 'Cancelling the whole class, rather than one date, is done from Programs — it releases the room for the term.'
+      }, ui.rows(lines));
+
+      var hint = c.en
+        ? plural(c.en, 'child', 'children') + ' · ' +
+          plural(c.en, 'class to make up', 'classes to make up') + ' · no money moves'
+        : 'Nobody is enrolled, so nothing is sent';
+
+      var buttons = when
+        ? [
+            { label: 'Cancel ' + longLabel(when), kind: 'danger', msg: 'Prototype — nothing was cancelled' },
+            { label: 'Keep the session', to: 'classRecord', id: c.id }
+          ]
+        : [{ label: 'Back to the class', to: 'classRecord', id: c.id }];
+
+      return ui.grid('sidebar', [pick, what]) +
+        ui.formActions(buttons, {
+          sticky: true,
+          hint: when ? hint : 'There is no dated session to cancel'
+        });
+    }
+  });
+
+  /* The children a cancellation reaches, named as far as the dataset can name
+     them and counted off the class's own enrollment for the rest. */
+  function whoLine(c) {
+    var kids = roster(c);
+    if (!kids.length) return 'The prototype does not carry their records, so it cannot name them here.';
+    var names = kids.map(function (k) { return k.name; });
+    var rest = c.en - names.length;
+    return names.join(', ') + (rest > 0 ? ' and ' + plural(rest, 'other', 'others') : '');
+  }
+
+  /* ---- matching ------------------------------------------------------------ */
 
   function cls(ctx) {
     var id = ctx && ctx.params ? ctx.params.id : null;
@@ -558,43 +770,5 @@
       var dayHit = dayTokens(c).some(function (d) { return text.indexOf(d.toLowerCase()) !== -1; });
       return dayHit && text.indexOf(startTime(c)) !== -1;
     });
-  }
-
-  /* What a place costs, read from the program's own prices — the same figures
-     the registration flow charges. */
-  function costRows(c) {
-    var P = D.PRICING[c.prog] || {};
-    var rows = [];
-
-    if (c.prog === 'as') {
-      Object.keys(P.plans).forEach(function (k) {
-        rows.push([k.slice(1) + ' sessions / month', money(P.plans[k])]);
-      });
-    } else if (c.prog === 'camp') {
-      rows.push(['A full week', money(P.week)]);
-      rows.push(['A single day', money(P.day)]);
-      rows.push(['Extra hour', money(P.extraHour)]);
-    } else if (c.prog === 'nsd') {
-      rows.push(['The day', money(P.base)]);
-      rows.push(['Extra hour', money(P.extraHour)]);
-      rows.push(['Longest day', P.maxHours + ' hours']);
-    } else if (c.prog === 'priv') {
-      rows.push(['An hour', money(P.hourly)]);
-      rows.push(['Longest booking', P.maxHours + ' hours']);
-    } else if (c.prog === 'pop') {
-      var here = P.events.filter(function (e) { return String(c.name).indexOf(e.label) !== -1; });
-      (here.length ? here : P.events).forEach(function (e) {
-        rows.push([esc(e.label), money(e.amount)]);
-      });
-    } else if (c.prog === 'bday') {
-      rows.push(['This party', 'By quote']);
-    }
-
-    rows.push({
-      k: 'Registration fee',
-      v: P.regFee ? money(P.regFee) + ' once, per child' : 'None',
-      tone: 'mute'
-    });
-    return rows;
   }
 })();

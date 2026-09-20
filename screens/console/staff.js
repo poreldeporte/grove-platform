@@ -1,59 +1,85 @@
 /* Console → Staff (list) and the staff record.
 
-   Simplifications against the previous build:
-     - NO statbar on the list. The old screen sat a four-tile stats band
-       directly under the header for a list of six rows, and every tile just
-       restated something the table already says ("6 people", "3 on shift",
-       "1 pending invitation"). Six rows do not need a summary of themselves.
-     - The separate "Invite a staff member" form screen is gone. It asked for
-       eleven fields — nine of which only ever have one sensible answer for a
-       six-person studio — so the header action sends the invitation directly
-       and says so.
-     - The record's three header buttons are two; "Revoke access" moved into
-       the Access card, where the consequence is spelled out next to it.
-     - The old drawer hard-coded the same assigned-class list onto every
-       person, including the front desk and the owner, who teach nothing.
-       Everything is read from Grove.data.
+   WHO THESE TWO SCREENS ARE FOR
+   Sabrina Yanguas, the owner. Six people. The whole team fits on one screen
+   without scrolling, and she knows every name on it. She comes here to see
+   who is carrying what, to look at the hours before she exports them, and to
+   open one person. Density is right; a band of controls over six rows is not.
 
-   Fixed after the visual review:
-     - "Classes this week" listed five lines beside a card that said "Sessions
-       a week 9", and the reader had to expand "Mon–Fri" in their head. Every
-       row now carries its own session count and the total is the sum of the
-       rows shown, on both screens. Pop-ups and birthday parties are single
-       dates, so they are listed apart from the weekly timetable — which is
-       also what makes the total agree with Grove.data for both instructors.
-     - THE PERSON card repeated the header subtitle (role, rate) and the TIME
-       card (status). Both cards are gone: the three facts that were not
-       already on screen are a statbar, the same shape the Studio portal uses
-       for the same person.
-     - the TIME card was two thirds empty because it was stretched to match
-       the timetable beside it. The record now lays its cards into two
-       balanced columns, so a short card is never parked beside a tall one.
-     - the owner's row was three em dashes. Hours, rate and clock status now
-       say what "not applicable" means in words.
-     - the control band carried a search box and nothing else while every
-       other list screen carries filters as well.
+   Cut in this pass
+     - the search box and the four filter chips. Every row is already on
+       screen, so "Instructors" hides three people she can see and a search
+       over six names she knows by heart is a control whose answer is always
+       the whole table. With the filters gone, "6 of 6 people" has nothing to
+       count against, so the toolbar goes with them and the table starts
+       under the header. The empty state goes too — an unfiltered list of the
+       staff cannot come back empty
+     - "Open timesheet" on the record. It was a header action that said
+       "Prototype — no timesheet in this build", sitting beside, and
+       competing with, the one thing the record is for. The record now has a
+       single header action, so the primary is unmissable. The hours are on
+       the list, and that is where Export timesheet takes them from
+     - the arithmetic lesson under the timetable: "A class that runs Monday
+       to Friday is five sessions, which is why 5 classes come to 9
+       sessions." Every row already prints its own session count and the stat
+       above prints the total. She can add up
+     - the counting footnotes under Lesson plans and Tutorials — "1 of these
+       names a class not on their timetable" — which counted a mark that is
+       printed in clay on the row two inches above. The mark stays, because
+       it says something true that nothing else says; the tally of it was a
+       number she cannot act on
+     - the stat strip on a record that has nothing to put in it. Theo has not
+       accepted his invitation, so "Sessions a week 0 · Hours this week 0.0 ·
+       On the clock: Invitation sent" was three ways of saying "has not
+       started", with an account state filed under a clock heading. His
+       record leads with the invitation and the one button that moves it
+     - "Sessions a week" on the front desk, the administrator and the owner,
+       and the empty "Classes this week" card underneath it. None of the
+       three teaches; a nought and an empty card are not facts about them
+     - the owner's three em dashes. Hours, rate and clock status are not
+       tracked for her, which is said once, in the Access card, rather than
+       three times as placeholder tiles
+     - the branch that decided whether the Access card was dealt into the two
+       columns or given a band of its own. Access appears on every record,
+       so it is simply dealt with the rest
 
-   Fixed after the final sweep:
-     - the timetable footnote claimed an instructor's lesson plans follow the
-       classes assigned to them, and two of Lauren's own rows disprove it: a
-       draft plan and a filmed tutorial both name a Wed 4:30pm class she does
-       not teach, and which no one teaches. The claim is gone. In its place,
-       any plan or tutorial naming a day and a time the person does not teach
-       is marked on the row and counted in that card's footnote. Nothing is
-       hidden and nothing is invented — the row still reads as Grove.data
-       writes it, with the mismatch said out loud.
-     - Supply requests was half empty: two short rows stretched to match the
-       taller column beside them, which left the footnote stranded at the foot
-       of the card. The two columns now have the Access card to deal with,
-       which is the short card they needed to finish level. It keeps a band of
-       its own only on a record where dealing it in would unbalance them.
+   Consequences made legible
+     - Revoke access is the one control here that removes a person, and she
+       has nobody to undo it for her. It now names what stays behind: the
+       classes that keep the revoked person's name on them and will have no
+       teacher who can sign in until she moves them. The count is read off
+       Grove.data, so it cannot go stale
+     - the owner's own record does not offer to revoke the account she is
+       signed in with
+     - Export timesheet says what it sent — the hours and the head count,
+       both summed from the rows on screen
 
-   Left alone on purpose:
+   Kept deliberately
+     - the table. A list of six people with hours and a rate belongs in a
+       table, not in six friendly cards
+     - the clock column, and "Invitation sent" inside it, exactly as
+       Grove.data writes it. The vocabulary is muddled — see the data note
+       below — but a screen does not get to rewrite a record's status
+     - no sticky action bar. That pattern belongs to a screen whose whole
+       purpose is to complete one action; both of these exist to be read, and
+       their actions live in the header where the owner's other list screens
+       put them. ui.choice({size:'lg'}) likewise stays in the parent portal:
+       this is a woman at a desk with a keyboard
      - the Private programme dot is blue because --prog-private is blue in
-       css/tokens.css. A screen may not hard-code a colour, and the same class
-       is drawn with the same dot on Classes, the Dashboard and Today, so the
-       fix belongs to the token rather than to this file. */
+       css/tokens.css. A screen may not hard-code a colour, and the same
+       class draws the same dot on Classes, the Dashboard and Today, so the
+       fix belongs to the token rather than to this file
+
+   What Grove.data does not carry, and this file therefore does not claim
+     - no way to reach anyone. A staff record holds no phone number, no
+       email and no emergency contact, so the record of a person says
+       nothing about how to contact her
+     - no record of who has done which training. TRAINING lists the allergy
+       and EpiPen procedure but nothing ties a document to a person who has
+       read it, so a record cannot say whether this instructor is cleared
+     - a class names its teacher by matching the string CLASSES.staff against
+       STAFF.name. Rename anyone in one place and their whole timetable
+       silently empties */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -68,14 +94,8 @@
 
   /* The data carries the tone on each row; this is the only place it is read. */
   var PILL_KIND = { ok: 'ok', neutral: null, warn: 'warn' };
-  var STAT_TONE = { ok: 'grove', neutral: null, warn: 'plum' };
   /* The same mapping Messages uses, so a post reads the same on both screens. */
   var ANN_KIND = { 'Pinned': 'amber', 'Live': 'ok', 'Scheduled': null };
-
-  var F_ALL = 'All';
-  var F_TEACH = 'Instructors';
-  var F_CLOCK = 'On the clock';
-  var F_INVITED = 'Invitation pending';
 
   /* ---- derivations --------------------------------------------------------
      Every number on both screens is counted off the rows being shown, so the
@@ -107,6 +127,27 @@
     return n;
   }
   function sessionLabel(n) { return n + (n === 1 ? ' session' : ' sessions'); }
+  function classLabel(n) { return n + (n === 1 ? ' class' : ' classes'); }
+
+  /* Whether this person's job involves a timetable at all. The front desk,
+     the administrator and the owner hold no classes and are not waiting to
+     be given any, so their records do not carry an empty one. */
+  function teaches(s) {
+    return s.role === 'Instructor' || assigned(s).length > 0;
+  }
+
+  /* What Export timesheet is actually sending: the hours printed in the
+     table, and the people who worked them. Summed from the rows, so an edit
+     to js/data.js moves the button's confirmation and the table's footnote
+     together. */
+  function payroll() {
+    var hours = 0, people = 0;
+    D.STAFF.forEach(function (s) {
+      var n = s.hrs === '—' ? 0 : parseFloat(s.hrs);
+      if (n > 0) { hours += n; people += 1; }
+    });
+    return { hours: hours.toFixed(1), people: people };
+  }
 
   /* A lesson plan and a tutorial each name the class they belong to as free
      text rather than by id. Where that text carries a day and a start time it
@@ -141,13 +182,10 @@
       : '';
   }
 
-  /* Counted off the rows the card is showing, never written down. */
-  function offCount(s, list, key) {
-    return list.filter(function (r) { return offTimetable(s, r[key]); }).length;
-  }
-  function offNote(n, why) {
-    return n + ' of these ' + (n === 1 ? 'names a class' : 'name classes') +
-      ' not on their timetable. ' + why;
+  /* Whether the card needs to explain the mark at all — not how many rows
+     carry it. The rows say that themselves. */
+  function offAny(s, list, key) {
+    return list.filter(function (r) { return offTimetable(s, r[key]); }).length > 0;
   }
 
   function prog(c) {
@@ -156,12 +194,6 @@
   function place(c) {
     return prog(c).short + ' · ' + c.room + (c.band === '—' ? '' : ' · ages ' + c.band);
   }
-
-  /* Five of the six people record hours, a rate and a clock status. The owner
-     records none of the three, and three em dashes in a row read as an
-     unfinished record rather than as "not applicable" — so say it in words. */
-  function hoursText(s) { return s.hrs === '—' ? 'Not tracked' : s.hrs + ' hrs'; }
-  function statusText(s) { return s.status === '—' ? 'Not clocked in' : s.status; }
 
   function muted(t) { return '<span class="mute">' + esc(t) + '</span>'; }
 
@@ -193,22 +225,22 @@
     eyebrow: 'who teaches what',
     title: 'Staff',
     sub: 'The team, their assignments and their hours.',
-    actions: [
-      { label: 'Export timesheet', msg: 'Timesheet exported' },
-      { label: 'Invite a teacher', kind: 'primary', msg: 'Invitation sent' }
-    ],
+
+    /* The confirmation names what went out, rather than saying that
+       something did. */
+    actions: function () {
+      var pay = payroll();
+      return [
+        {
+          label: 'Export timesheet',
+          msg: 'Timesheet exported — ' + pay.hours + ' hours, ' + pay.people + ' people'
+        },
+        { label: 'Invite a teacher', kind: 'primary', msg: 'Invitation sent' }
+      ];
+    },
 
     body: function () {
-      var q = Grove.query('staff');
-      var f = Grove.filter('staff', F_ALL);
-
-      var rows = D.STAFF.filter(function (s) {
-        if (!Grove.match(q, s.name, s.role, s.status, s.rate)) return false;
-        if (f === F_TEACH) return s.role === 'Instructor';
-        if (f === F_CLOCK) return s.status === 'Clocked in';
-        if (f === F_INVITED) return s.status === 'Invitation sent';
-        return true;
-      });
+      var pay = payroll();
 
       var table = ui.table(
         [
@@ -219,7 +251,7 @@
           'Rate',
           { label: 'Status', shrink: true }
         ],
-        rows.map(function (s) {
+        D.STAFF.map(function (s) {
           return {
             to: 'staffRecord', id: s.id,
             cells: [
@@ -231,17 +263,14 @@
               statusCell(s)
             ]
           };
-        }),
-        { emptyTitle: 'Nobody matches', emptyText: 'Clear the search or choose a different filter.' }
+        })
       );
 
-      return ui.toolbar({
-        search: { key: 'staff', placeholder: 'Search staff…' },
-        filters: { key: 'staff', items: [F_ALL, F_TEACH, F_CLOCK, F_INVITED] },
-        count: rows.length + ' of ' + D.STAFF.length + ' people'
-      }) + ui.card({
+      return ui.card({
         flush: true,
-        note: 'Sessions are counted off the timetable: a class that runs Monday to Friday is five, and a party or a pop-up is a single date rather than a weekly commitment.'
+        note: pay.hours + ' hours this week across ' + pay.people +
+          ' people, which is what Export timesheet sends. A class that runs Monday to Friday ' +
+          'counts as five sessions; a party or a pop-up is a single date rather than a weekly commitment.'
       }, table);
     }
   });
@@ -258,7 +287,6 @@
       return s.rate === '—' ? s.role : s.role + ' · ' + s.rate;
     },
     actions: [
-      { label: 'Open timesheet', msg: 'Prototype — no timesheet in this build' },
       { label: 'Assign a class', kind: 'primary', to: 'classes' }
     ],
 
@@ -266,7 +294,6 @@
       var s = person(ctx);
       var mine = timetableOf(s);
       var events = oneOffsOf(s);
-      var sessions = sessionsAWeek(s);
       var invited = s.status === 'Invitation sent';
       var cards = [];
 
@@ -277,47 +304,51 @@
         if (/^clocked in/i.test(a.what)) clockIn = a.at; else log.push(a);
       });
 
-      var stats = ui.statbar([
-        {
+      /* Only the figures this person actually has. A tile reading "0" or
+         "not tracked" is a placeholder, not a fact. */
+      var tiles = [];
+      if (teaches(s)) {
+        tiles.push({
           label: 'Sessions a week',
-          value: String(sessions),
-          sub: mine.length
-            ? 'across ' + mine.length + (mine.length === 1 ? ' class' : ' classes')
-            : 'nothing assigned'
-        },
-        { label: 'Hours this week', value: hoursText(s) },
-        {
+          value: String(sessionsAWeek(s)),
+          sub: mine.length ? 'across ' + classLabel(mine.length) : 'nothing assigned'
+        });
+      }
+      if (s.hrs !== '—') tiles.push({ label: 'Hours this week', value: s.hrs + ' hrs' });
+      if (s.status !== '—') {
+        tiles.push({
           label: 'On the clock',
-          value: statusText(s),
-          tone: STAT_TONE[s.kind],
+          value: s.status,
+          tone: s.kind === 'ok' ? 'grove' : null,
           sub: clockIn ? 'in at ' + clockIn : null
-        }
-      ]);
+        });
+      }
+      var stats = (invited || !tiles.length) ? '' : ui.statbar(tiles);
 
-      cards.push({
-        w: 2 + (mine.length || 2),
-        html: ui.card({
-          title: 'Classes this week',
-          flush: true,
-          note: mine.length
-            ? 'A class that runs Monday to Friday is five sessions, which is why ' +
-              mine.length + (mine.length === 1 ? ' class comes' : ' classes come') +
-              ' to ' + sessionLabel(sessions) + '. An instructor sees only the classes assigned here — their Today, roster and attendance all follow this list.'
-            : 'Assign a class and it appears here, and in their Today, roster and attendance.'
-        }, mine.length
-          ? ui.rows(mine.map(function (c) {
-              return {
-                lead: '<span class="mute">' + esc(c.day) + '</span>',
-                title: esc(c.time),
-                sub: ui.dot(prog(c).color) + ' ' + esc(place(c)),
-                end: muted(sessionLabel(sessionsIn(c))),
-                to: 'classRecord', id: c.id
-              };
-            }))
-          : ui.empty('No classes assigned', invited
-              ? 'Nothing is assigned until they accept the invitation.'
-              : 'Nothing on the timetable for them this week.'))
-      });
+      if (teaches(s)) {
+        cards.push({
+          w: 2 + (mine.length || 2),
+          html: ui.card({
+            title: 'Classes this week',
+            flush: true,
+            note: mine.length
+              ? 'What is assigned here is what they see — their Today, their roster and their attendance all follow this list.'
+              : (invited ? null : 'Assign a class and it appears here, and in their Today, roster and attendance.')
+          }, mine.length
+            ? ui.rows(mine.map(function (c) {
+                return {
+                  lead: '<span class="mute">' + esc(c.day) + '</span>',
+                  title: esc(c.time),
+                  sub: ui.dot(prog(c).color) + ' ' + esc(place(c)),
+                  end: muted(sessionLabel(sessionsIn(c))),
+                  to: 'classRecord', id: c.id
+                };
+              }))
+            : ui.empty('No classes assigned', invited
+                ? 'Nothing is assigned until they accept the invitation.'
+                : 'Nothing on the timetable for them this week.'))
+        });
+      }
 
       if (events.length) {
         cards.push({
@@ -325,7 +356,7 @@
           html: ui.card({
             title: 'One-off dates',
             flush: true,
-            note: 'A party or a pop-up is booked for the date it happens, so it sits outside the weekly count above.'
+            note: 'A party or a pop-up is booked for the date it happens, so it sits outside the weekly count.'
           }, ui.rows(events.map(function (c) {
             return {
               lead: '<span class="mute">' + esc(c.day) + '</span>',
@@ -340,14 +371,15 @@
 
       var plans = D.LESSON_PLANS.filter(function (p) { return p.teacher === s.name; });
       if (plans.length) {
-        var planOff = offCount(s, plans, 'cls');
+        var planOff = offAny(s, plans, 'cls');
         cards.push({
           w: (planOff ? 2 : 1) + plans.length,
           html: ui.card({
             title: 'Lesson plans',
             flush: true,
-            note: planOff ? offNote(planOff, 'A plan is written against the class it is for, ' +
-              'which is not always a class they are running now.') : null
+            note: planOff
+              ? 'A plan stays with the class it was written for, which is not always a class they run now.'
+              : null
           }, ui.rows(plans.map(function (p) {
             return {
               title: esc(p.lesson),
@@ -361,14 +393,15 @@
 
       var tutorials = D.TUTORIALS.filter(function (t) { return t.by === s.name; });
       if (tutorials.length) {
-        var tutOff = offCount(s, tutorials, 'linked');
+        var tutOff = offAny(s, tutorials, 'linked');
         cards.push({
           w: (tutOff ? 2 : 1) + tutorials.length,
           html: ui.card({
             title: 'Tutorials they filmed',
             flush: true,
-            note: tutOff ? offNote(tutOff, 'A tutorial stays linked to the class it was filmed for, ' +
-              'long after that class has moved on.') : null
+            note: tutOff
+              ? 'A tutorial stays linked to the class it was filmed for, long after that class has moved on.'
+              : null
           }, ui.rows(tutorials.map(function (t) {
             return {
               title: esc(t.name),
@@ -435,45 +468,67 @@
         });
       }
 
-      var access = ui.card({ title: 'Access' }, invited
-        ? h`<div class="spread">
-            <p class="hint">The invitation has gone out but they have not signed in yet. Nothing is assigned to them, and no hours are counted, until they do.</p>
-            ${raw(ui.btn({ label: 'Resend the invitation', msg: 'Invitation resent to ' + s.name }))}
-          </div>`
-        : h`<div class="spread">
-            <p class="hint">Revoking takes their sign-in away straight away. Their hours, lesson plans and attendance history stay on file.</p>
-            ${raw(ui.btn({ label: 'Revoke access', kind: 'danger', msg: 'Prototype — nothing was revoked' }))}
-          </div>`);
+      /* An invitation that has not been accepted is the whole state of that
+         record and the only thing to do about it, so it leads the page rather
+         than waiting at the foot in an Access card. */
+      var lead = invited
+        ? ui.notice({
+            kind: 'warn',
+            title: 'Invitation sent, not yet accepted',
+            text: 'They cannot sign in. Nothing is assigned to them and no hours are counted until they accept.',
+            action: { label: 'Resend the invitation', msg: 'Invitation resent to ' + s.name }
+          })
+        : '';
 
-      /* Access is a short card and every record has one. Dealt in with the
-         rest it is usually the card that lets the two columns finish level;
-         on a record with little else it would unbalance them instead, and
-         then it keeps a full-width band of its own. */
-      var apart = deal(cards);
-      var together = deal(cards.concat([{ w: 2, html: access }]));
-      if (together.gap <= apart.gap) {
-        return '<div class="section">' + stats + columns(together) + '</div>';
-      }
-      return '<div class="section">' + stats + columns(apart) + '</div>' +
-        '<div class="section">' + access + '</div>';
+      if (!invited) cards.push({ w: 2, html: access(s, ctx) });
+
+      var main = cards.length
+        ? '<div class="section">' + stats + columns(deal(cards)) + '</div>'
+        : '';
+      return lead + main;
     }
   });
 
+  /* Revoking is the one thing on this screen that removes a person, and there
+     is nobody to undo it for her, so it says what it leaves behind: the
+     classes that keep the revoked person's name on them and will have nobody
+     who can sign in to teach them. The count is read off Grove.data. */
+  function access(s, ctx) {
+    if (ctx.persona && ctx.persona.name === s.name) {
+      var yours = 'This is the account you are signed in with, so its sign-in cannot be revoked here.';
+      if (s.hrs === '—') yours += ' It records no hours and no rate.';
+      return ui.card({ title: 'Access' }, h`<p class="hint">${yours}</p>`);
+    }
+
+    var held = assigned(s).length;
+    var what = 'Revoking takes their sign-in away straight away. ';
+    if (held) {
+      what += 'The ' + classLabel(held) + ' assigned to them keep their name, so move ' +
+        (held === 1 ? 'it' : 'those') + ' to somebody else first or ' +
+        (held === 1 ? 'it will have' : 'they will have') + ' no teacher who can sign in. ';
+    }
+    what += 'Their hours, lesson plans and attendance history stay on file.';
+
+    return ui.card({ title: 'Access' }, h`<div class="spread">
+      <p class="hint">${what}</p>
+      ${raw(ui.btn({ label: 'Revoke access', kind: 'danger', msg: 'Prototype — nothing was revoked' }))}
+    </div>`);
+  }
+
   /* Lay the record's cards into two columns that end at roughly the same
-     place. The timetable leads the left column; the rest are dealt heaviest
+     place. The first card leads the left column; the rest are dealt heaviest
      first to whichever column is shorter, so a two-row card is never parked
      beside a tall one with a third of a card of white underneath it.
 
      A card's weight is its head, its rows and its footnote — the parts that
-     take up height — which is why a card gains weight when the footnote below
-     appears. `gap` is how far apart the two columns finish; a lone card takes
-     the full width and is stretched by nothing, so its gap is nought. */
+     take up height — which is why a card gains weight when the footnote
+     below appears. */
   function deal(cards) {
     var a = [cards[0].html], b = [], wa = cards[0].w, wb = 0;
     cards.slice(1).sort(function (x, y) { return y.w - x.w; }).forEach(function (c) {
       if (wb < wa) { b.push(c.html); wb += c.w; } else { a.push(c.html); wa += c.w; }
     });
-    return { a: a, b: b, gap: b.length ? Math.abs(wa - wb) : 0 };
+    return { a: a, b: b };
   }
 
   function columns(d) {

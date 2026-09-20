@@ -1,109 +1,112 @@
 /* Studio → My classes, and the register.
 
-   Simplifications against the spec:
-     - no toolbar. Lauren teaches five classes; a search box, a tab rail and a
-       result count over five cards is furniture, not navigation. The cards are
-       ordered with today's classes first, which is the only sort a teacher
-       wants
-     - the staffClass overlay is gone. Its four sections held the when, the
-       room, the fill, the roster size, the allergy count and two lines of
-       "ask the office". The first four are already on the class card, the
-       allergy count is now a clay pill in the card foot and again at the top
-       of the register, and the two lines are one notice at the foot of the
-       screen. Every card goes where the overlay's primary button went —
-       straight to the register
-     - three marks (Present, Absent, Late) are two. A child who arrives late is
-       in the room, and nothing downstream — billing, make-up credits, the
-       family portal — reads the difference
-     - the avatar circles are dropped. There is no avatar in the component set
-       outside the rail, and a coloured initial carries nothing the name does
-       not
+   WHO THESE TWO SCREENS ARE FOR
+   Lauren Ortiz teaches. She reads this on a tablet propped against a shelf or
+   on a phone in her apron, with clay on her hands and about three minutes
+   before the doors open. She needs, in this order: who in this room has an
+   allergy, the register, what she is teaching, and now and then her hours.
+   Enrolment against capacity, fill rate, waiting lists and a child's
+   attendance percentage are the studio's numbers, and they belong on the
+   owner's screens. This pass takes them off hers.
 
-   Changes from the visual review:
-     - the register said "on the roster 6" under a class the whole app reports
-       as 18 of 20 enrolled. Nothing on this screen now states a total it has
-       not derived: the strip carries the class fact (18 of 20, from
-       Grove.data.CLASSES) beside the length of the list actually shown ("6 of
-       18"), "marked" counts that same list, and the card says in words why the
-       two differ. It is the sentence Console → Classes already uses about the
-       same gap, so the two screens tell one story
-     - which children are on a class roster is now worked out with the same
-       rules Console → Classes uses, so a child cannot appear on a register
-       here and be missing from the same class's roster there. Which children
-       hold a camp week 4 record is still the spec's list, because the dataset
-       links no child to a camp class, but which room takes each of them is
-       derived, not named
-     - who "my classes" belongs to is read from ctx.persona, never from a
-       literal name, so this screen and Today can never disagree about whose
-       classes these are
-     - the footer button was quiet, so its label floated 13px inside the card's
-       content edge while every row label above it sat flush. It is an ordinary
-       small button now: its border starts where the card's content starts
-     - a one-to-one lesson is no longer dressed as a warning. "1 of 1" was clay
-       with a full amber bar, the same treatment as a genuinely over-subscribed
-       class. A private lesson reads "one to one", carries no capacity bar, and
-       nothing on it is red
-     - the two after-school cards were told apart only by the small grey time
-       in their headers. The room is in the header now and the age band leads
-       the card, so the two differ on their first line and their title
-     - the fifth class card sat alone in the last row. The "ask the office"
-       notice is the sixth cell of the same grid, so the grid closes out
-     - the camp register listed all six of the week's children under a room
-       whose own card calls it "Ages 5–7", and three of them were 8 or older.
-       Camp runs two rooms at the same hour, so the room a child is in is now
-       settled by the band Grove.data puts on the room, and the same enrollment
-       test the other rosters use is applied to camp as well — a child the
-       dataset still reads as "Not yet enrolled" was standing in Studio 1. The
-       card and the register can no longer disagree about who the class is for
-     - the same two allergy facts were stated three times: a banner, a stat
-       cell and a pill on the child's row. The pill also made the one row
-       without a flag 6px shorter than its neighbours, so the list's rhythm
-       broke on Noah Rivera. The facts are stated once, by name, in the clay
-       banner at the top; the stat cell and the row pills are gone and every
-       register row is now the same height
+   Cut in this pass
+     - the five stat tiles above the register — Enrolled / On the register /
+       Marked / Present / Absent. Five tiles of telemetry stood above a list
+       of two children. Marked and unmarked are now a line in the save bar,
+       counted from the rows; enrolled against capacity is the owner's number
+       and is gone
+     - every capacity figure on My classes: "18 of 20", "12 of 12 · 3
+       waiting", "1 place left", "Full", and the meter under each one. A
+       teacher taking a register does not act on any of them
+     - the per-child attendance percentage on the register row. It is a
+       judgement about the child, not a fact about this hour
+     - the five class cards. A card with a three-row key/value table and a
+       progress bar, five times over, is a filing cabinet. Time is what
+       organises a teacher's week, so the classes are now two lists: what is
+       on today, then the rest of the week
+     - the family name on the register row, to keep the row to one line of
+       state. It is on the child's own record, one tap away
 
-   Roster membership: which children hold a camp week 4 record is the spec's,
-   by child id; which camp room each one sits in is not, because a camp room
-   takes the children of its own week who are enrolled and in the age band
-   Grove.data gives that room. Everything shown about each child — name, age,
-   family, safety flag, attendance — is read from Grove.data.STUDENTS. Every
-   other class works its roster out from the dataset the way Console → Classes
-   does: the child's recorded class has to match this class's day and then its
-   room, its start time or its age band. */
+   Changes this pass
+     - safety is the first thing on both screens, in clay, by name, with the
+       condition spelled out. On My classes it also says which of her hours
+       each child is in, grouped so a child in two of her classes is named
+       once
+     - "Mark all present" has come out of the page header and sits on the
+       register itself as "Everyone is here", because the common case is that
+       everybody came except one, and because a header button is the wrong
+       place for the thing she taps first
+     - Save is in a bar pinned to the bottom of the viewport with a line
+       beside it saying how many children are still unmarked — the pattern
+       the parent pass put on any screen whose whole purpose is one action
+     - the Present and Absent buttons are full size rather than small, and
+       each row says in words where the child stands: here, away today, or
+       not marked yet
+     - the page is called The register rather than Attendance, because that is
+       what she is holding, and the card head carries the date she is marking.
+       A class opened out of its own day says so rather than quietly writing
+       Tuesday against Wednesday's room
+     - an After-School class is titled by its programme name. The record's
+       name, "1 hour · After-School", is a duration, and the two Monday
+       classes were told apart only by small grey time text. The day is now
+       the headline of the time chip and the age band is on the title, so no
+       two rows read alike
+
+   Every figure is derived from the rows on screen or read from Grove.data;
+   nothing is written down. Whose classes these are comes from ctx.persona, so
+   this screen and Today can never disagree about whose week this is.
+
+   What is the spec's, not the dataset's
+     - which children hold a camp week 4 record (by child id). Nothing in
+       Grove.data joins a child to a class. Which camp room takes each of them
+       is still derived from the age band on the room, so a child cannot
+       appear on a register the class is not for.
+   Everything else — names, ages, safety flags, rooms, hours, lesson plans —
+   is read from Grove.data. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
   var TODAY_DAY = 'Tue';                    /* Grove.data.today — Tuesday 28 July 2026 */
+  var TODAY_DATE = '28 Jul 2026';
   var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  /* The children the prototype holds a camp week 4 record for, by child id —
-     the dataset links no child to a class id. Which of them a given camp room
-     takes is worked out below from the band on the room, never written down
-     here, so a child cannot land on a register the class card says they are
-     too old for. */
+  /* The children the prototype holds a camp week 4 record for, by child id.
+     The same list Today uses, for the same reason: nothing in the dataset
+     joins a child to a class. Which camp room takes each of them is worked
+     out below from the band on the room, never written down here. */
   var CAMP_WEEK = 'week 4';
   var CAMP_CHILDREN = ['mia', 'emma', 'noah', 'sophia', 'iker', 'zara'];
 
-  /* ---- helpers ------------------------------------------------------------ */
+  /* ---- words ----------------------------------------------------------------
+     A sentence reads faster than a tile. "Three children you teach have an
+     allergy" beats a stat cell reading 3. */
 
-  /* Whose portal this is. Never a literal — the shell hands the persona to
-     every screen and the rail shows the same person. */
+  var WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'];
+  function words(n) { return WORDS[n] || String(n); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  function sentenceList(items) {
+    if (items.length < 2) return items.join('');
+    return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+  }
+
+  /* ---- whose portal this is -------------------------------------------------
+     Never a literal. The shell hands the persona to every screen and the rail
+     shows the same person. */
+
   function teacher(ctx) {
     var who = (ctx && ctx.persona) || Grove.persona('studio');
     return (who && who.name) || '';
   }
 
-  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
-
-  /* "6 of 18" when the list is short of the enrollment, "18" when it is not. */
-  function countOf(shown, total) {
-    return shown === total ? String(shown) : shown + ' of ' + total;
-  }
+  /* ---- time ------------------------------------------------------------------ */
 
   function dayTokens(c) { return String(c.day).split(/[^A-Za-z]+/).filter(Boolean); }
+  function spansWeek(c) { return dayTokens(c).length > 1; }
 
-  /* Handles 'Mon' and ranges like 'Mon–Fri'. */
+  /* Handles 'Tue' and ranges like 'Mon–Fri'. Same rule as Today, so the two
+     screens agree about what runs when. */
   function runsOn(c, day) {
     var t = dayTokens(c);
     if (!t.length) return false;
@@ -111,6 +114,78 @@
     var from = WEEK.indexOf(t[0]), to = WEEK.indexOf(t[t.length - 1]), i = WEEK.indexOf(day);
     if (from === -1 || to === -1) return false;
     return i >= from && i <= to;
+  }
+
+  /* '10:00am–1:00pm' → '10:00am'. '1:00–2:00pm' → '1:00pm'. Only the end of a
+     range carries the meridiem in this dataset. */
+  function startOf(range) {
+    var parts = String(range).split('–');
+    var m = /(am|pm)/.exec(parts[0]) || /(am|pm)/.exec(parts[1] || '');
+    return parts[0].replace(/(am|pm)/, '') + (m ? m[1] : '');
+  }
+
+  /* '10:00am' → 1000, '1:00pm' → 1300, so a day reads in the order she teaches
+     it rather than alphabetically. */
+  function minutes(range) {
+    var m = /^(\d+):(\d+)(am|pm)$/.exec(startOf(range));
+    if (!m) return 0;
+    var hour = parseInt(m[1], 10) % 12;
+    if (m[3] === 'pm') hour += 12;
+    return hour * 60 + parseInt(m[2], 10);
+  }
+
+  /* The time chip wants a headline and a small line under it. Today's classes
+     lead with the clock; the rest of the week leads with the day, because that
+     is the thing she is looking for. */
+  function clockChip(range) {
+    var s = startOf(range);
+    var m = /(am|pm)$/.exec(s);
+    return (m ? s.slice(0, -2) : s) + ' ' + (m ? m[1].toUpperCase() : '');
+  }
+  function dayChip(c) { return dayTokens(c)[0] + ' ' + startOf(c.time); }
+
+  function byTime(a, b) { return minutes(a.time) - minutes(b.time); }
+  function byDayThenTime(a, b) {
+    var d = WEEK.indexOf(dayTokens(a)[0]) - WEEK.indexOf(dayTokens(b)[0]);
+    return d || byTime(a, b);
+  }
+
+  /* An After-School record is named by its length ("1 hour · After-School"),
+     which is a duration and not a class name, so those rows carry the
+     programme name instead. Same rule as Today and the family schedule. */
+  function className(c) {
+    return c.prog === 'as' ? D.program(c.prog).name : c.name;
+  }
+  function oneToOne(c) { return c.cap <= 1 || c.band === '—'; }
+
+  function classOf(id) {
+    return D.CLASSES.filter(function (c) { return c.id === id; })[0];
+  }
+
+  /* The signed-in teacher's classes. */
+  function mine(ctx) {
+    var who = teacher(ctx);
+    return D.CLASSES.filter(function (c) { return c.staff === who; });
+  }
+  function myToday(ctx) {
+    return mine(ctx).filter(function (c) { return runsOn(c, TODAY_DAY); }).sort(byTime);
+  }
+  function myRest(ctx) {
+    return mine(ctx).filter(function (c) { return !runsOn(c, TODAY_DAY); }).sort(byDayThenTime);
+  }
+
+  /* ---- who is in the room ----------------------------------------------------
+     A child's placement is free text on their own record ("Mon 3:15pm · Studio
+     2", "Camp week 4 · Clay Room", "Mon, Wed, Thu"), so membership is matched
+     on the signals that string carries. Same rules as Today and Console →
+     Classes, so a child is on the same rosters in every portal. */
+
+  function enrolled(s) {
+    return s.cls.indexOf('Waitlisted') === -1 && s.cls.indexOf('Not yet enrolled') === -1;
+  }
+  function weekOf(name) {
+    var m = /week \d+/.exec(String(name).toLowerCase());
+    return m ? m[0] : null;
   }
 
   /* '2:15–3:15pm' → '2:15pm', the form a child's record writes. */
@@ -122,38 +197,6 @@
     return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
   }
 
-  function weekOf(name) {
-    var m = /week \d+/.exec(String(name).toLowerCase());
-    return m ? m[0] : null;
-  }
-
-  function classOf(id) {
-    return D.CLASSES.filter(function (c) { return c.id === id; })[0];
-  }
-
-  function oneToOne(c) { return c.cap <= 1; }
-
-  /* The signed-in teacher's classes, the ones running today first. */
-  function mine(ctx) {
-    var who = teacher(ctx);
-    return D.CLASSES.filter(function (c) { return c.staff === who; })
-      .sort(function (a, b) {
-        var ra = runsOn(a, TODAY_DAY) ? 0 : 1;
-        var rb = runsOn(b, TODAY_DAY) ? 0 : 1;
-        if (ra !== rb) return ra - rb;
-        return WEEK.indexOf(dayTokens(a)[0]) - WEEK.indexOf(dayTokens(b)[0]);
-      });
-  }
-
-  function enrolled(s) {
-    return s.cls.indexOf('Waitlisted') === -1 && s.cls.indexOf('Not yet enrolled') === -1;
-  }
-
-  /* The dataset writes a child's placement as free text ("Mon 3:15pm · Studio
-     2", "Camp week 4 · Clay Room", "Mon, Wed, Thu"), so membership is matched
-     on the signals those strings carry. Same rules as Console → Classes, so a
-     child is on the same rosters in both portals. Camp is the exception and is
-     settled by the band rule below. */
   function onRoster(c, s) {
     if (!enrolled(s)) return false;
 
@@ -161,7 +204,6 @@
     if (String(c.name).toLowerCase().indexOf(String(s.name).toLowerCase()) !== -1) return true;
 
     var roomHit = text.indexOf(String(c.room).toLowerCase()) !== -1;
-
     var dayHit = dayTokens(c).filter(function (d) {
       return text.indexOf(d.toLowerCase()) !== -1;
     }).length > 0;
@@ -177,8 +219,7 @@
   /* Camp runs Mon–Fri in two rooms at once, so a weekday proves nothing about
      which room a child is in — the age band does. A camp room takes the
      children of its own week who are enrolled and in the band the room
-     advertises. Enrollment is the same test every other roster here applies:
-     a child the dataset has not enrolled yet is nobody's register. */
+     advertises. */
   function campRoster(c) {
     if (weekOf(c.name) !== CAMP_WEEK) return [];
     return CAMP_CHILDREN
@@ -191,18 +232,38 @@
     return D.STUDENTS.filter(function (s) { return onRoster(c, s); });
   }
 
-  function allergies(list) {
-    return list.filter(function (s) { return s.flagKind === 'bad'; });
-  }
-  function worthKnowing(list) {
-    return list.filter(function (s) { return s.flagKind === 'warn'; });
+  function flagged(list, kind) {
+    return list.filter(function (s) { return s.flagKind === kind; });
   }
 
-  /* ---- marks --------------------------------------------------------------
-     Held in Grove.state so the register survives a redraw. */
+  /* ---- the office's published work -------------------------------------------
+     She reads a plan, she cannot write one. A plan is matched to a room on a
+     date, which is as close as the dataset allows. */
+
+  function planFor(ctx, c) {
+    var who = teacher(ctx);
+    return D.LESSON_PLANS.filter(function (p) {
+      return p.date === TODAY_DATE && p.teacher === who && p.room === c.room;
+    })[0];
+  }
+
+  /* ---- marks ------------------------------------------------------------------
+     Held in Grove.state under the key Today reads, so once she has taken a
+     register Today stops saying it has not been taken. */
 
   function markKey(cid, sid) { return 'att-' + cid + '-' + sid; }
   function markOf(cid, sid) { return Grove.filter(markKey(cid, sid), ''); }
+
+  function tally(c, people) {
+    var t = { present: 0, absent: 0, toMark: 0 };
+    people.forEach(function (s) {
+      var m = markOf(c.id, s.id);
+      if (m === 'Present') t.present += 1;
+      else if (m === 'Absent') t.absent += 1;
+      else t.toMark += 1;
+    });
+    return t;
+  }
 
   Grove.on('sMark', function (d) { Grove.setFilter(markKey(d.cid, d.id), d.mark); });
 
@@ -216,68 +277,151 @@
     Grove.toast('All marked present');
   });
 
-  /* ---- my classes ---------------------------------------------------------- */
+  /* Counted from the marks against the list shown. Never a literal. */
+  function registerState(c) {
+    var people = roster(c);
+    if (!people.length) return '';
+    var t = tally(c, people);
+    if (t.toMark === people.length) return ui.pill('Register not taken', 'amber');
+    if (t.toMark) return ui.pill((people.length - t.toMark) + ' of ' + people.length + ' marked', 'amber');
+    return ui.pill('Register taken', 'ok');
+  }
+
+  /* ---- my classes -------------------------------------------------------------
+     Time is the organising principle: today, then the rest of the week. Every
+     row is the tap target for its own register, which is the biggest target a
+     row can be. */
 
   Grove.screen('sClasses', {
     surface: 'studio',
     crumbTitle: 'Classes',
-    eyebrow: 'yours this term',
+    eyebrow: 'your week',
     title: 'My classes',
-    sub: 'Only the classes you are assigned to. Ask an administrator if something is missing.',
-    actions: [
-      { label: 'Today', to: 'sToday' },
-      { label: 'Take the register', kind: 'primary', to: 'sAttendance' }
-    ],
+    sub: 'Today first, then the rest of the week. Tap a class to take its register. Only the classes you are assigned to — ask the office if one is missing.',
+    actions: function (ctx) {
+      var next = myToday(ctx)[0];
+      return [
+        { label: 'Today', to: 'sToday' },
+        next
+          ? { label: 'Take the register', kind: 'primary', to: 'sAttendance', id: next.id }
+          : { label: 'Take the register', kind: 'primary', to: 'sAttendance' }
+      ];
+    },
 
     body: function (ctx) {
-      var cards = mine(ctx).map(function (c) {
-        var people = roster(c);
-        var alert = allergies(people).length;
-        var solo = oneToOne(c);
-        var left = c.cap - c.en;
+      var today = myToday(ctx);
+      var rest = myRest(ctx);
+      var week = today.concat(rest);
 
-        /* A private lesson at 1 of 1 is its normal state, not a warning. */
-        var tag = runsOn(c, TODAY_DAY)
-          ? ui.pill('Today', 'ok')
-          : (solo
-              ? ui.pill('One to one', null)
-              : (left > 0 ? ui.pill(plural(left, 'place left', 'places left'), null)
-                          : ui.pill('Full', 'amber')));
+      /* Safety before anything else, in clay, by name, with the hours she will
+         be standing in front of that child. Grouped by child, so a child in
+         two of her classes is named once, and read in teaching order, so the
+         child she sees this morning is named first. */
+      var alerts = byChild(week, 'bad');
+      var watch = byChild(week, 'warn');
 
-        var facts = ui.kv([
-          ['Ages', solo || c.band === '—' ? 'One to one' : esc(c.band)],
-          ['Class', esc(c.name)],
-          {
-            k: 'Enrolled',
-            v: esc(c.en + ' of ' + c.cap + (c.wl ? ' · ' + c.wl + ' waiting' : '')),
-            tone: !solo && c.en >= c.cap ? 'clay' : null
-          }
-        ]);
+      var safety = alerts.length
+        ? ui.notice({
+            kind: 'bad',
+            title: alerts.length === 1
+              ? 'One child you teach has an allergy'
+              : words(alerts.length) + ' children you teach have an allergy',
+            text: alerts.map(saying).join(' '),
+            action: { label: 'Safety notes', to: 'sStudents' }
+          })
+        : ui.notice({
+            kind: 'ok',
+            title: 'No allergies in your classes',
+            text: 'Nothing is flagged on the children you teach. The full notes are on the students screen.',
+            action: { label: 'Safety notes', to: 'sStudents' }
+          });
 
-        return ui.card({
-          title: c.day + ' · ' + c.time + ' · ' + c.room,
-          head: tag,
-          foot: ui.btn({ label: 'Take the register', size: 'sm', to: 'sAttendance', id: c.id }) +
-            (alert ? ui.pill(plural(alert, 'allergy', 'allergies'), 'bad') : '')
-        }, h`<div class="stack stack--sm">${raw(facts)}${raw(solo ? '' : ui.meter(c.en, c.cap))}</div>`);
-      });
+      var watching = watch.length
+        ? ui.notice({
+            kind: 'warn',
+            title: 'Worth knowing before you start',
+            text: watch.map(saying).join(' ')
+          })
+        : '';
 
-      /* The last cell of the same grid, so the class cards never end on a row
-         with one card and an empty half. */
+      var onToday = today.length
+        ? ui.card({ title: 'Today', flush: true }, ui.rows(today.map(function (c) {
+            var plan = planFor(ctx, c);
+            var bits = [c.room];
+            if (spansWeek(c)) bits.push('every day this week');
+            if (plan) bits.push(plan.lesson);
+            else if (oneToOne(c)) bits.push('one to one');
+            return {
+              lead: ui.timechip(clockChip(c.time)),
+              title: ui.dot(D.program(c.prog).color) + ' ' + esc(titleOf(c)),
+              sub: esc(bits.join(' · ')),
+              end: registerState(c),
+              to: 'sAttendance',
+              id: c.id
+            };
+          })))
+        : '';
+
+      var later = ui.card({
+        title: today.length ? 'The rest of your week' : 'Your week',
+        flush: true
+      }, rest.length
+        ? ui.rows(rest.map(function (c) {
+            var bits = [c.room];
+            if (oneToOne(c)) bits.push('one to one');
+            return {
+              lead: ui.timechip(dayChip(c)),
+              title: ui.dot(D.program(c.prog).color) + ' ' + esc(titleOf(c)),
+              sub: esc(bits.join(' · ')),
+              to: 'sAttendance',
+              id: c.id
+            };
+          }))
+        : ui.empty('Nothing else this week', 'Everything you are assigned to runs today.'));
+
+      /* The constraint, stated where she would go looking for a way around it. */
       var help = ui.notice({
         title: 'Something not right with a class?',
         text: 'Missing materials go through a supply request and the office picks it up. Rosters and lesson plans are set by the office, so ask the desk rather than working around them.',
         action: { label: 'Request supplies', to: 'sSupplies' }
       });
 
-      return ui.grid(2, cards.concat([help]));
+      return h`
+        ${raw(safety)}${raw(watching)}
+        ${raw(onToday ? '<div class="section">' + onToday + '</div>' : '')}
+        <div class="section">${raw(later)}</div>
+        <div class="section">${raw(help)}</div>
+      `;
     }
   });
 
-  /* ---- the register --------------------------------------------------------- */
+  function titleOf(c) {
+    return className(c) + (c.band && c.band !== '—' && c.band !== 'All' ? ' · ages ' + c.band : '');
+  }
+
+  /* One entry per child, carrying every one of her hours that child is in, so
+     Sophia Martinez is named once and not once per class. */
+  function byChild(classes, kind) {
+    var order = [], seen = {};
+    classes.forEach(function (c) {
+      flagged(roster(c), kind).forEach(function (s) {
+        if (!seen[s.id]) { seen[s.id] = { who: s, when: [] }; order.push(seen[s.id]); }
+        seen[s.id].when.push(dayTokens(c).join('–') + ' ' + startOf(c.time));
+      });
+    });
+    return order;
+  }
+  function saying(e) {
+    return e.who.name + ' — ' + e.who.flag + ' (' + sentenceList(e.when) + ').';
+  }
+
+  /* ---- the register ------------------------------------------------------------
+     The one job of this screen. Safety, then the list, then Save in a bar
+     pinned to the bottom saying how many children are still unmarked. Nothing
+     else is on it. */
 
   function current(ctx) {
-    return classOf(ctx.params.id) || mine(ctx)[0];
+    return classOf(ctx.params.id) || myToday(ctx)[0] || mine(ctx)[0];
   }
 
   Grove.screen('sAttendance', {
@@ -285,105 +429,86 @@
     crumbs: [{ label: 'Classes', to: 'sClasses' }],
     crumbTitle: 'Attendance',
     eyebrow: 'who is in the room',
-    title: 'Attendance',
+    title: 'The register',
     sub: function (ctx) {
       var c = current(ctx);
-      return c.name + ' · ' + c.day + ' ' + c.time + ' · ' + c.room +
-        '. Mark every child present or absent, then save.';
+      return titleOf(c) + ' · ' + c.room + ' · ' + c.day + ' ' + c.time + '.';
     },
-    actions: function (ctx) {
-      return [
-        { label: 'Mark all present', act: 'sMarkAll', cid: current(ctx).id },
-        { label: 'Save attendance', kind: 'primary', msg: 'Attendance saved' }
-      ];
-    },
+    actions: [{ label: 'My classes', to: 'sClasses' }],
 
     body: function (ctx) {
       var c = current(ctx);
       var people = roster(c);
+      var t = tally(c, people);
 
-      var present = 0, absent = 0;
-      people.forEach(function (s) {
-        var m = markOf(c.id, s.id);
-        if (m === 'Present') present++;
-        else if (m === 'Absent') absent++;
-      });
-      var toMark = people.length - present - absent;
-
-      var flagged = allergies(people);
-      var watch = worthKnowing(people);
+      var alerts = flagged(people, 'bad');
+      var watch = flagged(people, 'warn');
 
       /* Safety before anything else, by name, in clay. This is the one place
-         the allergy is spelled out — the register rows below do not repeat it. */
-      var safety = flagged.length
+         the allergy is spelled out — the rows below do not repeat it. */
+      var safety = alerts.length
         ? ui.notice({
             kind: 'bad',
-            title: plural(flagged.length,
-              'child in this room has an allergy',
-              'children in this room have an allergy'),
-            text: flagged.map(function (s) { return s.name + ' — ' + s.flag; }).join('. ') + '.',
+            title: alerts.length === 1
+              ? 'One child in this room has an allergy'
+              : words(alerts.length) + ' children in this room have an allergy',
+            text: alerts.map(function (s) { return s.name + ' — ' + s.flag + '.'; }).join(' '),
             action: { label: 'Safety notes', to: 'sStudents' }
           })
-        : '';
+        : ui.notice({
+            kind: 'ok',
+            title: 'No allergies in this room',
+            text: 'Nothing is flagged on the children on this register. The full notes are on the students screen.',
+            action: { label: 'Safety notes', to: 'sStudents' }
+          });
 
       var watching = watch.length
         ? ui.notice({
             kind: 'warn',
             title: 'Worth knowing before you start',
-            text: watch.map(function (s) { return s.name + ' — ' + s.flag; }).join('. ') + '.'
+            text: watch.map(function (s) { return s.name + ' — ' + s.flag + '.'; }).join(' ')
           })
         : '';
 
-      /* Every figure here is either the class fact from Grove.data or a count
-         of the rows printed below — never a number of its own. */
-      var short = people.length < c.en;
-
-      var stats = ui.statbar([
-        {
-          label: 'Enrolled',
-          value: c.en + ' of ' + c.cap,
-          sub: oneToOne(c)
-            ? 'One to one'
-            : (c.en >= c.cap
-                ? (c.wl ? plural(c.wl, 'child waiting', 'children waiting') : 'Full')
-                : plural(c.cap - c.en, 'place free', 'places free'))
-        },
-        {
-          label: 'On the register',
-          value: countOf(people.length, c.en),
-          sub: short ? 'records on file' : 'everyone enrolled'
-        },
-        {
-          label: 'Marked',
-          value: (present + absent) + ' of ' + people.length,
-          sub: toMark ? plural(toMark, 'still to mark', 'still to mark') : 'All marked'
-        },
-        { label: 'Present', value: String(present), tone: present ? 'grove' : null, sub: 'In the room' },
-        { label: 'Absent', value: String(absent), tone: absent ? 'clay' : null, sub: 'Not in today' }
-      ]);
+      /* Said once, quietly, under the list, and derived from it rather than
+         written down. The prototype holds records for two of the eighteen. */
+      var lines = [];
+      if (!runsOn(c, TODAY_DAY)) lines.push('This class does not run today.');
+      if (people.length < c.en) {
+        lines.push('The prototype holds records for ' + people.length + ' of the ' + c.en +
+          ' children enrolled, so this list is shorter than the room.');
+      }
+      lines.push('If a child is here and not on the list, tell the office and they will add them.');
 
       var register = ui.card({
-        title: 'The register',
+        /* The card head carries the date being marked, so the page title can
+           say what the screen is and the card can say which sitting it is. */
+        title: runsOn(c, TODAY_DAY) ? D.today : c.day + ' · ' + c.time,
         flush: true,
-        note: (short
-          ? 'The prototype carries records for ' + people.length + ' of the ' + c.en +
-            ' children enrolled, so the register is shorter than the class. '
-          : '') +
-          'This is the class record. If a child is in the room but not on the list, tell the office and they will add them.'
+        /* With the list, not in the page header: the common case is that
+           everybody came except one. A one-to-one lesson has nothing to mark
+           in bulk, so it does not get the button. */
+        head: people.length > 1
+          ? ui.btn({ label: 'Everyone is here', act: 'sMarkAll', cid: c.id })
+          : '',
+        note: lines.join(' ')
       }, people.length
         ? ui.rows(people.map(function (s) {
             var m = markOf(c.id, s.id);
+            var where = m === 'Present'
+              ? '<span class="grove">Here</span>'
+              : (m === 'Absent' ? '<span class="clay">Away today</span>' : 'Not marked yet');
             return {
               lead: esc('Age ' + s.age),
               title: esc(s.name),
-              sub: esc(s.family + ' family' + (s.att === '—' ? '' : ' · ' + s.att + ' attendance')),
+              sub: where,
               end: ui.btns([
                 {
-                  label: 'Present', size: 'sm', kind: m === 'Present' ? 'primary' : null,
+                  label: 'Present', kind: m === 'Present' ? 'primary' : null,
                   act: 'sMark', cid: c.id, id: s.id, mark: 'Present'
                 },
                 {
-                  label: 'Absent', size: 'sm', kind: m === 'Absent' ? 'danger' : null,
+                  label: 'Absent', kind: m === 'Absent' ? 'danger' : null,
                   act: 'sMark', cid: c.id, id: s.id, mark: 'Absent'
                 }
               ])
@@ -392,10 +517,24 @@
         : ui.empty('Nobody on this register yet',
             'The office adds children to a class when they enroll.'));
 
-      var top = safety + watching;
+      var hint = t.toMark
+        ? plural(t.toMark, 'child still to mark', 'children still to mark')
+        : (t.absent
+            ? plural(t.absent, 'child away', 'children away') + ', everyone else is here'
+            : 'Everyone is here');
 
-      return (top ? '<div class="stack">' + top + '</div>' : '') +
-        '<div class="section">' + stats + register + '</div>';
+      var save = people.length
+        ? ui.formActions(
+            [{ label: 'Save the register', kind: 'primary', msg: 'Register saved' }],
+            { sticky: true, hint: hint }
+          )
+        : '';
+
+      return h`
+        ${raw(safety)}${raw(watching)}
+        <div class="section">${raw(register)}</div>
+        ${raw(save)}
+      `;
     }
   });
 })();

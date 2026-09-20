@@ -1,43 +1,59 @@
-/* Console → Reports, and the report detail behind each card.
+/* Console → Reports, and the report detail behind each one.
+
+   Written for Sabrina at a desk. She is comfortable with a table of numbers,
+   so this is a table of numbers — eight rows, not eight paragraphs in eight
+   cards. What she came for is not "how is the studio doing", it is "what
+   needs me today", and the screen now answers that in its first row.
 
    No charts, deliberately. The old screen drew a 38px eight-bar sparkline on
    every card. At that size the bars say nothing a sentence cannot say better,
    and two of the nine overflowed their own track while a third had three
-   invisible zero bars. A studio owner reading a prototype needs the number and
-   the sentence; a fake chart is noise.
+   invisible zero bars.
 
-   Every figure on this screen is now DERIVED from the rows shown underneath
-   it. The previous build carried nine typed-in headline numbers — $34,180 of
-   recurring revenue over eight families whose plans come to $2,700, 96.4%
-   collected over eight invoices of which three are unpaid, "5 classes full"
-   over twelve classes of which four are at or over capacity — and a supporting
-   table that could not add up to any of them. Nothing here is typed in by hand
-   any more: the value, the sub-line, the finding, the reading and the total in
-   each card foot are all computed from Grove.data, so the number and the rows
-   can no longer disagree.
+   Every figure is DERIVED from the rows shown underneath it. The value, the
+   sub-line, the finding, the reading, the thing to do and the total in each
+   table foot are all computed from Grove.data, so the number and the rows
+   cannot disagree.
 
-   Other simplifications:
-     - the "Where families come from" report is gone. Nothing in the platform
-       records where a family heard of the studio, so it had no rows, and its
-       "38 new this quarter" could not be checked against anything. A report
-       that cannot be derived is a dead page; eight real ones are better than
-       nine with a hole in the middle.
-     - the four date-range chips are gone with it. The dataset holds one state
-       of the studio and no history, so a range picker that changed nothing but
-       the word under it was a control pretending to work. The period is stated
-       once, in the strip on the detail. (Before the chips, picking a range was
-       a whole form screen: preset, from, to, plus two "what to include"
-       selects that belong to the statement rather than to a report.)
-     - nine delta colours carrying three different meanings, all of which read
-       the same at a glance, collapse to one muted line under the figure.
-     - the detail's "Back to reports" button is gone. The shell draws
-       breadcrumbs on every screen, so a second way back is ceremony.
-     - "How it is counted" was the same three lines on all nine reports. It is
-       now per report, and its "Excludes" line names the rows that are left out
-       and why — which is how the camp booking, the unpaid registration and the
-       cancelling family stopped sitting inside a recurring-revenue total.
-     - the export button was labelled CSV and toasted PDF. It says CSV both
-       times. */
+   Cut in this pass:
+     - the eight prose cards. Three rows of cards, about 1100px of scroll, and
+       "$2,700 committed" — which needs nothing from her — sat at the same
+       weight as "$803 out, one card declined twice". The eight reports are now
+       two tables: the ones carrying a deadline, a failure or money that has
+       not arrived, and the ones that are only worth knowing. The split is
+       derived from the rows, and the rule is printed on the card so it is not
+       magic.
+     - "Export all · CSV". Eight tables of eight different shapes cannot be one
+       CSV. Export lives on the report you are actually looking at.
+     - the per-card "Open" button. The whole row is the link; two controls for
+       one decision is one too many.
+     - "Refreshes · Overnight", which was the same line on all eight reports
+       and was not even true — the figures are read live from the rows.
+     - the card note "A report is a read of the data, never a place to edit
+       it." The sticky bar names the screen where the change is made, which
+       says the same thing once and does something about it.
+     - "Period · 28 July 2026" as a headline stat. It was identical on all
+       eight and there is nothing she can do about the date. It is stated once
+       in the toolbar and once in the footnotes of each report.
+     - "Counted from · 5 · families on a monthly plan" as a headline stat. The
+       table foot already carries the row count.
+     - the make-up status vocabulary. The dataset carries four states —
+       awaiting approval, available, booked, expiring — and she acts on three
+       of them identically. The report now counts them by who holds the ball:
+       waiting on you, with the family, about to lapse.
+     - the detail's header buttons. The one thing to do from a report is to go
+       and do it somewhere else, so that button is pinned to the bottom of the
+       viewport with the state line beside it.
+
+   Kept deliberately:
+     - no money button on this screen. It would be tempting to put "Retry the
+       card" on Collection health, and that is exactly how a product ends up
+       with six places to reduce what a family owes. A report reads; Billing
+       charges.
+     - all eight reports, including the four that need nothing today. A figure
+       with no action is not automatically decoration — it is decoration when
+       nobody says what it means. Each one says what it means in a sentence,
+       and the ones with nothing to do say why there is nothing to do. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -130,6 +146,7 @@
       sum += planPrice(f);
       if (planPrice(f) > planPrice(top)) top = f;
     });
+    var atRisk = on.filter(function (f) { return f.status !== 'Active'; });
 
     var table = ui.table(
       ['Family', 'Current plan', { label: 'A month', align: 'right' }, { label: 'Status', shrink: true }],
@@ -151,9 +168,15 @@
       delta: count(on.length, 'family', 'families') + ' on a monthly plan',
       find: 'Tuition committed before a single camp is sold — ' + money0(sum) + ' a month from ' +
         count(on.length, 'family', 'families') + ' on a monthly session plan.',
-      read: 'The ' + top.name + ' family is ' + money0(planPrice(top)) + ' of it, ' +
+      read: 'The ' + top.name + ' family is ' + money0(planPrice(top)) + ' of the ' + money0(sum) + ', ' +
         pct(planPrice(top), sum) + ' of the total, so one cancellation moves this figure further than a quiet month of enquiries does.',
-      act: 'A plan is changed on the family record. This page only reads it.',
+      act: 'A plan is changed on the family record, never here.',
+      todo: null,
+      todoWhy: '',
+      steady: atRisk.length
+        ? 'No plan here carries a date. What the ' + listOf(atRisk.map(function (f) { return f.name; })) +
+          ' families owe is chased in Collection health, so the same money is not worked twice.'
+        : 'Every family on a plan is paying on time, and no plan here carries a date.',
       counts: 'The session plan on each family record, priced from the after-school rate card.',
       excludes: listOf(off.map(function (f) { return f.name + ' (' + f.plan + ')'; })) + '.',
       table: table,
@@ -164,7 +187,9 @@
     };
   }
 
-  /* ---- 2. Retention --------------------------------------------------------- */
+  /* ---- 2. Retention ---------------------------------------------------------
+     A family leaving is only a job if it leaves owing something. Whether it
+     does is read from its invoices rather than assumed. */
 
   function retention() {
     var leaving = D.FAMILIES.filter(function (f) { return f.status === 'Cancelling'; });
@@ -181,6 +206,13 @@
       var m = monthsSince(f.since);
       return m !== null && outMonths !== null && m < outMonths;
     }).length;
+
+    var owing = [], owed = 0;
+    leaving.forEach(function (f) {
+      D.INVOICES.forEach(function (i) {
+        if (i.fam === f.name && i.status !== 'Paid') { owing.push(i); owed += i.amt; }
+      });
+    });
 
     var table = ui.table(
       ['Family', 'With us since', { label: 'Months with us', align: 'right' }, { label: 'Status', shrink: true }],
@@ -207,7 +239,15 @@
         ? 'The ' + out.name + ' family is the only one leaving, after ' + count(outMonths, 'month', 'months') +
           ' — longer than ' + shorter + ' of the ' + staying.length + ' staying. This is not a first-term drop-out.'
         : 'Nobody is on notice, so every family on the books is expected next month.',
-      act: 'Notice is recorded on the family record, and the last billing date with it.',
+      act: 'Notice, and the last billing date with it, is recorded on the family record.',
+      todo: owing.length ? money0(owed) + ' to settle' : null,
+      todoWhy: owing.length
+        ? 'The ' + listOf(leaving.map(function (f) { return f.name; })) + ' family is going and ' +
+          count(owing.length, 'invoice', 'invoices') + ' has not been paid. Collect it before the last class.'
+        : '',
+      steady: out
+        ? 'The ' + out.name + ' family has given notice and its last invoice has settled, so there is nothing left to collect.'
+        : 'Nobody is on notice.',
       counts: 'The join date and the status on each family record, measured against ' + stamp() + '.',
       excludes: 'Nothing. All ' + count(D.FAMILIES.length, 'family', 'families') + ' on the books are counted.',
       table: table,
@@ -218,7 +258,10 @@
     };
   }
 
-  /* ---- 3. Attendance -------------------------------------------------------- */
+  /* ---- 3. Attendance --------------------------------------------------------
+     A low figure is worth a word with a family, but it has no date on it and
+     the absences that were reported in time are already credits. This one is
+     something to know, not something to do. */
 
   function attendance() {
     var withFigure = D.STUDENTS.filter(function (s) { return figure(s.att) !== null; });
@@ -228,6 +271,7 @@
     D.STUDENTS.forEach(function (s) { credits += s.mk || 0; });
     var avg = withFigure.length ? Math.round(sum / withFigure.length) : 0;
     var low = withFigure.filter(function (s) { return figure(s.att) < 90; });
+    var worst = low.slice().sort(function (a, b) { return figure(a.att) - figure(b.att); })[0];
 
     var table = ui.table(
       ['Child', 'Class', { label: 'Attendance', align: 'right' }, { label: 'Credits', align: 'right' }],
@@ -249,9 +293,16 @@
       delta: 'across ' + count(withFigure.length, 'child', 'children') + ' with a record',
       find: 'Attendance averages ' + avg + '% across the ' + count(withFigure.length, 'child', 'children') +
         ' with a record, and ' + count(low.length, 'child sits', 'children sit') + ' below 90%.',
-      read: 'The same children hold ' + count(credits, 'make-up credit', 'make-up credits') +
-        ' between them, so the absences that were reported in time are already owed back as classes.',
-      act: 'A credit is approved and booked under Requests, not here.',
+      read: worst
+        ? worst.name + ' is the lowest at ' + worst.att + ', and the roster holds ' +
+          count(credits, 'make-up credit', 'make-up credits') + ' between them, so the absences that were reported in time are already owed back as classes.'
+        : 'Every child with a record is above 90%, and the ' + count(credits, 'make-up credit', 'make-up credits') +
+          ' on the books cover the absences that were reported in time.',
+      act: 'A child’s record, and the family behind it, is under Families.',
+      todo: null,
+      todoWhy: '',
+      steady: count(low.length, 'child sits', 'children sit') +
+        ' below 90%, which is worth a word with the family rather than a job for today. Nothing here carries a date.',
       counts: 'The attendance figure recorded against each enrolled child.',
       excludes: 'Children with nothing recorded yet — ' +
         listOf(without.map(function (s) { return s.name + ' (' + s.cls + ')'; })) + '.',
@@ -263,11 +314,12 @@
     };
   }
 
-  /* ---- 4. Fill rate --------------------------------------------------------- */
+  /* ---- 4. Fill rate ---------------------------------------------------------- */
 
   function fill() {
-    var en = 0, cap = 0, full = 0, waiting = 0, queues = 0, over = null, idle = null;
+    var en = 0, cap = 0, full = 0, waiting = 0, queues = 0, over = null, idle = null, longest = null;
     D.CLASSES.forEach(function (c) {
+      if (c.wl && (!longest || c.wl > longest.wl)) longest = c;
       en += c.en;
       cap += c.cap;
       if (c.en >= c.cap) full += 1;
@@ -302,7 +354,11 @@
       read: count(waiting, 'child is', 'children are') + ' waiting for ' + count(queues, 'class', 'classes') +
         ' that are already full' + (idle ? ', while the ' + idle.name + ' has sold none of its ' + idle.cap : '') +
         '. The places to add are where the queue already is.',
-      act: 'Offers go out in position order from Requests.',
+      act: 'Offers go out in position order from Requests. Places are added under Classes.',
+      todo: waiting ? count(waiting, 'child', 'children') + ' waiting' : null,
+      todoWhy: count(queues, 'class has', 'classes have') + ' a queue' +
+        (longest ? ', the longest ' + longest.wl + ' deep on the ' + longest.day + ' ' + longest.time + ' class' : '') + '.',
+      steady: 'Every class has room and nothing is queued.',
       counts: 'The enrollment, the capacity and the waiting count carried on each class.',
       excludes: 'Nothing. All ' + count(D.CLASSES.length, 'class is', 'classes are') +
         ' counted, the one-to-one and the birthday party included.',
@@ -314,18 +370,25 @@
     };
   }
 
-  /* ---- 5. Make-up credits ---------------------------------------------------- */
+  /* ---- 5. Make-up credits -----------------------------------------------------
+     The dataset carries four statuses. She approves one of them, rescues
+     another, and does nothing at all about the other two, so the summary
+     counts them by who is holding the credit rather than by its label. */
 
   function makeups() {
-    var order = [], tally = {};
+    var pending = 0, expiringN = 0;
     D.MAKEUPS.forEach(function (m) {
-      if (order.indexOf(m.status) === -1) order.push(m.status);
-      tally[m.status] = (tally[m.status] || 0) + 1;
+      if (m.status === 'Awaiting approval') pending += 1;
+      if (m.status === 'Expiring') expiringN += 1;
     });
-    var booked = tally['Booked'] || 0;
-    var expiringN = tally['Expiring'] || 0;
+    var withFamily = D.MAKEUPS.length - pending - expiringN;
     var expiring = D.MAKEUPS.filter(function (m) { return m.status === 'Expiring'; })[0];
-    var breakdown = order.map(function (s) { return tally[s] + ' ' + lcFirst(s); });
+    var waitingOn = D.MAKEUPS.filter(function (m) { return m.status === 'Awaiting approval'; })
+      .map(function (m) { return m.child; });
+
+    var jobs = [];
+    if (pending) jobs.push(pending + ' to approve');
+    if (expiringN) jobs.push(expiringN + ' lapsing');
 
     var table = ui.table(
       ['Child', 'Missed', 'Expires', { label: 'Status', shrink: true }],
@@ -344,13 +407,19 @@
     return {
       unit: 'Credits open',
       value: String(D.MAKEUPS.length),
-      delta: booked + ' booked, ' + expiringN + ' expiring',
-      find: count(D.MAKEUPS.length, 'credit is', 'credits are') + ' open: ' + listOf(breakdown) + '.',
+      delta: pending + ' waiting on you, ' + withFamily + ' with the family',
+      find: count(D.MAKEUPS.length, 'credit is', 'credits are') + ' open — ' + pending +
+        ' waiting on you, ' + withFamily + ' with the family, and ' + expiringN + ' about to lapse.',
       read: expiring
         ? expiring.child + '’s credit lapses on ' + expiring.expires + ' because ' + lcFirst(expiring.booked) +
           '. Every credit that expires is a class a family paid for and did not get.'
         : 'Nothing is about to expire, so every credit still has a class it can be taken in.',
-      act: 'Approving a request and booking the slot both happen under Requests.',
+      act: 'Approving a credit and booking the hour both happen under Requests.',
+      todo: jobs.length ? jobs.join(', ') : null,
+      todoWhy: (pending ? listOf(waitingOn) + (pending === 1 ? ' is' : ' are') + ' waiting on a yes' : '') +
+        (pending && expiring ? ', and ' : '') +
+        (expiring ? expiring.child + '’s credit lapses on ' + expiring.expires : '') + '.',
+      steady: 'Nothing is waiting on you and nothing is about to lapse.',
       counts: 'One credit for each session missed, as recorded against the child.',
       excludes: 'Nothing. Every one of the ' + count(D.MAKEUPS.length, 'credit', 'credits') +
         ' is counted, whatever state it is in.',
@@ -358,11 +427,11 @@
       rows: D.MAKEUPS.length,
       rowNoun: 'credits recorded',
       footLabel: count(D.MAKEUPS.length, 'credit', 'credits') + ' open',
-      footValue: breakdown.join(' · ')
+      footValue: pending + ' waiting on you · ' + withFamily + ' with the family · ' + expiringN + ' about to lapse'
     };
   }
 
-  /* ---- 6. Collection health --------------------------------------------------- */
+  /* ---- 6. Collection health ---------------------------------------------------- */
 
   function collection() {
     var paid = D.INVOICES.filter(function (i) { return i.status === 'Paid'; });
@@ -397,10 +466,16 @@
         listOf(open.map(function (i) { return i.fam; })) + '.',
       read: worst
         ? 'Most of what is outstanding sits with one family: the ' + worst.fam + ' family at ' + money0(worst.amt) +
-          ', ' + pct(worst.amt, owed) + ' of the ' + money0(owed) + ' open' +
-          (worst.note ? '. The invoice reads “' + worst.note + '”' : '.')
+          ', ' + pct(worst.amt, owed) + ' of the ' + money0(owed) + ' open. The other ' +
+          count(open.length - 1, 'invoice comes', 'invoices come') + ' to ' + money0(owed - worst.amt) + ' between them.'
         : 'Nothing is outstanding — every invoice raised has settled.',
       act: 'Retries and reminders go out from Billing.',
+      todo: open.length ? money0(owed) + ' out' : null,
+      todoWhy: worst
+        ? count(open.length, 'invoice', 'invoices') +
+          (worst.note ? ', and the largest reads “' + worst.note + '”' : ', the largest ' + money0(worst.amt) + '.')
+        : '',
+      steady: 'Every invoice raised has settled.',
       counts: 'Every invoice raised, and what has settled against it.',
       excludes: 'A charge posted to a family ledger that no invoice has picked up yet. Billing counts those in its own outstanding figure, so that number is the larger one.',
       table: table,
@@ -429,6 +504,7 @@
        left to look like a different class count from the other two reports. */
     var named = D.STAFF.map(function (s) { return s.name; });
     var unstaffed = D.CLASSES.filter(function (c) { return named.indexOf(c.staff) === -1; });
+    var invited = D.STAFF.filter(function (s) { return s.status === 'Invitation sent'; });
 
     var hours = 0, classes = 0, wage = 0, teachHours = 0, teachPay = 0, teachers = 0;
     D.STAFF.forEach(function (s) {
@@ -473,7 +549,13 @@
         count(D.STAFF.length, 'person', 'people') + ' on the team, ' + teachHours + ' hours between them.',
       read: 'Hourly pay comes to ' + money0(wage) + ' a week and ' + pct(teachPay, wage) +
         ' of that is teaching. The rest is the front desk and the office.',
-      act: 'Hours and rates are set on the staff record.',
+      act: 'Hours, rates and who teaches what are set on the staff record.',
+      todo: unstaffed.length ? count(unstaffed.length, 'class', 'classes') + ' unstaffed' : null,
+      todoWhy: listOf(unstaffed.map(function (c) { return c.name; })) +
+        (unstaffed.length === 1 ? ' has ' : ' have ') + 'nobody on the record' +
+        (invited.length ? ', and ' + listOf(invited.map(function (s) { return s.name; })) +
+          ' has not accepted the invitation yet' : '') + '.',
+      steady: 'Every class has an instructor on the record.',
       counts: 'The hours and classes a week on each staff record, priced at the rate that record carries.',
       excludes: 'Pay for anyone not on an hourly rate — ' +
         listOf(unrated.map(function (s) { return s.name + ' (' + (s.rate === '—' ? 'no rate recorded' : s.rate) + ')'; })) +
@@ -509,6 +591,7 @@
     rows.forEach(function (r) {
       if (r !== big && (!next || r.en > next.en)) next = r;
     });
+    var unsold = D.CLASSES.filter(function (c) { return c.en === 0; });
 
     var table = ui.table(
       ['Program', { label: 'Classes', align: 'right' }, { label: 'Enrolled', align: 'right' },
@@ -536,6 +619,13 @@
       read: count(free, 'place is', 'places are') + ' unsold across the ' +
         count(rows.length, 'program', 'programs') + ', and ' + loosest.free + ' of them sit in ' + loosest.p.name + '.',
       act: 'Places, prices and the classes under each program are set under Programs.',
+      todo: null,
+      todoWhy: '',
+      steady: (unsold.length
+        ? count(unsold.length, 'class has', 'classes have') + ' sold nothing at all — ' +
+          listOf(unsold.map(function (c) { return c.name + ' (' + c.cap + ' places)'; })) + '. '
+        : 'Every class has sold something. ') +
+        'Nothing here carries a date, so this is selling to be done rather than a job for today.',
       counts: 'Every class grouped by the program it belongs to.',
       excludes: 'Nothing. All ' + count(D.CLASSES.length, 'class sits', 'classes sit') + ' under one of the ' +
         count(rows.length, 'program', 'programs') + '.',
@@ -547,17 +637,19 @@
     };
   }
 
-  /* ---- the eight reports ---------------------------------------------------- */
+  /* ---- the eight reports ----------------------------------------------------
+     `open` is the screen where the thing can actually be done, and it is the
+     primary button on the report. It is not a menu of related pages. */
 
   var REPORTS = [
-    { id: 'mrr',       cat: 'Revenue',    title: 'Monthly recurring revenue',      open: { label: 'Open Billing',  to: 'billing' },  build: mrr },
-    { id: 'retention', cat: 'Retention',  title: 'Who is staying, and how long',   open: { label: 'Open Families', to: 'families' }, build: retention },
-    { id: 'absence',   cat: 'Attendance', title: 'Attendance by child',            open: { label: 'Open Families', to: 'families' }, build: attendance },
-    { id: 'fill',      cat: 'Capacity',   title: 'Fill rate by class',             open: { label: 'Open Classes',  to: 'classes' },  build: fill },
-    { id: 'makeups',   cat: 'Make-ups',   title: 'Credits, and where they stand',  open: { label: 'Open Requests', to: 'requests' }, build: makeups },
-    { id: 'collection',cat: 'Payments',   title: 'Collection health',              open: { label: 'Open Billing',  to: 'billing' },  build: collection },
-    { id: 'staffcost', cat: 'Staff',      title: 'Hours and pay across the team',  open: { label: 'Open Staff',    to: 'staff' },    build: staffCost },
-    { id: 'programs',  cat: 'Programs',   title: 'Which programs fill',            open: { label: 'Open Programs', to: 'programs' }, build: programs }
+    { id: 'mrr',        cat: 'Revenue',    title: 'Monthly recurring revenue',     open: { label: 'Open Families', to: 'families' }, build: mrr },
+    { id: 'retention',  cat: 'Retention',  title: 'Who is staying, and how long',  open: { label: 'Open Families', to: 'families' }, build: retention },
+    { id: 'absence',    cat: 'Attendance', title: 'Attendance by child',           open: { label: 'Open Families', to: 'families' }, build: attendance },
+    { id: 'fill',       cat: 'Capacity',   title: 'Fill rate by class',            open: { label: 'Open Requests', to: 'requests' }, build: fill },
+    { id: 'makeups',    cat: 'Make-ups',   title: 'Credits, and where they stand', open: { label: 'Open Requests', to: 'requests' }, build: makeups },
+    { id: 'collection', cat: 'Payments',   title: 'Collection health',             open: { label: 'Open Billing',  to: 'billing' },  build: collection },
+    { id: 'staffcost',  cat: 'Staff',      title: 'Hours and pay across the team', open: { label: 'Open Staff',    to: 'staff' },    build: staffCost },
+    { id: 'programs',   cat: 'Programs',   title: 'Which programs fill',           open: { label: 'Open Programs', to: 'programs' }, build: programs }
   ];
 
   function rep(ctx) {
@@ -568,55 +660,112 @@
     return REPORTS[0];
   }
 
-  /* ---- the grid ------------------------------------------------------------- */
-
-  function reportCard(r) {
-    var b = r.build();
-    var foot =
-      '<div>' +
-        '<div class="stat__label">' + esc(b.unit) + '</div>' +
-        '<div class="stat__value">' + esc(b.value) + '</div>' +
-        '<div class="stat__sub">' + esc(b.delta) + '</div>' +
-      '</div>' +
-      ui.btn({ label: 'Open', kind: 'quiet', size: 'sm', to: 'report', id: r.id });
-
-    return ui.card({ title: r.cat, foot: foot }, h`<div class="stack stack--sm">
-      <p class="strong">${r.title}</p>
-      <p class="cell-mute">${b.find}</p>
-      <p class="hint">${b.read}</p>
-    </div>`);
+  /* Build every report once, and hang the report's own identity off the
+     result so the two tables can be sliced out of one list. */
+  function built() {
+    return REPORTS.map(function (r) {
+      var b = r.build();
+      b.id = r.id;
+      b.cat = r.cat;
+      b.reportTitle = r.title;
+      b.open = r.open;
+      return b;
+    });
   }
+
+  function needing(list) {
+    return list.filter(function (b) { return !!b.todo; });
+  }
+  function resting(list) {
+    return list.filter(function (b) { return !b.todo; });
+  }
+
+  /* ---- the list -------------------------------------------------------------- */
 
   Grove.screen('reports', {
     surface: 'console',
     crumbTitle: 'Reports',
     eyebrow: 'how it is going',
     title: 'Reports',
-    sub: 'Not a wall of charts. Each report answers a question the studio actually asks, ends in something you can do, and shows the rows it was counted from.',
-    actions: [
-      { label: 'Export all · CSV', msg: REPORTS.length + ' reports exported as CSV' }
-    ],
+    sub: 'Every figure here is counted from rows you can open. The reports carrying a deadline, a failure or money that has not arrived are at the top; the rest are where the studio stands.',
 
     body: function () {
-      return ui.toolbar({
-        count: REPORTS.length + ' reports · the studio as it stands on ' + stamp()
-      }) + ui.grid(3, REPORTS.map(function (r) { return reportCard(r); }));
+      var all = built();
+      var todo = needing(all);
+      var rest = resting(all);
+
+      var jobs = ui.card({
+        title: 'Needs you today',
+        flush: true,
+        note: 'A report lands here when its own rows carry a deadline, a failure, or money that has not arrived.'
+      }, ui.table(
+        ['Report', 'What to do', { label: 'Figure', align: 'right' }],
+        todo.map(function (b) {
+          return {
+            to: 'report',
+            id: b.id,
+            cells: [
+              ui.two(b.reportTitle, b.cat),
+              ui.two(b.todo, b.todoWhy),
+              ui.two(b.value, b.delta)
+            ]
+          };
+        }),
+        {
+          emptyTitle: 'Nothing needs you today',
+          emptyText: 'No report has a deadline, a failure or an unpaid invoice in its rows.'
+        }
+      ));
+
+      var standing = ui.card({
+        title: 'Where the studio stands',
+        flush: true,
+        note: 'Nothing in these rows carries a date. They are worth knowing rather than doing.'
+      }, ui.table(
+        ['Report', 'What it says', { label: 'Figure', align: 'right' }],
+        rest.map(function (b) {
+          return {
+            to: 'report',
+            id: b.id,
+            cells: [
+              ui.two(b.reportTitle, b.cat),
+              ui.mute(b.read),
+              ui.two(b.value, b.delta)
+            ]
+          };
+        }),
+        {
+          emptyTitle: 'Every report needs you',
+          emptyText: 'All eight carry something with a date on it today.'
+        }
+      ));
+
+      return h`${raw(ui.toolbar({
+        count: (todo.length
+          ? todo.length + ' of ' + all.length + ' reports need you'
+          : 'Nothing needs you · ' + all.length + ' reports') +
+          ' · the studio as it stands on ' + stamp()
+      }))}
+        ${raw(jobs)}
+        <div class="section">${raw(standing)}</div>`;
     }
   });
 
-  /* ---- one report ------------------------------------------------------------ */
+  /* ---- one report -------------------------------------------------------------
+     The figure, then the rows it came from, then the footnotes. The one thing
+     to do from a report is to go and do it somewhere else, so that button sits
+     in a bar pinned to the bottom of the viewport with the state line beside
+     it, and the header carries no buttons at all. */
 
   Grove.screen('report', {
     surface: 'console',
     crumbs: [{ label: 'Reports', to: 'reports' }],
-    crumbTitle: 'Report',
+    crumbTitle: function (ctx) { return rep(ctx).title; },
     eyebrow: function (ctx) { return rep(ctx).cat.toLowerCase(); },
     title: function (ctx) { return rep(ctx).title; },
-    sub: function (ctx) { return rep(ctx).build().find; },
-    actions: function (ctx) {
-      return [
-        { label: 'Export this report · CSV', kind: 'primary', msg: rep(ctx).title + ' exported as CSV' }
-      ];
+    sub: function (ctx) {
+      var b = rep(ctx).build();
+      return b.find + ' ' + b.read;
     },
 
     body: function (ctx) {
@@ -625,28 +774,13 @@
 
       var headline = ui.statbar([
         { label: b.unit, value: b.value, sub: b.delta, tone: 'grove' },
-        { label: 'Period', value: stamp(), sub: 'the studio as it stands today' },
-        { label: 'Counted from', value: String(b.rows), sub: b.rowNoun }
+        {
+          label: 'What to do',
+          value: b.todo || 'Nothing today',
+          sub: b.todo ? b.todoWhy : b.steady,
+          tone: b.todo ? 'clay' : null
+        }
       ]);
-
-      var means = ui.card({
-        title: 'What it means',
-        head: ui.btn({ label: r.open.label, kind: 'quiet', size: 'sm', to: r.open.to }),
-        note: 'A report is a read of the data, never a place to edit it.'
-      }, h`<div class="stack stack--sm">
-        <p class="cell-mute">${b.read}</p>
-        <p class="cell-mute">${b.act}</p>
-      </div>`);
-
-      /* These three values are sentences, not figures. A kv row right-aligns
-         its value, which left a full sentence ragged down its left edge and
-         broke the shortest one across two lines. A label over the line reads
-         as prose and every line starts in the same place. */
-      var counted = ui.card({ title: 'How it is counted', flush: true }, ui.rows([
-        { title: 'Counts', sub: esc(b.counts) },
-        { title: 'Excludes', sub: esc(b.excludes) },
-        { title: 'Refreshes', sub: 'Overnight.' }
-      ]));
 
       var behind = ui.card({
         title: 'The rows behind it',
@@ -654,9 +788,22 @@
         foot: total(b.footLabel, b.footValue)
       }, b.table);
 
+      /* Provenance, under the rows rather than in front of them. A kv row
+         right-aligns its value, which left a full sentence ragged down its
+         left edge, so a label over the line reads as prose instead. */
+      var made = ui.card({ title: 'How this figure is made', flush: true }, ui.rows([
+        { title: 'Counts', sub: esc(b.counts) },
+        { title: 'Excludes', sub: esc(b.excludes) },
+        { title: 'Period', sub: esc('The studio as it stands on ' + stamp() + '. This is today’s rows counted, not a trend.') }
+      ]));
+
       return h`${raw(headline)}
-        ${raw(ui.grid(2, [means, counted]))}
-        <div class="section">${raw(behind)}</div>`;
+        ${raw(behind)}
+        <div class="section">${raw(made)}</div>
+        ${raw(ui.formActions([
+          { label: r.open.label, kind: 'primary', to: r.open.to },
+          { label: 'Export · CSV', msg: r.title + ' exported as CSV' }
+        ], { sticky: true, hint: b.act }))}`;
     }
   });
 })();

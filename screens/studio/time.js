@@ -1,191 +1,321 @@
-/* Studio → My time. A teacher's own clock entries for the pay week.
+/* Studio → My time. Lauren's own clock entries for the pay week.
 
-   Simplified against the spec:
-     - the "Week to date" card was a rollup dressed up as a list item, sitting
-       in the same stack as real entries. The week's numbers now live in the
-       slim stat strip and the pay card, so the list holds only real entries.
-     - the per-entry drawer carried three facts: the two times, the class, and
-       who logged it. The times and the classes are columns in the table and
-       the logging line is the screen's own subtitle, so the drawer earns
-       nothing and is gone.
-     - the incomplete Thursday is one notice with the single action that
-       mattered, instead of a status a teacher has to open a drawer to read.
+   WHO THIS SCREEN IS FOR
+   Lauren Ortiz teaches. She opens this once a fortnight, off the floor, to
+   answer one question: have I been paid for what I worked. She is not
+   managing anything here — she cannot edit a clock entry, only the desk can —
+   so the shape is: what is wrong, what the week came to, the days it came
+   from, and who fixes it. Nothing on this screen is the studio's telemetry.
+   Her sessions, her attendance rate and what her classes are worth are the
+   owner's numbers and they live on the owner's screens.
 
-   Column widths. A date, a clock time and an hours figure each have one
-   shape, so the four fixed-shape columns are shrink columns — they take their
-   content's width and hold it on one line, which is what stops "Tue 28 Jul"
-   breaking after the weekday and "Still clocked in" running to two lines and
-   deepening its row. Classes is the one column with prose in it, so it takes
-   whatever width is left and wraps there.
+   Cut in this pass
+     - "Classes taught · 9" led the stat strip. A teacher checking her pay
+       does not count her own sessions, and the figure contradicted Console →
+       Staff, which prints Lauren's "Sessions a week" as the 5 weekly classes
+       her STAFF record carries, not the 9 class-days this week happened to
+       hold. The classes stay where they earn their place — one plain line
+       per day, so she can recognise the day she is checking
+     - the "2 sessions / 3 sessions" counts under those class names: the same
+       tally again, per row
+     - "Days counted · 4 of 5" as a stat of its own. It said what the clay
+       notice at the top of the page already says, and what the line under
+       the table says while it is doing the arithmetic. The strip is now the
+       two figures she came for: the hours, and the money
+     - "Average day · 5.6 hrs" was a statistic about her, of no use to her
+     - the Pay card was eight key/value rows restating the strip. It is a
+       short paragraph of plain sentences that does the arithmetic out loud
+     - the missing day was named five times over, twice of them saying only
+       that the desk will fix it. It is named where it does work: in clay at
+       the top, with the button that fixes it; as its own row; and in the two
+       places where a total would otherwise not add up — under the table,
+       which ties 22.5 hours to the rows above it, and in the pay card, which
+       has to say why the figure is short
 
-   Numbers. Clock entries are the one thing on this screen Grove.data does not
-   hold, so the five rows below are this file's own — but they are the rows the
-   rest of the app is costed against. Their recorded hours sum to 22.5 and the
-   classes they were worked against come to 9 sessions, which is exactly what
-   STAFF['lauren'] carries and what Console → Staff prints as "Hours this week"
-   and "Sessions a week". Every figure on the screen is summed from these rows;
-   not one is written as a literal. Change an entry and the strip, the table
-   and the pay card all move together — and they will then disagree with
-   js/data.js, so change that record too.
+   Carried over from the parent pass
+     - every figure is derived, and now so is every figure in every row. The
+       hours in a row are the distance between the two clock times printed
+       beside them, the week's total is the sum of those rows, and the pay is
+       that total at the rate on her staff record. Nothing is a literal, so
+       an edited clock time moves the table, the strip and the sentences
+       together
+     - the right-hand column is a ui.col pair, so it does not end in dead
+       space beside a five-row table
+     - one studio phone number, read from Grove.data.STUDIO
+     - no sticky action bar. That pattern belongs on a screen whose whole
+       purpose is to complete one action; this screen's purpose is to be
+       read, and its one action — clocking out — is the header button it
+       shares with Studio → Today
 
-   The period is the Wed–Tue pay week, Wed 22 Jul – Tue 28 Jul. Today is
-   Tuesday 28 July, so the week ends on today's open entry. Each day is worked
-   against real classes from Grove.data.CLASSES, all of them Lauren's: the
-   week 4 camp every weekday, plus the after-school hours and the private
-   lesson her record carries.
+   What is the spec's, not the dataset's
+     - the clock entries themselves. Grove.data holds no timesheet, so the
+       five rows below are this file's own. They are pinned to the rest of
+       the app: their hours sum to 22.5, which is exactly what
+       STAFF['lauren'] carries and what Console → Staff prints as "Hours this
+       week", and today's 9:58am clock-in is the one in Grove.data.ACTIVITY,
+       which the console dashboard also renders. Change a row here and
+       js/data.js must change with it
+     - "as of 2:10pm" on the open entry. A running day needs a now, and the
+       dataset has a date but no clock
+     - the pay week is Wed–Tue, ending on today, Tuesday 28 July 2026. The
+       dataset carries no pay period
 
-   Today's clock-in is held to Grove.data.ACTIVITY, which has Lauren clocking
-   in at 09:58. Do not drift it: the console dashboard renders that same row,
-   so a different time here makes the two screens contradict each other. */
+   Each day is worked against real classes from Grove.data.CLASSES, all of
+   them Lauren's: the week 4 camp every weekday, plus the after-school hours
+   and the private lesson her record carries. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
-  /* Newest first. `cls` holds the class ids worked against that day. `hrs` is
-     null where no clock-out was recorded, so that day counts no hours. */
+  /* Newest first. A day carries only what the tablet recorded: the time she
+     clocked in, and the time she clocked out. `outAt` is null where no
+     clock-out was taken. `asOf` is the running day's now — the one entry
+     that is still open has a now instead of an end. Hours are never stored;
+     they are the distance between the two times. */
   var ENTRIES = [
-    { day: 'Tue 28 Jul', note: 'Today', inAt: '9:58am', outAt: 'Still clocked in', hrs: 4.2,  open: true, cls: ['c6', 'c11'] },
-    { day: 'Mon 27 Jul', note: '',      inAt: '9:28am', outAt: '4:40pm',           hrs: 7.2,  cls: ['c6', 'c1', 'c2'] },
-    { day: 'Fri 24 Jul', note: '',      inAt: '9:35am', outAt: '1:23pm',           hrs: 3.8,  cls: ['c6'] },
-    { day: 'Thu 23 Jul', note: '',      inAt: '9:30am', outAt: 'Not recorded',     hrs: null, missing: true, cls: ['c6'] },
-    { day: 'Wed 22 Jul', note: '',      inAt: '9:30am', outAt: '4:48pm',           hrs: 7.3,  cls: ['c6', 'c4'] }
+    { day: 'Tue 28 Jul', note: 'Today', inAt: '9:58am', outAt: null,     asOf: '2:10pm', cls: ['c6', 'c11'] },
+    { day: 'Mon 27 Jul', note: '',      inAt: '9:28am', outAt: '4:40pm', asOf: null,     cls: ['c6', 'c1', 'c2'] },
+    { day: 'Fri 24 Jul', note: '',      inAt: '9:35am', outAt: '1:23pm', asOf: null,     cls: ['c6'] },
+    { day: 'Thu 23 Jul', note: '',      inAt: '9:30am', outAt: null,     asOf: null,     cls: ['c6'] },
+    { day: 'Wed 22 Jul', note: '',      inAt: '9:30am', outAt: '4:48pm', asOf: null,     cls: ['c6', 'c4'] }
   ];
 
-  function me() {
-    return D.STAFF.filter(function (s) { return s.id === 'lauren'; })[0] || D.STAFF[0];
+  /* The table writes a day short, because five of them stand in a column. A
+     sentence writes it long, because it is being read aloud. */
+  var WEEKDAY = {
+    Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday',
+    Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday'
+  };
+  var MONTH = {
+    Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April',
+    May: 'May', Jun: 'June', Jul: 'July', Aug: 'August',
+    Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December'
+  };
+
+  /* The studio portal is always looked at as the teacher on shift, so the
+     screen reads her off the persona rather than naming her in the file. */
+  function teacher(ctx) {
+    var who = (ctx && ctx.persona) || Grove.persona('studio');
+    return (who && who.name) || '';
+  }
+  function me(ctx) {
+    var name = teacher(ctx);
+    return D.STAFF.filter(function (s) { return s.name === name; })[0] ||
+           D.STAFF.filter(function (s) { return s.id === 'lauren'; })[0] || D.STAFF[0];
+  }
+
+  /* Who actually corrects a clock entry. Read from the staff list so the
+     screen does not invent a name for the front desk. */
+  function deskName() {
+    var d = D.STAFF.filter(function (s) { return s.role === 'Front desk'; })[0];
+    return d ? String(d.name).split(' ')[0] : '';
   }
 
   function klass(id) {
     return D.CLASSES.filter(function (c) { return c.id === id; })[0];
   }
-
-  function openEntry() {
-    return ENTRIES.filter(function (e) { return e.open; })[0] || ENTRIES[0];
+  function longDay(day) {
+    var bits = String(day).split(' ');
+    return bits.map(function (bit, i) {
+      if (i === 0) return WEEKDAY[bit] || bit;
+      return MONTH[bit] || bit;
+    }).join(' ');
   }
-
-  function missingEntry() {
-    return ENTRIES.filter(function (e) { return e.missing; })[0];
-  }
-
   function round1(n) { return Math.round(n * 10) / 10; }
 
-  /* --- every figure on the screen is summed from ENTRIES ------------------ */
+  /* --- the hours are the clock times, never a stored figure ---------------- */
 
+  /* "4:40pm" → minutes past midnight. */
+  function clock(t) {
+    var m = /^(\d{1,2}):(\d{2})(am|pm)$/i.exec(String(t || '').replace(/\s+/g, ''));
+    if (!m) return null;
+    var hh = parseInt(m[1], 10) % 12;
+    if (/pm/i.test(m[3])) hh += 12;
+    return hh * 60 + parseInt(m[2], 10);
+  }
+  function isOpen(e) { return !e.outAt && !!e.asOf; }
+  function isMissing(e) { return !e.outAt && !e.asOf; }
+
+  /* What the row shows in its Hours column, and therefore what the week is
+     summed from. A day with no clock-out has no hours at all. */
+  function hoursOf(e) {
+    var from = clock(e.inAt), to = clock(e.outAt || e.asOf);
+    if (from === null || to === null) return null;
+    return round1((to - from) / 60);
+  }
   function hoursLogged() {
     var total = 0;
-    ENTRIES.forEach(function (e) { if (e.hrs !== null) total += e.hrs; });
+    ENTRIES.forEach(function (e) {
+      var n = hoursOf(e);
+      if (n !== null) total += n;
+    });
     return round1(total);
   }
-
   function daysCounted() {
-    return ENTRIES.filter(function (e) { return e.hrs !== null; }).length;
+    return ENTRIES.filter(function (e) { return hoursOf(e) !== null; }).length;
   }
-
-  function classesTaught() {
-    var n = 0;
-    ENTRIES.forEach(function (e) { n += e.cls.length; });
-    return n;
-  }
+  function openEntry() { return ENTRIES.filter(isOpen)[0]; }
+  function missingEntry() { return ENTRIES.filter(isMissing)[0]; }
 
   function hourlyRate(staff) {
     return parseFloat(String(staff.rate).replace(/[^0-9.]/g, '')) || 0;
   }
+  function payFor(hours, staff) {
+    return Grove.money(hours * hourlyRate(staff));
+  }
 
-  function sessions(n) { return n === 1 ? '1 session' : n + ' sessions'; }
+  /* An After-School record is named by its length ("1 hour · After-School").
+     That is a duration and not a class name, so the programme name is what
+     goes in the row. */
+  function className(c) {
+    return c.prog === 'as' ? D.program(c.prog).name : c.name;
+  }
 
-  /* The classes a day was worked against, named once each. */
+  /* What she taught that day, as a phrase rather than a count. */
+  function listify(list) {
+    if (!list.length) return '';
+    if (list.length === 1) return list[0];
+    return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+  }
   function classNames(e) {
     var names = [];
     e.cls.forEach(function (id) {
       var c = klass(id);
-      if (c && names.indexOf(c.name) === -1) names.push(c.name);
+      if (!c) return;
+      var name = className(c);
+      if (names.indexOf(name) === -1) names.push(name);
     });
-    return names.join(', ');
+    return listify(names);
   }
 
   Grove.screen('sTime', {
     surface: 'studio',
     crumbTitle: 'My time',
-    eyebrow: 'hours and cover',
+    eyebrow: 'your pay week',
     title: 'My time',
-    sub: 'Clock in when you arrive, out when you leave. Every entry below came from the studio tablet and none have been edited.',
-    actions: [
-      { label: 'Clock out', kind: 'primary', msg: 'Clocked out · ' + openEntry().hrs.toFixed(1) + ' hours logged' }
-    ],
+    sub: 'Every entry below came from the studio tablet when you clocked in and out. You cannot change one from here — if a day looks wrong, the desk corrects it.',
+    actions: function (ctx) {
+      var on = me(ctx).status === 'Clocked in';
+      var open = openEntry();
+      var run = open ? hoursOf(open) : null;
+      return [{
+        label: on ? 'Clock out' : 'Clock in',
+        kind: 'primary',
+        msg: on && run !== null
+          ? 'Clocked out · ' + run.toFixed(1) + ' hours logged today'
+          : 'Clocked in'
+      }];
+    },
 
-    body: function () {
-      var staff = me();
+    body: function (ctx) {
+      var staff = me(ctx);
       var open = openEntry();
       var gap = missingEntry();
 
       var hours = hoursLogged();
-      var classes = classesTaught();
       var counted = daysCounted();
       var period = ENTRIES[ENTRIES.length - 1].day + ' – ' + ENTRIES[0].day;
+      var pay = payFor(hours, staff);
 
-      var stats = ui.statbar([
-        { label: 'Hours logged',   value: hours.toFixed(1) + ' hrs', sub: period },
-        { label: 'Classes taught', value: String(classes), sub: 'Across ' + ENTRIES.length + ' days' },
-        { label: 'Status',         value: staff.status, tone: 'grove', sub: 'In at ' + open.inAt }
-      ]);
-
+      /* The one thing on this screen that costs her money, so it leads the
+         page in clay and carries the only button that fixes it. */
       var alert = gap
         ? ui.notice({
-            kind: 'warn',
-            title: gap.day + ' has no clock-out',
-            text: 'No clock-out was recorded, so that day counts no hours yet. Message the desk and they will correct it.',
-            action: { label: 'Ask the desk to fix it', msg: 'The desk will correct Thursday’s entry' }
+            kind: 'bad',
+            title: longDay(gap.day) + ' has no clock-out',
+            text: 'The tablet has you in at ' + gap.inAt + ' and nothing after it. That day is not in the hours below and earns nothing until the desk records the time you left.',
+            action: { label: 'Ask the desk to fix it', msg: 'Sent — the desk will add ' + gap.day + '’s clock-out' }
           })
         : '';
 
+      /* Two figures, because she came with one question. How many days made
+         them up is the table's business, one line under the table. */
+      var stats = ui.statbar([
+        { label: 'Hours logged', value: hours.toFixed(1) + ' hrs', sub: period },
+        { label: 'Estimated pay', value: pay, tone: 'grove', sub: 'At ' + staff.rate + ', before tax' }
+      ]);
+
+      /* Column widths. A date, a clock time and an hours figure each have one
+         shape, so the four fixed-shape columns are shrink columns — they take
+         their content's width and hold it on one line, which is what stops
+         "Tue 28 Jul" breaking after the weekday and "Still clocked in"
+         running to two lines. What she taught is the one column with prose in
+         it, so it takes whatever width is left and wraps there. */
       var table = ui.table(
         [
           { label: 'Day', shrink: true },
           { label: 'In', shrink: true },
           { label: 'Out', shrink: true },
           { label: 'Hours', align: 'right', shrink: true },
-          'Classes'
+          'What you taught'
         ],
         ENTRIES.map(function (e) {
+          var n = hoursOf(e);
           var out;
-          if (e.missing) out = '<span class="clay strong">' + esc(e.outAt) + '</span>';
-          else if (e.open) out = '<span class="grove strong">' + esc(e.outAt) + '</span>';
-          else out = ui.mute(e.outAt);
+          if (isMissing(e)) out = '<span class="clay strong">' + esc('Not recorded') + '</span>';
+          else if (isOpen(e)) out = '<span class="grove strong">' + esc('Still clocked in') + '</span>';
+          else out = esc(e.outAt);
 
           return {
             cells: [
               ui.two(e.day, e.note),
-              ui.mute(e.inAt),
+              esc(e.inAt),
               out,
-              e.hrs === null ? ui.mute('—') : esc(e.hrs.toFixed(1)),
-              ui.two(classNames(e), sessions(e.cls.length))
+              n === null ? '<span class="clay strong">—</span>' : esc(n.toFixed(1)),
+              ui.mute(classNames(e))
             ]
           };
         }),
         { emptyTitle: 'No entries this pay week', emptyText: 'Clock in when you arrive and the day will appear here.' }
       );
 
-      var entries = ui.card({ title: 'Clock entries', flush: true }, table);
+      var days = ui.card({
+        title: 'This pay week',
+        flush: true,
+        note: gap
+          ? 'The ' + counted + ' days here with a clock-out add up to ' + hours.toFixed(1) +
+            ' hours. ' + gap.day + ' has none, so it adds nothing yet.'
+          : 'These ' + counted + ' days add up to ' + hours.toFixed(1) + ' hours.'
+      }, table);
 
-      var payRows = [
-        ['Rate', esc(staff.rate)],
-        ['Pay week', esc(period)],
-        ['Hours logged', esc(hours.toFixed(1))],
-        ['Classes taught', String(classes)],
-        ['Days counted', counted + ' of ' + ENTRIES.length]
-      ];
-      if (gap) payRows.push({ k: 'Not yet counted', v: esc(gap.day), tone: 'clay' });
-      payRows.push(['Average day', round1(hours / counted).toFixed(1) + ' hrs']);
-      payRows.push({ k: 'Estimated pay', v: Grove.money(hours * hourlyRate(staff)), tone: 'grove' });
+      /* The arithmetic said out loud, so she can check it against her own
+         memory of the week rather than trust a total. */
+      var said = ['Your rate is ' + staff.rate + '. The ' + hours.toFixed(1) +
+        ' hours in the table come to ' + pay + ' before tax.'];
+      if (open) {
+        said.push('Today is still running. Its ' + hoursOf(open).toFixed(1) +
+          ' hours are counted up to ' + open.asOf + ' and will change when you clock out.');
+      }
+      if (gap) {
+        said.push(longDay(gap.day) + ' is not in that figure. With a clock-out it would add hours at the same rate.');
+      }
+      said.push('The desk confirms the final figure before payroll.');
 
-      var pay = ui.card({
-        title: 'Pay',
-        note: 'An estimate at your hourly rate. A day with no clock-out earns nothing until the desk records one, and the desk confirms the final figure before payroll.'
-      }, ui.kv(payRows));
+      var sums = ui.card({ title: 'How your pay adds up' }, h`
+        <div class="stack stack--sm">${raw(said.map(function (line) {
+          return '<p class="hint">' + esc(line) + '</p>';
+        }).join(''))}</div>
+      `);
+
+      var desk = deskName();
+      var who = desk
+        ? 'so tell ' + desk + ' at the front desk, or ring ' + D.STUDIO.phone
+        : 'so ring the desk on ' + D.STUDIO.phone;
+      var help = ui.card({
+        title: 'If a day looks wrong',
+        foot: ui.btn({ label: 'Message the front desk', msg: 'Sent — the front desk will take a look' })
+      }, h`
+        <div class="stack stack--sm">
+          <p class="hint">Clock entries cannot be changed from here, ${who}. Say which day and what
+            time you left, and they will correct the entry.</p>
+          <p class="hint">Only this pay week is here. If you are checking back over a fortnight, ask
+            the desk for the week before.</p>
+        </div>
+      `);
 
       return h`
-        ${raw(alert ? '<div class="stack">' + alert + '</div>' : '')}
-        <div class="section">${raw(stats)}${raw(ui.grid('sidebar', [entries, pay]))}</div>
+        ${raw(alert)}
+        <div class="section">${raw(stats)}${raw(ui.grid('sidebar', [days, ui.col([sums, help])]))}</div>
       `;
     }
   });

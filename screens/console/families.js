@@ -1,69 +1,61 @@
-/* Console → Families: the list, the family record, and one child's record.
+/* Console → Families: the list, one family's record, one child's record.
 
-   Simplifications against the previous build:
-     - the record's eight header buttons are now three; the rest moved into
-       the card they belong to, where they read as part of that subject
-     - "Discounts & fixed fees" and "Exclusions" were two cards of per-family
-       overrides duplicating program settings. They are one "Billing
-       exceptions" card, and the two separate omit-from-posting / omit-from-
-       ePayment toggles are one "Skip automatic billing" switch.
+   Written for Sabrina, who owns the studio. She is at a desk with a real
+   keyboard and she reads a table faster than she reads a card, so the list
+   stays a table and the records stay dense. What came out of these screens is
+   ceremony, not density.
 
-   Fixed after the visual review:
-     - the list is called Families, the name the rail and the breadcrumb
-       already use. It called itself People, so the "Families" crumb landed
-       on a page with a different name
+   Cut in the owner pass:
+     - "Billing exceptions" is gone as a card. It held two per-family
+       overrides of studio-wide settings: "Send bills by post", whose answer
+       was always no because the studio emails, and "Skip automatic billing",
+       which is the same decision as FAMILIES.autopay written a second time.
+       Autopay is now stated as the fact it already is, in Billing
+     - the sibling rule stays, because it is money, but it sits with the rest
+       of the money and only appears on a family with more than one child. A
+       row reading "None — one child on the books" is not information
+     - the three pills under the title (status, autopay, owing) said one thing
+       three ways and none of them said what to do about it. They are one
+       notice at the top naming the open invoice, the amount, the due date and
+       the reason it failed, with "Record a payment" on it. That notice used
+       to be a pink box halfway down, inside the Billing card
+     - "Record a payment" left the header. It appears only when something is
+       actually owed, beside the amount it refers to. A family at zero is not
+       offered a control with nothing to do
+     - the list's "Active" chip was the exact complement of "Needs attention" —
+       four chips for three decisions. Three chips now
+     - the Students tab filtered by age band, which slices eleven children and
+       answers nothing. It filters on the two things she acts on: a safety note
+       before a camp day, and a child on the books with no place
+     - Documents printed the studio's version numbers on the record of every
+       family whose paperwork it cannot report on. A version number is not a
+       fact about this family. Every row now says whether a signed copy is on
+       file, and the head counts what is left to chase
+     - the child's record carried "Family plan", which is the family's, and a
+       make-up tally directly above the card that lists those same credits row
+       by row. The tally is now the head of the list it counts.
+
+   Consequences, because there is nobody behind her to undo anything:
+     - cancelling states, before the button, every child who comes off the
+       register, who on the waitlist takes each place, that the balance is
+       still owed afterwards, and what is kept. All of it derived
+     - a family already cancelling is not offered "Cancel membership" again.
+       It is offered the only decision left, which is to keep it.
+
+   Standing decisions from earlier passes, still true:
      - the Children column is derived from the children on the books, so it
        cannot disagree with the Students tab beside it
-     - Current plan no longer restates the Status pill two cells to its right
-     - the subtitle follows the tab, as the search and the filters already did
-     - "Lifetime value $14,280" and "Next charge 1 Aug 2026" were literals
-       with nothing behind them. Billing reads the family's own invoice
-     - Documents claimed "8 of 9 signed" and a photo permission Grove.data
-       does not hold. Every row is derived, and a document is only reported
-       as signed on the record of the family whose signature it carries
-     - Contact carried a "Second guardian — not provided" placeholder and a
-       third of a card of white space; it carries the family's last message
-     - the child's record was three short cards that mostly repeated the
-       title. It carries the sessions missed, the safety note, the child's
-       siblings and the family's contact details
-     - "Open the ledger" is offered only to the family whose ledger
-       Grove.data actually holds; every other family opens Billing.
-
-   Fixed in the second pass:
-     - the sibling exception put the studio's rule in its own words, "50% off
-       the second child". The rule Grove.data holds, and that Settings,
-       Programs and the registration flow all quote, is 50% off the second and
-       third registration fee. It is read from PRICING now, and the children
-       it applies to are the ones after the first on the roster
-     - the make-up pill on a child's record was keyed on the credit's colour
-       rather than its status, so every one of them rendered grey. It reads
-       the status, off the same map the make-ups queue in Requests uses
-     - the Children card is the register's own rows, so a name on a family
-       record opens that child's record instead of sitting there as text. The
-       make-up count sits on the child holding it; the plan is the card foot
-     - the three cards in the first row each ended in a third of a card of
-       white. Children, contact and paperwork share that row now, and billing
-       sits with its exceptions in the next, which leaves the tallest and the
-       shortest card in a row within about 80px of each other
-     - a family with no thread showed a full empty panel where a family with
-       one shows a single notice; both are one notice now
-     - make-up credits are counted off the MAKEUPS rows a child holds rather
-       than the STUDENTS.mk tally. The count and the rows behind it sit on the
-       same screen here, so the number has to be the length of the list under
-       it; the family portal counts them the same way
-     - the child's record named the guardian and their phone number twice, in
-       two cards side by side. Who to call is on the family card, and Safety
-       says so
-     - the child's record is two columns of two cards (ui.col) rather than two
-       rows, so the columns end level instead of one card ending in white
-     - the membership paragraph carried an inline max-width.
-
-   Fixed in the final pass:
-     - the "Skip automatic billing" helper line described the family as
-       already invoiced by hand, with the switch off, an Autopay on pill in
-       the header and an automatic charge in Billing that failed. It describes
-       the default and what flipping the switch changes, the way the row below
-       it does. */
+     - Current plan never restates the Status pill two cells to its right
+     - a document is reported signed only on the record of the family whose
+       signature Grove.data carries
+     - make-up credits are counted off the MAKEUPS rows a child holds, never
+       off the STUDENTS.mk tally, because the rows are on this same screen
+     - the sibling rule is read from PRICING, the one place the studio keeps it
+     - "Open the ledger" is offered only to the family whose ledger Grove.data
+       holds; every other family opens Billing
+     - no sticky action bar on these three screens. None of them exists to
+       complete one action — they are a list and two records, and the actions
+       belong beside the rows they act on. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -90,6 +82,9 @@
   var T_FAMILIES = 'Families';
   var T_STUDENTS = 'Students';
 
+  var F_ALL = 'All', F_OWING = 'Owing', F_ATTENTION = 'Needs attention';
+  var S_ALL = 'All children', S_SAFETY = 'Safety notes', S_UNPLACED = 'Not in a class';
+
   /* ---- derivations --------------------------------------------------------
      Everything these screens state about a family is read back out of
      Grove.data here, so one fact cannot be written two ways on two screens. */
@@ -102,6 +97,15 @@
 
   function firstName(name) { return String(name).split(' ')[0]; }
 
+  function ord(n) {
+    var end = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (end[(v - 20) % 10] || end[v] || end[0]);
+  }
+
+  function sumBalance(list) {
+    return list.reduce(function (n, f) { return n + f.balance; }, 0);
+  }
+
   /* The Children column and the Students tab have to be the same set of
      people, so the column lists the children on the books rather than a
      written-out line that can drift away from the roster. */
@@ -109,6 +113,48 @@
     return kidsOf(f.name).map(function (s) {
       return firstName(s.name) + ' (' + s.age + ')';
     }).join(', ');
+  }
+
+  /* A child is either in a room, on a waitlist, or on the books with nothing
+     booked. The third group is money left on the table, so it is worth being
+     able to ask for it by name. */
+  function inClass(s) {
+    return String(s.cls).indexOf('Waitlisted') !== 0 && s.cls !== 'Not yet enrolled';
+  }
+
+  /* "Mon 3:15pm · Studio 2" and "Waitlisted · Mon 3:15pm" and the waitlist's
+     own "Mon 3:15pm · Ages 8–11" are three spellings of one class. The slot is
+     the part they agree on. In a real schema this is a foreign key. */
+  function slotOf(text) {
+    var parts = String(text).split(' · ');
+    return parts[0] === 'Waitlisted' ? (parts[1] || '') : parts[0];
+  }
+
+  /* The class record behind a child's slot, which is where the teacher lives.
+     Same day-and-start-time match the family schedule uses. */
+  function classOf(s) {
+    var bits = slotOf(s.cls).split(' ');
+    var start = (bits[1] || '').replace(/(am|pm)/i, '');
+    if (!start) return null;
+    return D.CLASSES.filter(function (c) {
+      return c.day === bits[0] && c.time.indexOf(start) === 0;
+    })[0] || null;
+  }
+
+  function waitlistEntry(childName) {
+    return D.WAITLIST.filter(function (w) { return w.child === childName; })[0];
+  }
+
+  function waitlistDepth(slot) {
+    return D.WAITLIST.filter(function (w) { return slotOf(w.cls) === slot; }).length;
+  }
+
+  /* Who takes the place if this family gives it up. A family already holding
+     a waitlist seat in the same class cannot inherit its own place. */
+  function waitingOn(slot, exceptFamily) {
+    return D.WAITLIST.filter(function (w) {
+      return slotOf(w.cls) === slot && w.fam !== exceptFamily;
+    }).sort(function (a, b) { return a.pos - b.pos; });
   }
 
   /* Two families record a status where a plan belongs — "Cancelling · ends 31
@@ -123,6 +169,8 @@
     }
     return /session|camp|week/i.test(p) ? p : '';
   }
+
+  function lowerFirst(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
 
   /* Every make-up credit a child holds, counted off the MAKEUPS rows rather
      than the STUDENTS.mk tally. The rows and the count appear on the same
@@ -145,16 +193,18 @@
     return order.map(function (k) { return count[k] + ' ' + k.toLowerCase(); }).join(' · ');
   }
 
-  /* One child, as the register has them. The same row the thread sidebar in
-     Messages draws, so a name on a family record opens that child's own
-     record rather than sitting there as a line of text. */
+  /* One child, as the register has them. A name on a family record opens that
+     child's record rather than sitting there as a line of text. */
   function childRow(s) {
-    var waiting = s.cls.indexOf('Waitlisted') === 0;
     var held = creditsOf(s.name).length;
     var end = '';
-    if (waiting) end = ui.pill('Waitlist', 'warn');
-    else if (s.flag) end = ui.pill(s.flag, s.flagKind === 'bad' ? 'bad' : 'warn');
-    else if (held) end = ui.mute(held === 1 ? '1 make-up credit' : held + ' make-up credits');
+    if (!inClass(s)) {
+      end = ui.pill(waitlistEntry(s.name) ? 'Waitlist' : 'Not enrolled', 'warn');
+    } else if (s.flag) {
+      end = ui.pill(s.flag, s.flagKind === 'bad' ? 'bad' : 'warn');
+    } else if (held) {
+      end = ui.mute(held === 1 ? '1 make-up credit' : held + ' make-up credits');
+    }
     return {
       title: esc(s.name),
       sub: esc('Age ' + s.age + ' · ' + s.cls),
@@ -176,8 +226,16 @@
     return kids.slice(1).map(function (k) { return k.name; }).join(', ');
   }
 
-  function invoiceOf(f) {
-    return D.INVOICES.filter(function (i) { return i.fam === f.name; })[0];
+  function invoicesOf(f) {
+    return D.INVOICES.filter(function (i) { return i.fam === f.name; });
+  }
+
+  function openInvoiceOf(f) {
+    return invoicesOf(f).filter(function (i) { return i.status !== 'Paid'; })[0];
+  }
+
+  function latestInvoiceOf(f) {
+    return openInvoiceOf(f) || invoicesOf(f)[0];
   }
 
   function threadOf(f) {
@@ -216,39 +274,34 @@
     return String(d.who).split(' · ')[1] || '';
   }
 
-  function docState(d) {
-    return d.signed
-      ? { v: esc('Signed · ' + signedOn(d)), tone: null }
-      : { v: 'Not signed', tone: 'clay' };
+  /* Three states, and she treats them the same way: anything that is not a
+     signed copy on file is a form to chase. */
+  function docRow(name, d) {
+    if (d && d.signed) return { k: name, v: esc('Signed · ' + signedOn(d)), tone: null };
+    if (d) return { k: name, v: 'Not signed', tone: 'clay' };
+    return { k: name, v: 'No signed copy', tone: 'mute' };
   }
 
-  /* The studio's forms first, then the image permission each child answers
-     separately. Version and publication date are the studio's own facts and
-     hold for everyone; whether a form came back signed is only known for the
-     family whose signature Grove.data records. */
   function documentRows(f) {
     var mine = ownsDocs(f);
     var rows = [];
 
     D.DOCUMENTS.forEach(function (d) {
       if (d.name.indexOf('Photo permission') === 0) return;
-      var state = docState(d);
-      rows.push(mine
-        ? { k: d.name, v: state.v, tone: state.tone }
-        : { k: d.name, v: esc(d.version + ' · ' + d.published), tone: 'mute' });
+      rows.push(docRow(d.name, mine ? d : null));
     });
 
     kidsOf(f.name).forEach(function (k) {
       var doc = photoDoc(k.name);
-      if (doc && mine) {
-        var state = docState(doc);
-        rows.push({ k: doc.name, v: state.v, tone: state.tone });
-      } else {
-        rows.push({ k: 'Photo permission — ' + firstName(k.name), v: 'No form on file', tone: 'mute' });
-      }
+      rows.push(docRow(doc ? doc.name : 'Photo permission — ' + firstName(k.name),
+        doc && mine ? doc : null));
     });
 
     return rows;
+  }
+
+  function toChase(rows) {
+    return rows.filter(function (r) { return !!r.tone; }).length;
   }
 
   /* ---- list ------------------------------------------------------------- */
@@ -284,15 +337,20 @@
 
   function familiesTab() {
     var q = Grove.query('families');
-    var filter = Grove.filter('families', 'All');
+    var filter = Grove.filter('families', F_ALL);
 
     var rows = D.FAMILIES.filter(function (f) {
       if (!Grove.match(q, f.name, f.guardian, f.email, childNames(f), f.phone)) return false;
-      if (filter === 'Active') return f.status === 'Active';
-      if (filter === 'Owing') return f.balance > 0;
-      if (filter === 'Needs attention') return f.status !== 'Active';
+      if (filter === F_OWING) return f.balance > 0;
+      if (filter === F_ATTENTION) return f.status !== 'Active';
       return true;
     });
+
+    /* Tallied off the rows on screen, so filtering the list re-states what
+       that list is worth rather than repeating a page total. */
+    var owing = rows.filter(function (f) { return f.balance > 0; });
+    var count = rows.length + ' of ' + D.FAMILIES.length + ' families' +
+      (owing.length ? ' · ' + owing.length + ' owing ' + Grove.money(sumBalance(owing)) : '');
 
     var table = ui.table(
       ['Family', 'Children', 'Contact', 'Current plan', { label: 'Balance', align: 'right' }, { label: 'Status', shrink: true }],
@@ -317,20 +375,25 @@
     return ui.toolbar({
       tabs: peopleTabs(),
       search: { key: 'families', placeholder: 'Search name, email, phone, child…' },
-      filters: { key: 'families', items: ['All', 'Active', 'Owing', 'Needs attention'] },
-      count: rows.length + ' of ' + D.FAMILIES.length + ' families'
+      filters: { key: 'families', items: [F_ALL, F_OWING, F_ATTENTION] },
+      count: count
     }) + ui.card({ flush: true }, table);
   }
 
   function studentsTab() {
     var q = Grove.query('students');
-    var filter = Grove.filter('students', 'All ages');
+    var filter = Grove.filter('students', S_ALL);
 
     var rows = D.STUDENTS.filter(function (s) {
       if (!Grove.match(q, s.name, s.family, s.cls)) return false;
-      if (filter !== 'All ages') return s.band === filter;
+      if (filter === S_SAFETY) return !!s.flag;
+      if (filter === S_UNPLACED) return !inClass(s);
       return true;
     });
+
+    var flagged = rows.filter(function (s) { return !!s.flag; }).length;
+    var count = rows.length + ' of ' + D.STUDENTS.length + ' children' +
+      (flagged ? ' · ' + flagged + ' with a safety note' : '');
 
     var table = ui.table(
       ['Child', 'Family', 'Class', 'Safety', { label: 'Attendance', align: 'right' }, { label: 'Credits', align: 'right' }],
@@ -340,22 +403,154 @@
           cells: [
             ui.two(s.name, 'Age ' + s.age + ' · ' + s.band),
             ui.mute(s.family),
-            ui.mute(s.cls),
+            inClass(s)
+              ? ui.mute(s.cls)
+              : (waitlistEntry(s.name)
+                  ? ui.pill('Waitlist', 'warn') + ' ' + ui.mute(slotOf(s.cls))
+                  : ui.pill('Not enrolled', 'warn')),
             s.flag ? ui.pill(s.flag, s.flagKind) : '<span class="mute">—</span>',
             '<span class="num">' + esc(s.att) + '</span>',
             '<span class="num">' + creditsOf(s.name).length + '</span>'
           ]
         };
       }),
-      { emptyTitle: 'No children match', emptyText: 'Clear the search or choose a different age band.' }
+      { emptyTitle: 'No children match', emptyText: 'Clear the search or choose a different filter.' }
     );
 
     return ui.toolbar({
       tabs: peopleTabs(),
       search: { key: 'students', placeholder: 'Search child, family, class…' },
-      filters: { key: 'students', items: ['All ages', '5–7', '8–11', '12+'] },
-      count: rows.length + ' of ' + D.STUDENTS.length + ' children'
+      filters: { key: 'students', items: [S_ALL, S_SAFETY, S_UNPLACED] },
+      count: count
     }) + ui.card({ flush: true }, table);
+  }
+
+  /* ---- what is wrong with this family, at the top -------------------------
+     One notice, stating the open invoice it is about. Everything it says is
+     read off that invoice, so it cannot claim a failure the ledger does not
+     have, and the money action sits on it rather than in the header where the
+     amount is not visible. */
+
+  function autopayLine(f) {
+    return f.autopay
+      ? 'Autopay is on for ' + String(f.card).split(' · ')[0] + '.'
+      : 'Autopay is off, so this family is invoiced by hand.';
+  }
+
+  /* "8 Jul 2026" stays as it is; "On receipt" is mid-sentence here. */
+  function dueLine(due) {
+    var d = String(due);
+    return /^\d/.test(d) ? d : lowerFirst(d);
+  }
+
+  function leadNotice(f) {
+    var inv = openInvoiceOf(f);
+    if (inv) {
+      return ui.notice({
+        kind: inv.kind === 'bad' ? 'bad' : 'warn',
+        title: inv.status + ' · ' + Grove.money(inv.amt) + ' owing',
+        text: inv.id + ' · due ' + dueLine(inv.due) + ' · ' + inv.note,
+        action: { label: 'Record a payment', msg: 'Payment recorded · receipt emailed to ' + f.email }
+      });
+    }
+
+    if (f.balance > 0) {
+      return ui.notice({
+        kind: 'bad',
+        title: Grove.money(f.balance) + ' owing',
+        text: 'No open invoice covers it. Raise one in billing.',
+        action: { label: 'Record a payment', msg: 'Payment recorded · receipt emailed to ' + f.email }
+      });
+    }
+
+    var last = latestInvoiceOf(f);
+
+    if (f.status === 'Cancelling') {
+      var ends = planOf(f);
+      return ui.notice({
+        title: 'Membership ' + (ends ? lowerFirst(ends) : 'is ending'),
+        text: (last ? 'The last invoice, ' + last.id + ' for ' + Grove.money(last.amt) + ', is paid. ' : '') +
+              'Nothing further will be charged.'
+      });
+    }
+
+    return ui.notice({
+      kind: 'ok',
+      title: 'Nothing outstanding',
+      text: (last ? last.id + ' for ' + Grove.money(last.amt) + ' is paid. ' : 'No invoice has been raised yet. ') +
+            autopayLine(f)
+    });
+  }
+
+  /* ---- what cancelling does ----------------------------------------------
+     Named children, named classes, the family who inherits each place and the
+     money that is still owed afterwards. She has nobody to undo this for her,
+     so it is all on the screen before the button rather than in a toast. */
+
+  function cancelRows(f, ending) {
+    var rows = [];
+
+    kidsOf(f.name).forEach(function (k) {
+      if (inClass(k)) {
+        var waiting = waitingOn(slotOf(k.cls), f.name);
+        rows.push({
+          title: esc(k.name + ' comes off ' + k.cls),
+          sub: esc(waiting.length
+            ? 'The place goes to ' + waiting[0].child + ', first of ' + waiting.length + ' waiting.'
+            : 'Nobody is waiting for that place.')
+        });
+        return;
+      }
+      var w = waitlistEntry(k.name);
+      if (w) {
+        rows.push({
+          title: esc(k.name + ' comes off the ' + slotOf(w.cls) + ' waitlist'),
+          sub: esc('Waiting since ' + w.joined + ', ' + ord(w.pos) + ' in line. The place is not held.')
+        });
+      }
+    });
+
+    if (f.balance > 0) {
+      rows.push({
+        title: esc(Grove.money(f.balance) + ' still has to be collected'),
+        sub: 'This stops future billing. It does not clear what is already owed.'
+      });
+    }
+
+    rows.push(ending
+      ? {
+          title: 'No further invoice is raised',
+          sub: 'The family keeps portal access until the end date. Invoices, documents and messages are kept.'
+        }
+      : {
+          title: 'Billing stops at the end of the current cycle',
+          sub: 'The family keeps portal access until then. Invoices, documents and messages are kept.'
+        });
+
+    return rows;
+  }
+
+  function membershipCard(f) {
+    var ending = f.status === 'Cancelling';
+    var places = kidsOf(f.name).filter(inClass).length;
+
+    var foot = ending
+      ? '<span class="mute">Everything above is already scheduled.</span>' +
+        ui.btn({ label: 'Keep the membership', msg: 'Membership kept · billing continues as before' })
+      : '<span class="mute">All of it happens at once, and there is no undo.</span>' +
+        ui.btn({
+          label: 'Cancel the membership',
+          kind: 'danger',
+          msg: 'Membership cancelled · billing stops after this cycle · ' +
+               (places === 1 ? '1 place released' : places + ' places released')
+        });
+
+    return ui.card({
+      title: 'Membership',
+      flush: true,
+      head: ending ? ui.pill(planOf(f) || 'Ending', 'warn') : '',
+      foot: foot
+    }, ui.rows(cancelRows(f, ending)));
   }
 
   /* ---- family record ------------------------------------------------------ */
@@ -373,7 +568,6 @@
       var f = fam(ctx);
       return [
         { label: 'Message', to: 'newMessage' },
-        { label: 'Record a payment', msg: 'Payment recorded · receipt emailed to ' + f.email },
         ownsLedger(f)
           ? { label: 'Open the ledger', kind: 'primary', to: 'ledger' }
           : { label: 'Open in billing', kind: 'primary', to: 'billing' }
@@ -383,15 +577,9 @@
     body: function (ctx) {
       var f = fam(ctx);
       var kids = kidsOf(f.name);
-      var inv = invoiceOf(f);
       var thread = threadOf(f);
       var plan = planOf(f);
-
-      var flags = h`<div class="flags">
-        ${raw(ui.pill(f.status, STATUS_KIND[f.status]))}
-        ${raw(ui.pill(f.autopay ? 'Autopay on' : 'Autopay off', f.autopay ? 'ok' : null))}
-        ${raw(f.balance > 0 ? ui.pill(Grove.money(f.balance) + ' owing', 'bad') : ui.pill('Nothing owing', 'ok'))}
-      </div>`;
+      var inv = latestInvoiceOf(f);
 
       var children = ui.card({
         title: 'Children',
@@ -403,10 +591,7 @@
         ? ui.rows(kids.map(childRow))
         : ui.empty('Nobody on the register', 'The family has an account but no child is enrolled.'));
 
-      var contact = ui.card({
-        title: 'Contact',
-        head: ui.btn({ label: 'New message', kind: 'quiet', size: 'sm', to: 'newMessage' })
-      }, h`
+      var contact = ui.card({ title: 'Contact' }, h`
         ${raw(ui.kv([
           ['Guardian', esc(f.guardian)],
           ['Email', esc(f.email)],
@@ -427,73 +612,47 @@
         </div>
       `);
 
-      var billing = ui.card({
-        title: 'Billing',
-        head: ui.btn({ label: 'Statement', kind: 'quiet', size: 'sm', msg: 'Statement emailed to ' + f.email }),
-        note: 'Card details are never stored by the studio — only the last four digits and a processor token.'
-      }, h`
-        ${raw(ui.kv([
-          ['Payment method', esc(f.card)],
-          inv
-            ? { k: 'Latest invoice', v: esc(inv.id + ' · ' + Grove.money(inv.amt)) }
-            : { k: 'Latest invoice', v: 'None raised yet', tone: 'mute' },
-          inv
-            ? { k: 'Due', v: esc(inv.due), tone: inv.status === 'Paid' ? null : 'clay' }
-            : { k: 'Due', v: 'Nothing due', tone: 'mute' },
-          { k: 'Balance', v: esc(Grove.money(f.balance)), tone: f.balance > 0 ? 'clay' : null }
-        ]))}
-        ${raw(inv && inv.status !== 'Paid'
-          ? '<div class="card-split">' + ui.notice({
-              kind: inv.kind === 'bad' ? 'bad' : 'warn',
-              title: inv.status + ' · ' + inv.id,
-              text: inv.note
-            }) + '</div>'
-          : '')}
-      `);
-
-      var exceptions = ui.card({
-        title: 'Billing exceptions',
-        note: 'Sibling relief is the studio-wide rule in Settings and is applied for you. Everything else follows the program defaults — only set an exception when this family genuinely differs.'
-      }, h`
-        ${raw(ui.kv(kids.length > 1
-          ? [['Sibling relief', esc(siblingRelief())],
-             { k: 'Applies to', v: esc(laterKids(kids)), tone: 'mute' }]
-          : [{ k: 'Sibling relief', v: 'None — one child on the books', tone: 'mute' }]))}
-        <div class="card-split">
-          ${raw(ui.toggleRow({
-            id: 'fam-skip-auto',
-            title: 'Skip automatic billing',
-            sub: 'Automatic billing is the default. Switched on, the family is invoiced by hand — listed for manual handling, never silently dropped.',
-            on: false
-          }))}
-          ${raw(ui.toggleRow({
-            id: 'fam-post',
-            title: 'Send bills by post',
-            sub: 'Email is the default.',
-            on: false
-          }))}
-        </div>
-      `);
-
+      var docRows = documentRows(f);
+      var chase = toChase(docRows);
       var docs = ui.card({
         title: 'Documents',
-        head: ui.btn({ label: 'Registration form', kind: 'quiet', size: 'sm', msg: 'Opening the registration form' }),
-        note: 'Image permission is answered per child on the registration form, not once for the family.'
-      }, ui.kv(documentRows(f)));
+        head: chase
+          ? h`<span class="inline">${raw(ui.pill(chase + ' to chase', 'warn'))}${raw(ui.btn({
+              label: 'Send a reminder',
+              kind: 'quiet',
+              size: 'sm',
+              msg: 'Reminder emailed to ' + f.email + ' · ' + chase + ' outstanding'
+            }))}</span>`
+          : ui.pill('All signed', 'ok'),
+        note: 'A form counts as signed only when the signed copy is on file. Image permission is answered per child on the registration form, not once for the family.'
+      }, ui.kv(docRows));
 
-      var danger = h`<div class="section">
-        ${raw(ui.card({ title: 'Membership' }, h`
-          <div class="spread">
-            <p class="hint">Cancelling stops billing at the end of the current cycle. The family keeps portal access until then, and their history is retained.</p>
-            ${raw(ui.btn({ label: 'Cancel membership', kind: 'danger', msg: 'Prototype — nothing was cancelled' }))}
-          </div>
-        `))}
-      </div>`;
+      /* One place where money is set, and it states the studio-wide rules it
+         is following rather than offering a second copy of them to edit. */
+      var moneyRows = [
+        ['Payment method', esc(f.card)],
+        { k: 'Automatic billing', v: f.autopay ? 'On' : 'Off · invoiced by hand', tone: f.autopay ? null : 'mute' }
+      ];
+      if (kids.length > 1) {
+        moneyRows.push(['Sibling relief', esc(siblingRelief())]);
+        moneyRows.push({ k: 'Applies to', v: esc(laterKids(kids)), tone: 'mute' });
+      }
+      if (inv) {
+        moneyRows.push({ k: 'Latest invoice', v: esc(inv.id + ' · ' + Grove.money(inv.amt) + ' · ' + inv.status) });
+        if (inv.status !== 'Paid') moneyRows.push({ k: 'Due', v: esc(inv.due), tone: 'clay' });
+      } else {
+        moneyRows.push({ k: 'Latest invoice', v: 'None raised yet', tone: 'mute' });
+      }
+      moneyRows.push({ k: 'Balance', v: esc(Grove.money(f.balance)), tone: f.balance > 0 ? 'clay' : null });
 
-      return flags +
-        ui.grid(3, [children, contact, docs]) +
-        '<div class="section">' + ui.grid(2, [billing, exceptions]) + '</div>' +
-        danger;
+      var billing = ui.card({
+        title: 'Billing',
+        head: ui.btn({ label: 'Statement', kind: 'quiet', size: 'sm', msg: 'Statement emailed to ' + f.email })
+      }, ui.kv(moneyRows));
+
+      return leadNotice(f) +
+        '<div class="section">' + ui.grid(3, [children, contact, docs]) + '</div>' +
+        '<div class="section">' + ui.grid(2, [billing, membershipCard(f)]) + '</div>';
     }
   });
 
@@ -522,34 +681,42 @@
       var f = famByName(s.family);
       var doc = photoDoc(s.name);
       var mine = ownsDocs(f);
-      var plan = planOf(f);
       var missed = creditsOf(s.name);
       var siblings = kidsOf(s.family).filter(function (k) { return k.id !== s.id; });
-      var started = s.att !== '—';
+      var placed = inClass(s);
+      /* Cillian sits in Thu 4:30pm and also holds a waitlist row for it. He
+         has the place, so the place is what his record says. */
+      var wait = placed ? null : waitlistEntry(s.name);
+      var cls = classOf(s);
 
-      var photoRow = doc && mine
-        ? { k: 'Photo permission', v: docState(doc).v, tone: docState(doc).tone }
-        : { k: 'Photo permission', v: 'No form on file', tone: 'mute' };
+      var state = placed
+        ? ui.pill('On the register', 'ok')
+        : (wait
+            ? ui.pill('Waitlist · ' + ord(wait.pos) + ' of ' + waitlistDepth(slotOf(wait.cls)), 'warn')
+            : ui.pill('Not enrolled', 'warn'));
 
-      var enrollment = ui.card({
-        title: 'Enrollment',
-        head: ui.pill(started ? 'On the register' : 'Not started', started ? 'ok' : 'warn')
-      }, ui.kv([
-        ['Class', esc(s.cls)],
-        plan
-          ? { k: 'Family plan', v: esc(plan) }
-          : { k: 'Family plan', v: 'Not set yet', tone: 'mute' },
-        { k: 'Attendance', v: esc(s.att), tone: started ? null : 'mute' },
-        { k: 'Make-up credits', v: esc(creditLine(missed)), tone: missed.length ? null : 'mute' },
-        photoRow
-      ]));
+      var placeRows = [
+        placed
+          ? { k: 'Class', v: esc(s.cls) }
+          : (wait
+              ? { k: 'Waiting for', v: esc(slotOf(wait.cls)) }
+              : { k: 'Class', v: 'Not yet enrolled', tone: 'mute' })
+      ];
+      if (wait) placeRows.push({ k: 'On the list since', v: esc(wait.joined), tone: 'mute' });
+      if (placed && cls) placeRows.push({ k: 'Teacher', v: esc(cls.staff) });
+      placeRows.push({ k: 'Attendance', v: esc(s.att), tone: placed ? null : 'mute' });
+      placeRows.push(doc && mine
+        ? docRow('Photo permission', doc)
+        : docRow('Photo permission', null));
+
+      var enrollment = ui.card({ title: 'Enrollment', head: state }, ui.kv(placeRows));
 
       var safety = ui.card({
         title: 'Safety',
         head: s.flag
           ? ui.pill(s.flagKind === 'bad' ? 'Medical alert' : 'Needs to know', s.flagKind)
           : ui.pill('No alerts', 'ok'),
-        note: 'Safety notes are shown to every teacher on the roster, and on the attendance sheet for each class this child attends. Who to call is on the family card.'
+        note: 'Shown to every teacher on the roster and on the attendance sheet for each class this child attends.'
       }, s.flag
         ? ui.notice({
             kind: s.flagKind,
@@ -561,9 +728,12 @@
             text: 'No allergy, condition or medication has been recorded for this child.'
           }));
 
+      /* The tally sits on the head of the list it counts, rather than one
+         card above the same rows it is counting. */
       var sessions = ui.card({
         title: 'Missed sessions',
         flush: true,
+        head: missed.length ? ui.pill(creditLine(missed)) : '',
         note: 'A class missed with more than 24 hours notice becomes a make-up credit, which lapses on the date shown.'
       }, missed.length
         ? ui.rows(missed.map(function (m) {

@@ -1,50 +1,55 @@
-/* Console → Inventory (list) and the stock item record.
+/* Console → Inventory (the shelf) and the stock item record.
 
-   Simplifications against the previous build:
-     - seven filter chips, none of which filtered anything, are the statuses
-       the data actually carries, read off the rows
-     - the search box and the count label were inert and hardcoded; both now
-       read the rows they describe
-     - "Reorder at" and "Minimum" were two names for one number. It is Minimum
-       on both screens
-     - the low-stock tint keyed off a status string, so Smocks at 18 against a
-       minimum of 20 read as fine. It now keys off the numbers
-     - lead time, last delivery and typical monthly use were figures nothing in
-       the studio produces, so the record carries what the dataset genuinely
-       holds: the shelf, the requests against it, and what an order costs
+   Fitted to Sabrina, who comes to this screen to answer one question: what do
+   I need to order. The answer is now the top of the page and the button that
+   acts on it is pinned to the bottom of the viewport.
 
-   Fixed after the visual review:
-     - the list opened with a search field where every other console list opens
-       with a segmented group. The statuses are that group now, with the counts
-       the rows give them, and search sits where Billing puts it
-     - "Items tracked" in the stat band only restated the All tab beside it. It
-       is now what it would cost to bring every item back to its minimum, which
-       is the figure behind the Create purchase order button
-     - the record was two short cards and half a page of cream. It carries the
-       shelf, the ordering arithmetic, the requests raised against the item and
-       the rest of that supplier's shelf — every line derived, nothing invented
-     - the subtitle restated all four rows of the card 40px beneath it; it says
-       what the page is for instead
-     - the breadcrumb read "Stock item". It names the item, as the ledger crumb
-       names the family
-     - every figure here is derived: a top-up is minimum minus on hand, an
-       order is priced at the unit cost on file, and an order covers the larger
-       of the shortfall and the units already requested — never both, because
-       Requests says approving a request puts its units on the shelf */
+   Cut in this pass:
+     - the status vocabulary. "Reorder now" and "Low" were two words for one
+       decision — both mean the item goes on the order — and the stored string
+       could disagree with the numbers (Smocks at 18 against a minimum of 20
+       read "Low" while Acrylic at 2 against 12 read "Reorder now"; the shelf
+       treats them the same). Status is derived from on-hand against minimum
+       and has two states: On the order, OK. INVENTORY.status and .kind are no
+       longer read by this screen
+     - the four status tabs. With the order lifted to its own card at the top,
+       a tab that filters the table down to the same three rows is a second
+       control for a decision already made. Search stays; six chips do not
+     - the three-up stat band. "Below minimum" restated the tab beside it and
+       "Open supply requests" restated the Requests screen. The one figure she
+       acts on — what the order costs — is the sticky bar's hint and the order
+       card's foot, beside the rows it is summed from
+     - the list and the record disagreed about what an order is. The list
+       priced the shortfall ($111.00) while the record priced the larger of the
+       shortfall and the units instructors had asked for ($100.80 for one item
+       alone). One rule now, stated once: an order covers the larger of the
+       two, because approving a request puts its units on the shelf
+     - "Value on the shelf" on the record. $8.40 of acrylic paint is an
+       accountant's number and there is no accountant; nothing she can do
+       changes it
+     - the record's Stock and Ordering cards stated the same five numbers
+       twice — "Short by 10" and "To reach the minimum 10 units", "On request
+       now 24 units" and "Requests waiting 24 units". One card
+     - the record's header primary. "Reorder" spent money without naming the
+       quantity, the supplier or the amount. It is a sticky bar that says all
+       three before she presses it
+
+   Kept dense on purpose: this is a desk, a keyboard and a table of numbers.
+   Nothing here became a large friendly card, and ui.choice is not used —
+   nothing on this screen is picked with a finger.
+
+   Every figure is derived from the rows printed under it: the order quantity,
+   the per-supplier split, the totals in both card feet and both sticky hints.
+   Nothing on this screen is typed in. */
 (function () {
   'use strict';
-  var Grove = window.Grove, ui = Grove.ui, esc = Grove.esc, D = Grove.data;
+  var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
-  var TAB_KEY = 'inventory';
-  var T_ALL = 'All';
-
-  /* Worst first, so the tab that matters holds the left of the group. Only
-     the statuses the dataset actually uses are offered. */
-  var STATUS_ORDER = ['Reorder now', 'Low', 'OK'];
+  var SEARCH_KEY = 'inventory';
 
   /* ---- derivations ---------------------------------------------------------
-     Every number on both screens comes out of Grove.data here, so the shelf
-     cannot be counted one way on the list and another on the record. */
+     Both screens read the shelf through these, so the list cannot count an
+     order one way and the record another. */
 
   function isBelow(i) { return i.on < i.min; }
   function shortOf(i) { return Math.max(0, i.min - i.on); }
@@ -62,13 +67,12 @@
   }
 
   function units(n) { return n + (n === 1 ? ' unit' : ' units'); }
+  function itemsWord(n) { return n + (n === 1 ? ' item' : ' items'); }
 
-  function belowMinimum() { return D.INVENTORY.filter(isBelow); }
-
-  /* What it would cost to bring the whole shelf back to its minimums, at the
-     supplier prices on file. */
-  function topUpValue() {
-    return sum(D.INVENTORY, function (i) { return shortOf(i) * unitCost(i); });
+  function joinWords(list) {
+    if (!list.length) return '';
+    if (list.length === 1) return list[0];
+    return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
   }
 
   /* The only movement the dataset holds for an item is the supply requests
@@ -91,17 +95,66 @@
     return sum(openFor(i), function (r) { return r.qty; });
   }
 
+  function requesters(i) {
+    var seen = [];
+    openFor(i).forEach(function (r) { if (seen.indexOf(r.by) === -1) seen.push(r.by); });
+    return seen;
+  }
+
   function pending() {
     return D.SUPPLY_REQUESTS.filter(function (r) { return r.status === 'Pending'; });
   }
 
-  function statusTabs() {
-    var items = [{ label: T_ALL, count: D.INVENTORY.length }];
-    STATUS_ORDER.forEach(function (s) {
-      var n = D.INVENTORY.filter(function (i) { return i.status === s; }).length;
-      if (n) items.push({ label: s, count: n });
+  /* The one rule. Approving a request puts its units on the shelf, which is
+     what the Requests screen tells her, so an order covers the larger of the
+     shortfall and the units already asked for — never the sum of them. */
+  function orderQty(i) { return Math.max(shortOf(i), askedFor(i)); }
+  function orderCost(i) { return orderQty(i) * unitCost(i); }
+
+  function toOrder() {
+    return D.INVENTORY.filter(function (i) { return orderQty(i) > 0; });
+  }
+
+  /* One order covers a whole supplier, so the order is grouped by supplier,
+     dearest supplier first, and dearest line first inside each. */
+  function supplierGroups(list) {
+    var names = [], by = {};
+    list.forEach(function (i) {
+      if (!by[i.supplier]) {
+        by[i.supplier] = { name: i.supplier, items: [], units: 0, cost: 0 };
+        names.push(i.supplier);
+      }
+      var g = by[i.supplier];
+      g.items.push(i);
+      g.units += orderQty(i);
+      g.cost += orderCost(i);
     });
-    return { key: TAB_KEY, items: items };
+    return names.map(function (n) { return by[n]; })
+      .sort(function (a, b) { return b.cost - a.cost; });
+  }
+
+  function orderRows() {
+    var out = [];
+    supplierGroups(toOrder()).forEach(function (g) {
+      g.items.slice().sort(function (a, b) { return orderCost(b) - orderCost(a); })
+        .forEach(function (i) { out.push(i); });
+    });
+    return out;
+  }
+
+  /* Why this quantity and not the shortfall — printed on the row rather than
+     left as arithmetic she has to redo. */
+  function whyShort(i) {
+    var gap = shortOf(i);
+    var asked = askedFor(i);
+    var who = joinWords(requesters(i));
+    if (gap && asked) return 'Short by ' + gap + ' · ' + who + ' asked for ' + units(asked);
+    if (asked) return who + ' asked for ' + units(asked);
+    return 'Short by ' + units(gap);
+  }
+
+  function statePill(i) {
+    return orderQty(i) ? ui.pill('On the order', 'bad') : ui.pill('OK', 'ok');
   }
 
   function item(ctx) {
@@ -113,29 +166,88 @@
     return '<span class="num' + (cls ? ' ' + cls : '') + '">' + esc(value) + '</span>';
   }
 
-  /* ---- list ---------------------------------------------------------------- */
+  function total(label, value) {
+    return '<span class="cell-mute">' + esc(label) + '</span>' +
+      '<span class="num strong">' + esc(value) + '</span>';
+  }
+
+  /* ---- the shelf ------------------------------------------------------------
+     What to order comes first, then the shelf it comes off, then the button
+     that places it. */
 
   Grove.screen('inventory', {
     surface: 'console',
     eyebrow: 'clay, paint, paper',
     title: 'Inventory',
-    sub: 'What is on the shelf and what is running out. Requests from instructors are approved under Requests.',
+    sub: 'What to order today, and the shelf it comes off. Instructor requests are approved under Requests.',
     actions: [
-      { label: 'See supply requests', to: 'requests' },
-      { label: 'Create purchase order', kind: 'primary', msg: 'Purchase order created' }
+      { label: 'See supply requests', to: 'requests' }
     ],
 
     body: function () {
-      var q = Grove.query(TAB_KEY);
-      var tab = Grove.tab(TAB_KEY, T_ALL);
+      var order = orderRows();
+      var groups = supplierGroups(order);
+      var orderUnits = sum(order, orderQty);
+      var orderTotal = sum(order, orderCost);
+      var waiting = pending().length;
 
-      var rows = D.INVENTORY.filter(function (i) {
-        if (!Grove.match(q, i.item, i.supplier, i.status)) return false;
-        if (tab !== T_ALL) return i.status === tab;
-        return true;
-      });
+      var orderTable = ui.table(
+        [
+          'Item',
+          'Supplier',
+          { label: 'On hand', align: 'right' },
+          { label: 'Minimum', align: 'right' },
+          { label: 'To order', align: 'right' },
+          { label: 'Cost', align: 'right' }
+        ],
+        order.map(function (i) {
+          return {
+            to: 'inventoryItem', id: i.id,
+            cells: [
+              ui.two(i.item, whyShort(i)),
+              ui.mute(i.supplier),
+              num(i.on, isBelow(i) ? 'clay strong' : ''),
+              num(i.min, 'mute'),
+              num(orderQty(i), 'strong'),
+              num(Grove.money(orderCost(i)))
+            ]
+          };
+        }),
+        {
+          emptyTitle: 'Nothing to order',
+          emptyText: 'Every item is at or above its minimum and no instructor request is waiting.'
+        }
+      );
 
-      var table = ui.table(
+      var orderCard = ui.card(
+        {
+          title: 'What to order',
+          head: waiting
+            ? ui.btn({
+                label: waiting === 1 ? '1 request waiting' : waiting + ' requests waiting',
+                kind: 'quiet', size: 'sm', to: 'requests'
+              })
+            : null,
+          flush: true,
+          note: 'An order covers the larger of two figures: the units needed to reach the minimum, and the units instructors have already asked for. Approving a request puts its units on the shelf, so it is never both.',
+          foot: order.length
+            ? total(
+                groups.map(function (g) { return g.name + ' ' + Grove.money(g.cost); }).join(' · '),
+                units(orderUnits) + ' · ' + Grove.money(orderTotal)
+              )
+            : null
+        },
+        orderTable
+      );
+
+      /* The shelf itself: every item, alphabetical, so a count can be checked
+         against the room without hunting. */
+      var q = Grove.query(SEARCH_KEY);
+      var shelf = D.INVENTORY
+        .filter(function (i) { return Grove.match(q, i.item, i.supplier); })
+        .sort(function (a, b) { return String(a.item).localeCompare(String(b.item)); });
+
+      var shelfTable = ui.table(
         [
           'Item',
           { label: 'On hand', align: 'right' },
@@ -144,7 +256,7 @@
           { label: 'Unit cost', align: 'right' },
           { label: 'Status', shrink: true }
         ],
-        rows.map(function (i) {
+        shelf.map(function (i) {
           return {
             to: 'inventoryItem', id: i.id,
             cells: [
@@ -153,50 +265,54 @@
               num(i.min, 'mute'),
               ui.mute(i.supplier),
               num(i.cost),
-              ui.pill(i.status, i.kind)
+              statePill(i)
             ]
           };
         }),
-        { emptyTitle: 'No items match', emptyText: 'Clear the search or choose a different status.' }
+        { emptyTitle: 'No items match', emptyText: 'Clear the search to see the whole shelf.' }
       );
 
-      var below = belowMinimum();
-
-      var stats = ui.statbar([
-        {
-          label: 'Below minimum',
-          value: String(below.length),
-          sub: 'of ' + D.INVENTORY.length + ' items on the shelf',
-          tone: below.length ? 'clay' : null
-        },
-        {
-          label: 'To reach every minimum',
-          value: Grove.money(topUpValue()),
-          sub: 'at the supplier prices on file'
-        },
-        {
-          label: 'Open supply requests',
-          value: String(pending().length),
-          sub: 'of ' + D.SUPPLY_REQUESTS.length + ' raised, waiting under Requests',
-          tone: pending().length ? 'plum' : null
-        }
-      ]);
-
-      /* Tabs first, then search — the order every other console list uses. */
       var toolbar = ui.toolbar({
-        tabs: statusTabs(),
-        search: { key: TAB_KEY, placeholder: 'Search item or supplier…' },
-        count: rows.length + ' of ' + D.INVENTORY.length + ' items'
+        search: { key: SEARCH_KEY, placeholder: 'Search item or supplier…' },
+        count: shelf.length === D.INVENTORY.length
+          ? itemsWord(shelf.length) + ' on the shelf'
+          : shelf.length + ' of ' + itemsWord(D.INVENTORY.length)
       });
 
-      return toolbar + stats + ui.card({ flush: true }, table);
+      /* Money leaves the studio here, so the bar says how much, to whom and
+         for how many units before she presses it. */
+      var bar = order.length
+        ? ui.formActions([
+            {
+              label: 'Create purchase order',
+              kind: 'primary',
+              msg: 'Purchase order' + (groups.length > 1 ? 's' : '') + ' raised with ' +
+                joinWords(groups.map(function (g) { return g.name; })) + ' · ' + Grove.money(orderTotal)
+            }
+          ], {
+            sticky: true,
+            hint: 'Orders ' + units(orderUnits) + ' across ' + itemsWord(order.length) + ' — ' +
+              Grove.money(orderTotal) + ' to ' + joinWords(groups.map(function (g) { return g.name; }))
+          })
+        : ui.formActions([
+            { label: 'See supply requests', to: 'requests' }
+          ], { sticky: true, hint: 'Nothing is under its minimum and no request is waiting' });
+
+      return h`
+        ${raw(orderCard)}
+        <div class="section">
+          <div class="section-head"><h2 class="section-title">Everything on the shelf</h2></div>
+          ${raw(toolbar)}
+          ${raw(ui.card({ flush: true }, shelfTable))}
+        </div>
+        ${raw(bar)}
+      `;
     }
   });
 
   /* ---- stock item -----------------------------------------------------------
-     Four cards in two stacked columns: the shelf and the requests against it on
-     the left, what an order would cost and the rest of that supplier's shelf on
-     the right, so the two columns finish together. */
+     One card of arithmetic, the requests raised against the item, the rest of
+     that supplier's shelf, and the order in a bar at the foot of the page. */
 
   var recordDef = {
     surface: 'console',
@@ -204,16 +320,12 @@
     eyebrow: 'on the shelf',
     title: function (ctx) { return item(ctx).item; },
     sub: function (ctx) {
-      return 'What is on the shelf, what the instructors have asked for, and what the next order with ' +
-        item(ctx).supplier + ' would cost.';
+      return 'Where this item stands, what the instructors have asked for, and what the next order with ' +
+        item(ctx).supplier + ' covers.';
     },
-    actions: function (ctx) {
-      var i = item(ctx);
-      return [
-        { label: 'Adjust count', msg: 'Stock count adjusted' },
-        { label: 'Reorder', kind: 'primary', msg: 'Reorder raised with ' + i.supplier }
-      ];
-    },
+    actions: [
+      { label: 'Adjust count', msg: 'Stock count adjusted' }
+    ],
 
     body: function (ctx) {
       var i = item(ctx);
@@ -221,30 +333,28 @@
       var gap = shortOf(i);
       var spare = spareOf(i);
       var moves = movementFor(i);
-      var open = openFor(i);
       var asked = askedFor(i);
-      /* Approving a request puts its units on the shelf, which is what
-         Requests tells the owner, so the order is the larger of the two
-         figures rather than the sum of them. */
-      var order = Math.max(gap, asked);
-
-      var whoAsked = open.map(function (r) { return r.by; }).join(' and ');
+      var qty = orderQty(i);
+      var cost = orderCost(i);
+      var whoAsked = joinWords(requesters(i));
 
       var standing = ui.notice({
-        kind: isBelow(i) ? (i.kind === 'bad' ? 'bad' : 'warn') : 'ok',
+        kind: isBelow(i) ? 'bad' : 'ok',
         title: isBelow(i)
           ? units(gap) + ' below the minimum'
           : units(spare) + ' above the minimum',
         text: asked
           ? 'Approving the ' + units(asked) + ' ' + whoAsked + ' asked for takes the shelf to ' + (i.on + asked) + '.'
-          : 'Nothing is on request, so the count will not move until an order is fulfilled.'
+          : 'Nothing is on request, so the count will not move until an order arrives.'
       });
 
+      /* One card, because Stock and Ordering were stating the same five
+         numbers under two headings. */
       var stock = ui.card(
         {
-          title: 'Stock',
-          head: ui.pill(i.status, i.kind),
-          note: 'Minimum is the point at which this item joins the next purchase order. A count only changes when an order is fulfilled.'
+          title: 'Stock and the next order',
+          head: statePill(i),
+          note: 'The minimum is the point at which this item joins the next purchase order. A count only changes when an order arrives.'
         },
         ui.kv([
           { k: 'On hand', v: esc(String(i.on)), tone: isBelow(i) ? 'clay' : null },
@@ -253,9 +363,13 @@
             ? { k: 'Short by', v: esc(units(gap)), tone: 'clay' }
             : { k: 'Above the minimum by', v: esc(units(spare)) },
           asked
-            ? { k: 'On request now', v: esc(units(asked)) }
-            : { k: 'On request now', v: 'Nothing outstanding', tone: 'mute' },
-          { k: 'Value on the shelf', v: esc(Grove.money(i.on * unit)) }
+            ? { k: 'Asked for by instructors', v: esc(units(asked) + ' · ' + Grove.money(asked * unit)) }
+            : { k: 'Asked for by instructors', v: 'Nothing outstanding', tone: 'mute' },
+          ['Supplier', esc(i.supplier)],
+          ['Unit cost', esc(i.cost)],
+          qty
+            ? { k: 'Next order', v: esc(units(qty) + ' · ' + Grove.money(cost)) }
+            : { k: 'Next order', v: 'Nothing to order', tone: 'mute' }
         ]) +
         '<div class="card-split">' + standing + '</div>'
       );
@@ -279,66 +393,81 @@
           : ui.empty('Nothing requested', 'No instructor has asked for this item. Requests raised in the Studio portal appear here.')
       );
 
-      var ordering = ui.card(
-        {
-          title: 'Ordering',
-          note: 'Approving a request puts its units on the shelf, so an order covers the larger of the two figures rather than both.'
-        },
-        ui.kv([
-          ['Supplier', esc(i.supplier)],
-          ['Unit cost', esc(i.cost)],
-          gap
-            ? { k: 'To reach the minimum', v: esc(units(gap) + ' · ' + Grove.money(gap * unit)), tone: 'clay' }
-            : { k: 'To reach the minimum', v: 'Nothing needed', tone: 'mute' },
-          asked
-            ? { k: 'Requests waiting', v: esc(units(asked) + ' · ' + Grove.money(asked * unit)) }
-            : { k: 'Requests waiting', v: 'None', tone: 'mute' },
-          order
-            ? { k: 'Next order', v: esc(units(order) + ' · ' + Grove.money(order * unit)) }
-            : { k: 'Next order', v: 'Nothing to order', tone: 'mute' }
-        ])
-      );
-
       /* One order covers a whole supplier, so the rest of that supplier's
          shelf belongs on this page. Two items are the only thing their
-         supplier sends; those fall back to whatever else is under its
-         minimum, which is the other reason to open this screen. */
+         supplier sends; those fall back to the rest of today's order, which
+         is the other reason to be on this screen. */
       var kin = D.INVENTORY.filter(function (x) {
         return x.supplier === i.supplier && x.id !== i.id;
       });
       var alone = kin.length === 0;
-      var alsoRows = alone
-        ? belowMinimum().filter(function (x) { return x.id !== i.id; })
-        : kin;
-      var alsoBelow = alsoRows.filter(isBelow).length;
+      var alsoRows = (alone ? toOrder().filter(function (x) { return x.id !== i.id; }) : kin)
+        .slice()
+        .sort(function (a, b) { return orderCost(b) - orderCost(a); });
+
+      var alsoOrdering = alsoRows.filter(function (x) { return orderQty(x) > 0; });
+      var alsoUnits = sum(alsoRows, orderQty);
+      var alsoCost = sum(alsoRows, orderCost);
 
       var alsoNote = alone
-        ? i.supplier + ' sends this item alone, so an order to them carries nothing else. These are the items under their minimum elsewhere on the shelf.'
+        ? i.supplier + ' sends this item alone, so an order to them carries nothing else. These are the other items on today’s order.'
         : 'One order covers everything from ' + i.supplier + ', so these travel with it. ' +
-          (alsoBelow === 1
-            ? '1 of the ' + alsoRows.length + ' is under its minimum.'
-            : alsoBelow + ' of the ' + alsoRows.length + ' are under their minimum.');
+          (alsoOrdering.length === 1
+            ? '1 of the ' + alsoRows.length + ' is on the order.'
+            : alsoOrdering.length + ' of the ' + alsoRows.length + ' are on the order.');
 
       var also = ui.card(
         {
-          title: alone ? 'Also running low' : 'Also from ' + i.supplier,
+          title: alone ? 'Also on today’s order' : 'Also from ' + i.supplier,
           head: ui.btn({ label: 'Open inventory', kind: 'quiet', size: 'sm', to: 'inventory' }),
           flush: true,
-          note: alsoNote
+          note: alsoNote,
+          foot: alsoRows.length
+            ? total(
+                alone ? 'The rest of today’s order' : 'The rest of the ' + i.supplier + ' order',
+                alsoUnits ? units(alsoUnits) + ' · ' + Grove.money(alsoCost) : 'Nothing else to order'
+              )
+            : null
         },
         alsoRows.length
           ? ui.rows(alsoRows.map(function (x) {
               return {
                 to: 'inventoryItem', id: x.id,
                 title: esc(x.item),
-                sub: esc(x.on + ' on hand against a minimum of ' + x.min),
-                end: ui.pill(x.status, x.kind)
+                sub: esc(orderQty(x)
+                  ? units(orderQty(x)) + ' to order · ' + Grove.money(orderCost(x))
+                  : x.on + ' on hand against a minimum of ' + x.min),
+                end: statePill(x)
               };
             }))
-          : ui.empty('Everything else is on the shelf', 'No other item is under its minimum today.')
+          : ui.empty('Everything else is on the shelf', 'Nothing else is under its minimum today.')
       );
 
-      return ui.grid(2, [ui.col([stock, movement]), ui.col([ordering, also])]);
+      /* The order names its quantity, its supplier and its cost before it is
+         placed, because nobody here reverses one for her. */
+      var bar = qty
+        ? ui.formActions([
+            {
+              label: 'Order ' + units(qty) + ' from ' + i.supplier,
+              kind: 'primary',
+              msg: 'Order raised with ' + i.supplier + ' · ' + units(qty) + ' of ' + i.item + ' · ' + Grove.money(cost)
+            },
+            { label: 'Back to inventory', to: 'inventory' }
+          ], {
+            sticky: true,
+            hint: Grove.money(cost) + ' at the price on file · the count moves when the order arrives'
+          })
+        : ui.formActions([
+            { label: 'Back to inventory', to: 'inventory' }
+          ], {
+            sticky: true,
+            hint: 'Nothing to order · ' + units(spare) + ' above the minimum and no request waiting'
+          });
+
+      return h`
+        ${raw(ui.grid(2, [ui.col([stock]), ui.col([movement, also])]))}
+        ${raw(bar)}
+      `;
     }
   };
 

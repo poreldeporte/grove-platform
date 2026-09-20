@@ -1,77 +1,82 @@
-/* Console → Messages: conversations and announcements, plus the thread, the
-   new-message form and a single announcement.
+/* Console → Messages: conversations and announcements, one thread, and the two
+   composers — a message to one family, an announcement to an audience.
 
-   MERGED: the old build had two rail items, "Messages" and "Announcements".
-   They are one screen now with two tabs — the same question ("this family, or
-   everyone?") is answered in one place, so a private reply cannot be posted as
-   studio-wide news by mistake.
+   WHAT THIS SCREEN IS
+   Messages and Announcements used to be two rail items. They are one screen
+   with two tabs, because the question under both is the same: this family, or
+   everyone? Answering it in one place is what stops a private reply going out
+   as studio-wide news.
 
-   Also simplified against the old build:
-     - both stats bands are gone (unread / answered / reply time, and live /
-       scheduled / reach). The tab counts and the result count carry the same
-       information on the one toolbar row, and "reach — 130 families" was a
-       number no other screen could corroborate.
-     - the thread is a real transcript again. The old drawer showed key/value
-       rows with the same two invented lines for every family, while the real
-       TRANSCRIPTS sat unread in the data file.
-     - "Open family" used to open the Johnson record whichever thread you were
-       in. It opens the family the conversation is actually with.
-     - "Pinned" and "Live" were both green and indistinguishable. Pinned is
-       amber now; the three statuses are otherwise unchanged.
+   Standing decisions from the earlier passes, kept:
+     - no stat bands. The tab counts and the single toolbar count carry it, and
+       "reach — 130 families" was a number no other screen could corroborate.
+     - the thread is the real transcript from TRANSCRIPTS, in the same chat pane
+       the family portal uses, with the family's details beside it.
+     - announcements are ordered pinned, then posted newest first, then anything
+       not posted. A post that has not gone out reads "Not yet" rather than
+       showing a date in the past under a "Posted" heading.
+     - an announcement that names a child on the register is called out, because
+       an announcement is public and one child's business is not.
 
-   Fixed after the visual review:
-     - the announcements list is ordered pinned, then live newest first, then
-       scheduled, so an unpublished post is no longer filed between published
-       ones. The date column is "Posted" and a scheduled post reads "Not yet"
-       rather than showing a date in the past under a "Published" heading.
-     - the thread's right column no longer claimed Tobi was waitlisted for the
-       Monday class he attends. Each child's standing is read from STUDENTS,
-       which is what the family record shows, so the panel agrees with the
-       conversation, and with the WAITLIST row filing him under Monday.
-     - the thread panel is three cards in one grid__col, so the column fills
-       beside the transcript instead of ending in 350px of white. The reply
-       moved into its own card, so its label is a card title like every other
-       label on the screen rather than bold body text, and consecutive
-       messages from one sender are grouped under a single name.
-     - the compose screen opens with "Choose a family" rather than a family
-       nobody picked, the message box grows to the height of the column, and
-       the page carries the conversations that are actually waiting.
-     - the announcement page stated the same three facts in three places. The
-       "Record" card is gone (its one new fact moved into "Who sees it"), and
-       the page ends with the other announcements instead of 400px of cream.
-     - an announcement that names a child is called out: announcements are
-       public, and one child's credit balance does not belong in one.
+   CUT IN THIS PASS — fitting the console to Sabrina, who owns the studio
+     - "New announcement" was a toast saying no form existed, and so was every
+       "Edit" on a post. There is a composer now. The mistake it exists to
+       prevent is the audience, so the audience is the first thing on it, every
+       option says how many families it reaches, the families are named down the
+       side, and the button reads "Post to 6 families".
+     - the composer offers an audience only for a program that has a family on
+       the roll. Six programs, four of them reaching nobody, is four dead
+       options on the one control that must not be got wrong.
+     - the announcement's "Who sees it" card held three rows, two of which said
+       the same thing about every announcement ever written: "Top of the family
+       home screen" and "Sent by email — yes". A row whose answer never changes
+       is not a fact about this post. Both are one line of note now, and the
+       card carries the audience, the families it reaches and the status.
+     - the pill strip above the post went with them. "Public to parents" is true
+       of all five posts, and the status pill was the third place on one page to
+       say the same word.
+     - "Post now" was the middle of three header buttons, and its confirmation
+       claimed every family home screen whatever the audience said. Posting is
+       the only reason an unposted announcement is on screen, so it is a sticky
+       bar at the foot that names the families it is about to reach, and taking
+       a post down now says plainly what that does to the email already sent.
+     - the thread offered "Open family" in the header and "Open record" in the
+       card head — one decision, two buttons. The card head keeps its title.
+     - "Mark answered" shows only on a conversation that is unanswered. On the
+       other two it did nothing.
+     - the new-message form asked for a Subject. Nothing carries one: a thread
+       is a family, a last line and a time, and the parent's portal never shows
+       a subject. A field whose answer is written nowhere is not a question.
+     - both composers end in a sticky action bar, so "Send message" no longer
+       sits below a card of conversations still waiting.
 
-   Fixed after the final review:
-     - the header called every announcement studio-wide and already sitting on
-       every family home screen. The table under it says otherwise: two of the
-       five posts are addressed to a single program, and the scheduled one is
-       on no home screen at all. The subtitle now says what the rows say, and
-       the three places that repeated the claim — the announcement's eyebrow,
-       its "Where" row and the heading over the post — read the audience and
-       the status off the post itself.
-     - the rail lost its Messages tint inside a thread or a single
-       announcement. js/nav.js owns that map and has no entry for either, so
-       the two detail views registered here declare their own owner at the
-       foot of this file, beside the screens they describe. */
+   KEPT DENSE ON PURPOSE
+     Both tabs are tables and stay tables: six conversations and five posts read
+     at a glance, one click to the one she wants. Pinned / Live / Scheduled
+     stays three words because she does three different things with them —
+     unpin, pin, post. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
+  var EVERYONE = 'All families';
   var ANN_KIND = { 'Pinned': 'amber', 'Live': 'ok', 'Scheduled': null };
   var ANN_RANK = { 'Pinned': 0, 'Live': 1, 'Scheduled': 2 };
   var MONTHS = {
     Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
     Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12
   };
+  var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   function thr(ctx) {
     var id = ctx.params.id;
     return D.THREADS.filter(function (t) { return t.id === id; })[0] || D.THREADS[0];
   }
+  function annNamed(id) {
+    return D.ANNOUNCEMENTS.filter(function (a) { return a.id === id; })[0] || null;
+  }
   function ann(ctx) {
-    var id = ctx.params.id;
-    return D.ANNOUNCEMENTS.filter(function (a) { return a.id === id; })[0] || D.ANNOUNCEMENTS[0];
+    return annNamed(ctx.params.id) || D.ANNOUNCEMENTS[0];
   }
   function famNamed(name) {
     return D.FAMILIES.filter(function (f) { return f.name === name; })[0] || D.FAMILIES[0];
@@ -81,6 +86,12 @@
   }
   function threadFor(name) {
     return D.THREADS.filter(function (t) { return t.fam === name; })[0];
+  }
+  function plural(n, one, many) {
+    return n + ' ' + (n === 1 ? one : many);
+  }
+  function families(n) {
+    return plural(n, 'family', 'families');
   }
 
   /* A scheduled announcement has not gone out, so it has no posted date. */
@@ -116,9 +127,16 @@
     return hit;
   }
 
-  /* An announcement is addressed either to every family or to the families of
-     one program. PROGRAMS holds those names, so a page can say which program
-     is reading rather than claiming the whole studio is. */
+  /* ---- who an audience reaches ---------------------------------------------
+     An announcement is addressed either to every family or to the families of
+     one program, and PROGRAMS holds those names. Which families that is has to
+     be read off the roll, and the roll does not hold a link: a child's class is
+     the free-text line "Mon 3:15pm · Studio 2", so the class — and with it the
+     program — is recovered by matching the day, the hour and the room back
+     against CLASSES. Sophia Martinez's line names three days and no hour, so
+     she is matched on her age band. In a real schema this is one foreign key
+     and none of the code below exists. */
+
   function audProgram(aud) {
     var hit = null;
     Object.keys(D.PROGRAMS).forEach(function (k) {
@@ -127,22 +145,98 @@
     return hit;
   }
 
+  function classesOfStudent(s) {
+    var line = String(s.cls);
+    if (line.indexOf('Waitlisted') === 0 || line.indexOf('Not yet') === 0) return [];
+
+    var bits = line.split(' · ');
+    var head = bits[0], tail = bits[1] || '';
+    var room = /Studio|Room/.test(tail) ? tail : '';
+    var found = /(\d{1,2}:\d{2})/.exec(head);
+    var time = found ? found[1] : '';
+    var days = DAYS.filter(function (d) { return head.indexOf(d) !== -1; });
+
+    /* "Camp week 4 · Clay Room" names its class rather than a day. */
+    if (!days.length) {
+      var wk = /week (\d+)/i.exec(head);
+      if (!wk) return [];
+      return D.CLASSES.filter(function (c) {
+        return c.name.toLowerCase().indexOf('week ' + wk[1]) !== -1 &&
+               (!room || c.room === room);
+      });
+    }
+
+    var out = [];
+    days.forEach(function (d) {
+      var hit = D.CLASSES.filter(function (c) {
+        if (c.day !== d) return false;
+        if (time) return c.time.indexOf(time) === 0;
+        if (room) return c.room === room;
+        return c.band === s.band;
+      })[0];
+      if (hit && out.indexOf(hit) === -1) out.push(hit);
+    });
+    return out;
+  }
+
+  function progsOfFamily(f) {
+    var out = [];
+    kidsOf(f.name).forEach(function (s) {
+      classesOfStudent(s).forEach(function (c) {
+        if (out.indexOf(c.prog) === -1) out.push(c.prog);
+      });
+    });
+    return out;
+  }
+
+  /* Every family an audience lands on, counted off the roll rather than
+     written down, so the composer and the post can never disagree. */
+  function reaches(aud) {
+    var p = audProgram(aud);
+    if (!p) return D.FAMILIES.slice();
+    return D.FAMILIES.filter(function (f) {
+      return progsOfFamily(f).indexOf(p.id) !== -1;
+    });
+  }
+
+  /* The audiences worth offering: everyone, and the programs that actually have
+     a family on the roll. An audience reaching nobody is a dead option on the
+     one control it matters most to get right. */
+  function audiences(current) {
+    var list = [{ id: EVERYONE, title: 'Every family' }];
+    Object.keys(D.PROGRAMS).forEach(function (k) {
+      var p = D.PROGRAMS[k];
+      if (reaches(p.name).length) list.push({ id: p.name, title: 'Every ' + p.name + ' family' });
+    });
+    var known = list.filter(function (o) { return o.id === current; }).length;
+    if (current && !known) list.push({ id: current, title: current });
+    return list;
+  }
+
   /* ---- messages: conversations + announcements ---------------------------- */
+
+  function onAnnouncements() {
+    return Grove.tab('messages', 'Conversations') === 'Announcements';
+  }
 
   Grove.screen('messages', {
     surface: 'console',
     eyebrow: 'one family, or everyone',
     title: 'Messages',
     sub: 'Private conversations with individual families. An announcement is public and read-only: it goes to everyone or to one program, and it reaches the family home screen only once it is posted.',
-    actions: [
-      { label: 'New announcement', msg: 'Prototype — no form yet' },
-      { label: 'New message', kind: 'primary', to: 'newMessage' }
-    ],
+
+    /* The primary follows the tab, so the button the screen is offering is the
+       one for the list under it. */
+    actions: function () {
+      var message = { label: 'New message', to: 'newMessage' };
+      var post = { label: 'New announcement', to: 'newAnnouncement' };
+      var lead = onAnnouncements() ? post : message;
+      var other = onAnnouncements() ? message : post;
+      return [other, { label: lead.label, to: lead.to, kind: 'primary' }];
+    },
 
     body: function () {
-      return Grove.tab('messages', 'Conversations') === 'Announcements'
-        ? announcementsTab()
-        : conversationsTab();
+      return onAnnouncements() ? announcementsTab() : conversationsTab();
     }
   });
 
@@ -161,6 +255,7 @@
     var rows = D.THREADS.filter(function (t) {
       return Grove.match(q, t.fam, t.who, t.last);
     });
+    var waiting = rows.filter(function (t) { return t.unread; }).length;
 
     var table = ui.table(
       ['Family', 'Last message', { label: 'When', shrink: true }, { label: 'Status', shrink: true }],
@@ -181,7 +276,8 @@
     return ui.toolbar({
       tabs: commsTabs(),
       search: { key: 'threads', placeholder: 'Search family or message…' },
-      count: rows.length + ' of ' + D.THREADS.length + ' conversations'
+      count: rows.length + ' of ' + D.THREADS.length + ' conversations · ' +
+        (waiting ? waiting + ' waiting on the studio' : 'none waiting on the studio')
     }) + ui.card({ flush: true }, table);
   }
 
@@ -190,6 +286,7 @@
     var rows = annSorted().filter(function (a) {
       return Grove.match(q, a.head, a.aud, a.by, a.body);
     });
+    var live = rows.filter(function (a) { return isPosted(a); }).length;
 
     var table = ui.table(
       ['Headline', 'Audience', { label: 'Posted', shrink: true }, 'By', { label: 'Status', shrink: true }],
@@ -198,7 +295,7 @@
           to: 'announcement', id: a.id,
           cells: [
             ui.two(a.head, a.body),
-            ui.mute(a.aud),
+            ui.two(a.aud, families(reaches(a.aud).length)),
             ui.mute(isPosted(a) ? a.when : 'Not yet'),
             ui.mute(a.by),
             ui.pill(a.status, ANN_KIND[a.status])
@@ -211,15 +308,16 @@
     return ui.toolbar({
       tabs: commsTabs(),
       search: { key: 'announcements', placeholder: 'Search announcements…' },
-      count: rows.length + ' of ' + D.ANNOUNCEMENTS.length + ' announcements'
+      count: rows.length + ' of ' + D.ANNOUNCEMENTS.length + ' announcements · ' +
+        live + ' on family home screens'
     }) + ui.card({ flush: true }, table);
   }
 
   /* ---- one conversation ---------------------------------------------------
      The same conversation pane the family portal uses, so a message looks the
      same to the studio as it does to the parent who sent it. Only the message
-     list scrolls; the composer stays pinned. The family's details sit beside
-     it, because answering usually means checking something first. */
+     list scrolls; the composer stays pinned, and it is the one thing this
+     screen is for, so nothing else on the page is styled as the primary. */
 
   function chatLines(t) {
     return (D.TRANSCRIPTS[t.id] || []).map(function (m) {
@@ -252,11 +350,13 @@
       var t = thr(ctx);
       return t.who + ' · last message ' + t.when;
     },
+    /* Nothing to mark on a conversation that has already been answered. */
     actions: function (ctx) {
-      return [
-        { label: 'Mark answered', msg: 'Marked answered' },
-        { label: 'Open family', kind: 'primary', to: 'familyRecord', id: famNamed(thr(ctx).fam).id }
-      ];
+      var t = thr(ctx);
+      var list = [];
+      if (t.unread) list.push({ label: 'Mark answered', msg: 'Marked answered' });
+      list.push({ label: 'Open family', kind: 'primary', to: 'familyRecord', id: famNamed(t.fam).id });
+      return list;
     },
 
     chat: true,
@@ -271,17 +371,14 @@
         ? ui.chat({
             name: t.fam + ' family',
             initials: t.fam.slice(0, 2).toUpperCase(),
-            status: t.who + ' \u00b7 last message ' + t.when,
-            placeholder: 'Reply to the ' + t.fam + ' family\u2026',
+            status: t.who + ' · last message ' + t.when,
+            placeholder: 'Reply to the ' + t.fam + ' family…',
             send: { label: 'Send reply', msg: 'Sent to the ' + t.fam + ' family' }
           }, lines)
         : ui.card({ title: 'Conversation' },
             ui.empty('No messages yet', 'Nothing has been sent to this family.'));
 
-      var about = ui.card({
-        title: 'This family',
-        head: ui.btn({ label: 'Open record', kind: 'quiet', size: 'sm', to: 'familyRecord', id: f.id })
-      }, ui.kv([
+      var about = ui.card({ title: 'This family' }, ui.kv([
         ['Guardian', f.guardian],
         ['Email', f.email],
         ['Phone', f.phone],
@@ -304,9 +401,10 @@
   Grove.screen('thread', threadDef);
 
   /* ---- new message --------------------------------------------------------
-     The recipient and the conversations already waiting stack in the narrow
-     column; the message box fills the wide one, so the two columns finish
-     together however long the note is. */
+     One question — which family — and the note to write. The conversations
+     already waiting sit under it, because the commonest mistake here is
+     starting a second thread with a family who is mid-sentence in the first.
+     Send is pinned to the foot so it is never below that card. */
 
   Grove.screen('newMessage', {
     surface: 'console',
@@ -321,20 +419,14 @@
 
       var to = ui.card({
         title: 'To',
-        note: 'It arrives in the family portal under Messages. No other family can see it.'
-      }, ui.fields(null, [
-        ui.field({
-          label: 'Family',
-          control: ui.select({
-            value: PICK,
-            options: [PICK].concat(D.FAMILIES.map(function (f) { return f.name + ' family'; }))
-          })
-        }),
-        ui.field({
-          label: 'Subject',
-          control: ui.input({ placeholder: 'e.g. a change of day' })
+        note: 'It arrives in the family portal under Messages.'
+      }, ui.field({
+        label: 'Family',
+        control: ui.select({
+          value: PICK,
+          options: [PICK].concat(D.FAMILIES.map(function (f) { return f.name + ' family'; }))
         })
-      ]));
+      }));
 
       var waiting = ui.card({
         title: 'Waiting for a reply',
@@ -357,10 +449,130 @@
         control: ui.textarea({ placeholder: 'Write to the family' })
       }));
 
-      return ui.grid('aside', [ui.col([to, waiting]), message]) + ui.formActions([
-        { label: 'Send message', kind: 'primary', msg: 'Message sent' },
-        { label: 'Cancel', to: 'messages' }
-      ]);
+      return h`
+        ${raw(ui.grid('aside', [ui.col([to, waiting]), message]))}
+        ${raw(ui.formActions([
+          { label: 'Send message', kind: 'primary', msg: 'Message sent' },
+          { label: 'Cancel', to: 'messages' }
+        ], { sticky: true, hint: 'Only the family you choose can read this' }))}
+      `;
+    }
+  });
+
+  /* ---- write an announcement ------------------------------------------------
+     The audience is the first thing on the page and the last thing on the
+     button, because sending studio news to the wrong people is the mistake this
+     screen exists to prevent. Every option says how many families it lands on,
+     the families themselves are named down the side, and the count is taken off
+     the roll rather than written down. The same screen edits a post that
+     already exists, so "Edit" is no longer a toast apologising for itself. */
+
+  function audKey() {
+    return 'annAud-' + (Grove.state.params.id || 'new');
+  }
+  function chosenAud(a) {
+    return Grove.filter(audKey(), a ? a.aud : EVERYONE);
+  }
+
+  Grove.on('pickAud', function (d) { Grove.setFilter(audKey(), d.id); });
+
+  Grove.screen('newAnnouncement', {
+    surface: 'console',
+    crumbs: [{ label: 'Messages', to: 'messages' }],
+    crumbTitle: function (ctx) {
+      return annNamed(ctx.params.id) ? 'Edit announcement' : 'New announcement';
+    },
+    eyebrow: 'everyone, or one program',
+    title: function (ctx) {
+      return annNamed(ctx.params.id) ? 'Edit announcement' : 'New announcement';
+    },
+    sub: function (ctx) {
+      var a = annNamed(ctx.params.id);
+      if (a && isPosted(a)) {
+        return 'This post is already on those families’ home screens. Saving replaces what they read.';
+      }
+      return 'Public and read-only. Choose who it is for first — every family in that audience sees it on their home screen and gets one email.';
+    },
+
+    body: function (ctx) {
+      var a = annNamed(ctx.params.id);
+      var live = !!a && isPosted(a);
+      var aud = chosenAud(a);
+      var who = reaches(aud);
+
+      var audience = ui.card({
+        title: 'Who will see it',
+        note: 'Only a program with a family on the roll is listed. Everyone in the audience gets the post on their home screen and one email, and an email cannot be unsent.'
+      }, ui.choices(null, audiences(a ? a.aud : null).map(function (o) {
+        return ui.choice({
+          id: o.id,
+          size: 'lg',
+          act: 'pickAud',
+          title: o.title,
+          sub: families(reaches(o.id).length) + ' on the roll',
+          on: o.id === aud
+        });
+      })));
+
+      /* Writing one now and posting it on Monday is a real second outcome, but
+         it is not the reason the page is open, so it sits in the head of the
+         card it belongs to rather than as a third button in the action bar. */
+      var post = ui.card({
+        title: 'The post',
+        head: live ? '' : ui.btn({
+          label: 'Save without posting',
+          kind: 'quiet',
+          size: 'sm',
+          msg: 'Saved — no family can see it yet'
+        })
+      }, ui.fields(null, [
+        ui.field({
+          label: 'Headline',
+          control: ui.input({
+            placeholder: 'e.g. studio closed on Monday',
+            value: a ? a.head : ''
+          })
+        }),
+        ui.field({
+          label: 'What families will read',
+          hint: 'An announcement is read-only. Anything that needs an answer belongs in a message to one family.',
+          control: ui.textarea({
+            placeholder: 'Write the announcement',
+            value: a ? a.body : ''
+          })
+        })
+      ]));
+
+      /* Named, not counted. Seeing one family under "Seasonal Camp" is what
+         stops studio-wide news going out to a single family, and the other way
+         round. No note on this card: it is the one card on the page whose
+         length is out of the composer's hands, so nothing is pinned under it. */
+      var reach = ui.card({
+        title: 'Who will get this',
+        flush: true
+      }, who.length
+        ? ui.rows(who.map(function (f) {
+          return { title: esc(f.name + ' family'), sub: esc(f.guardian) };
+        }))
+        : ui.empty('Nobody is enrolled in that program', 'Choose another audience.'));
+
+      var label = live ? 'Save changes' : 'Post to ' + families(who.length);
+      var sent = live
+        ? 'Saved — ' + families(who.length) + ' now read the new wording'
+        : 'Posted — ' + families(who.length) + ' can see it now';
+      var hint = aud === EVERYONE
+        ? 'Going to every family on the roll — ' + who.length + ' of them'
+        : 'Going to ' + families(who.length) + ' in ' + aud;
+
+      var bar = [
+        { label: label, kind: 'primary', msg: sent },
+        a ? { label: 'Cancel', to: 'announcement', id: a.id } : { label: 'Cancel', to: 'messages' }
+      ];
+
+      return h`
+        ${raw(ui.grid('sidebar', [ui.col([audience, post]), reach]))}
+        ${raw(ui.formActions(bar, { sticky: true, hint: hint }))}
+      `;
     }
   });
 
@@ -381,32 +593,29 @@
         ? 'Posted ' + a.when + ' by ' + a.by
         : 'Not posted yet — written ' + a.when + ' by ' + a.by;
     },
+    /* Posting is the whole reason an unposted post is on screen, so it is not a
+       header button among three — it is the bar at the foot. */
     actions: function (ctx) {
       var a = ann(ctx);
       if (!isPosted(a)) {
         return [
           { label: 'Discard', kind: 'danger', msg: 'Prototype — nothing was discarded' },
-          { label: 'Post now', msg: 'Posted to every family home' },
-          { label: 'Edit', kind: 'primary', msg: 'Prototype — no form yet' }
+          { label: 'Edit', to: 'newAnnouncement', id: a.id }
         ];
       }
       var pinned = a.status === 'Pinned';
       return [
         { label: 'Take down', kind: 'danger', msg: 'Prototype — nothing was taken down' },
-        { label: pinned ? 'Unpin' : 'Pin to top', msg: pinned ? 'Unpinned' : 'Pinned to every family home' },
-        { label: 'Edit', kind: 'primary', msg: 'Prototype — no form yet' }
+        { label: pinned ? 'Unpin' : 'Pin to top', msg: pinned ? 'Unpinned' : 'Pinned to the top of the home screen' },
+        { label: 'Edit', kind: 'primary', to: 'newAnnouncement', id: a.id }
       ];
     },
 
     body: function (ctx) {
       var a = ann(ctx);
+      var who = reaches(a.aud);
       var named = childNamedIn(a);
       var others = annSorted().filter(function (x) { return x.id !== a.id; });
-
-      var flags = h`<div class="flags">
-        ${raw(ui.pill(a.status, ANN_KIND[a.status]))}
-        ${raw(ui.pill('Public to parents'))}
-      </div>`;
 
       var warning = '';
       if (named) {
@@ -426,13 +635,15 @@
         note: 'Announcements are read-only for families. If someone needs to reply, they use Messages.'
       }, ui.notice({ kind: 'ok', title: a.head, text: a.body }) + warning);
 
-      var who = ui.card({
+      var whoCard = ui.card({
         title: 'Who sees it',
-        note: 'A pinned post stays at the top of the family home screen until it is unpinned.'
+        note: isPosted(a)
+          ? 'It sits at the top of those home screens and it emailed them once. Taking it down clears the home screens; the email stays sent.'
+          : 'Nothing sends this on its own. It reaches those families when you post it, and discarding it now tells nobody, because nobody has seen it.'
       }, ui.kv([
-        ['Audience', esc(a.aud)],
-        ['Where', isPosted(a) ? 'Top of the family home screen' : 'Top of the family home screen, once posted'],
-        ['Sent by email', isPosted(a) ? 'Yes' : 'Will send when it goes out']
+        ['Audience', esc(a.aud) + ' · ' + families(who.length)],
+        { k: 'Status', v: ui.pill(a.status, ANN_KIND[a.status]) },
+        ['Written by', esc(a.by)]
       ]));
 
       var more = ui.card({
@@ -448,18 +659,27 @@
         };
       })));
 
-      return flags + ui.grid('sidebar', [post, who]) +
-        '<div class="section">' + more + '</div>';
+      var bar = isPosted(a) ? '' : ui.formActions([
+        {
+          label: 'Post to ' + families(who.length),
+          kind: 'primary',
+          msg: 'Posted — ' + families(who.length) + ' can see it now'
+        }
+      ], { sticky: true, hint: 'It is on no home screen yet' });
+
+      return ui.grid('sidebar', [post, whoCard]) +
+        '<div class="section">' + more + '</div>' + bar;
     }
   });
 
   /* ---- the rail -------------------------------------------------------------
-     A thread and a single announcement are only ever reached from Messages,
-     and both carry a Messages crumb, so the rail item has to stay lit while
-     you are inside one. js/nav.js keeps that map for the screens it knows
-     about; these two are declared here, next to the screens they describe. */
+     A thread, a single announcement and the announcement composer are only ever
+     reached from Messages, and all three carry a Messages crumb, so the rail
+     item has to stay lit while you are inside one. js/nav.js keeps that map for
+     the screens it knows about; these are declared here, next to the screens
+     they describe. */
 
-  var OWNED = { thread: 'messages', announcement: 'messages' };
+  var OWNED = { thread: 'messages', announcement: 'messages', newAnnouncement: 'messages' };
   var ownerElse = Grove.nav.currentFor;
   Grove.nav.currentFor = function (key) {
     return OWNED[key] || ownerElse.call(Grove.nav, key);
