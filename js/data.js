@@ -269,6 +269,25 @@
     { id: 'd5', name: 'Medical and allergy form', version: 'Version 3', published: '1 September 2025',signed: true,  who: 'Sabrina Moore · 4 Sep 2025' }
   ];
 
+  /* Which policies a family signs, per programme. The program builder and
+     Settings each kept their own hard-coded copy of this, and they had already
+     drifted: the builder showed all nine on every programme while Settings
+     reported eight for a camp and twelve for a private class. One source. */
+  var POLICY_BASE = [
+    'Important facts', 'Class scheduling', 'Make-ups & cancellations',
+    'Drop-off & pick-up', 'Health & safety', 'Medical emergencies',
+    'Payment terms', 'Release of liability', 'Agreement'
+  ];
+  var POLICY_BY_PROGRAM = {
+    as:   { drop: [], add: [] },
+    camp: { drop: ['Make-ups & cancellations', 'Class scheduling'], add: ['Food and snacks'] },
+    nsd:  { drop: ['Make-ups & cancellations', 'Class scheduling'], add: ['Food and snacks'] },
+    pop:  { drop: ['Make-ups & cancellations', 'Class scheduling'], add: ['Food and snacks'] },
+    priv: { drop: [], add: ['Owner approval', 'Off-site hosting', 'Additional participants'] },
+    /* A birthday party is quoted from the enquiry and signs nothing. */
+    bday: { none: true }
+  };
+
   var STUDIO = {
     name: 'The Grove Art Studio',
     legal: 'The Grove Art Studio LLC',
@@ -304,6 +323,19 @@
     ACTIVITY: ACTIVITY,
     LEDGER: LEDGER,
     DOCUMENTS: DOCUMENTS,
+
+    POLICY_BASE: POLICY_BASE,
+    POLICY_BY_PROGRAM: POLICY_BY_PROGRAM,
+
+    /* The policies attached to one programme, in signing order. */
+    policiesFor: function (programId) {
+      var rule = POLICY_BY_PROGRAM[programId];
+      if (!rule || rule.none) return [];
+      var out = POLICY_BASE.filter(function (name) {
+        return (rule.drop || []).indexOf(name) === -1;
+      });
+      return out.concat(rule.add || []);
+    },
 
     family: function (id) { return FAMILIES.filter(function (f) { return f.id === id; })[0]; },
     student: function (id) { return STUDENTS.filter(function (s) { return s.id === id; })[0]; },

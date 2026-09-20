@@ -98,12 +98,6 @@
     p16: 'Four 1-hour, two 2-hour, or mixed'
   };
 
-  var POLICIES = [
-    'Important facts', 'Class scheduling', 'Make-ups & cancellations',
-    'Drop-off & pick-up', 'Health & safety', 'Medical emergencies',
-    'Payment terms', 'Release of liability', 'Agreement'
-  ];
-
   /* ---- small helpers ------------------------------------------------------- */
 
   function ids() { return Object.keys(D.PROGRAMS); }
@@ -479,12 +473,21 @@
       note: 'Written once in Settings. Only the rules that touch this program are listed.'
     }, ui.kv(ruleRows(id)));
 
+    /* This programme's own set, not a universal list. A camp leaves out the
+       two class-scheduling clauses and adds one; a private class adds three;
+       a birthday party is quoted from the enquiry and signs nothing. */
+    var attached = D.policiesFor(id);
     var policies = ui.card({
       title: 'Required policies',
-      note: 'Attached to every program. A family signs one only when it is new to them or has changed.'
-    }, h`<div class="inline">${raw(POLICIES.map(function (name) {
-      return ui.pill(name, 'ok');
-    }).join(''))}</div>`);
+      note: attached.length
+        ? 'Every family on this program signs these once, and again when a version changes. ' +
+          'Which clauses a program carries is set by its type; the wording is the same everywhere it appears.'
+        : 'A birthday party is quoted from the enquiry, so there is nothing to sign.'
+    }, attached.length
+      ? h`<div class="inline">${raw(attached.map(function (name) {
+          return ui.pill(name, 'ok');
+        }).join(''))}</div>`
+      : ui.empty('No policies on this program', 'Nothing is signed for a quoted booking.'));
 
     return ui.grid(2, [identityCard(id), runs]) +
       '<div class="section">' + prices + '</div>' +
@@ -513,8 +516,8 @@
       },
       {
         title: 'The standing rules already apply',
-        sub: 'Billing, cancellation, make-ups and the ' + POLICIES.length +
-          ' required policies come from Settings, the same as every other program.'
+        sub: 'Billing, cancellation and make-ups come from Settings, the same as every ' +
+          'other program, and the required policies follow the program type.'
       },
       {
         title: 'Nobody can book it yet',

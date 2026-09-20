@@ -396,14 +396,6 @@
      the program builder spells it. The counts on the Policy documents card
      are arithmetic on these arrays, so they cannot drift apart the way the
      typed "9 policies / 9 policies" pair did. */
-  var BASE_POLICIES = [
-    'Important facts', 'Class scheduling', 'Make-ups & cancellations',
-    'Drop-off & pick-up', 'Health & safety', 'Medical emergencies',
-    'Payment terms', 'Release of liability', 'Agreement'
-  ];
-  var CAMP_DROPS = ['Make-ups & cancellations', 'Class scheduling'];
-  var CAMP_ADDS = ['food and snacks'];
-  var PRIV_ADDS = ['owner approval', 'off-site hosting', 'additional participants'];
 
   function policiesTab() {
     var billing = ui.card({
@@ -473,16 +465,16 @@
     ]));
 
     var shared = [D.program('camp').short, D.program('nsd').short, D.program('pop').short].join(' · ');
-    var asCount = BASE_POLICIES.length;
-    var campCount = asCount - CAMP_DROPS.length + CAMP_ADDS.length;
-    var privCount = asCount + PRIV_ADDS.length;
+    var asCount = D.policiesFor('as').length;
+    var campCount = D.policiesFor('camp').length;
+    var privCount = D.policiesFor('priv').length;
 
     var docs = ui.card({
       title: 'Policy documents',
-      note: 'Attached per program in the program builder. Camps and pop-ups leave out ' +
-        CAMP_DROPS.length + ' of the after-school set and add ' + andList(CAMP_ADDS) +
-        '; a private class adds ' + PRIV_ADDS.length +
-        ' more on top of the full set. A new version is asked for at the next sign-in and never blocks a child from attending.'
+      note: 'Which clauses each program carries is set by its type and listed on the program ' +
+        'itself. A camp leaves out ' + (asCount - campCount + 1) + ' of the after-school clauses and adds one; ' +
+        'a private class adds ' + (privCount - asCount) + ' on top of the full set. A new version is asked ' +
+        'for at the next sign-in and never blocks a child from attending.'
     }, ui.kv([
       row(D.program('as').name, asCount + ' policies'),
       row(shared, campCount + ' policies'),
