@@ -85,6 +85,13 @@
      about money. Nothing below it is drawn until it has been answered. */
   Grove.on('priceModel', function (d) { Grove.setFilter('newProgModel', d.id); });
 
+  /* Changing how an existing programme is priced. The price table follows
+     immediately so she can see what the new model asks for before saving. */
+  Grove.on('setProgModel', function (d) {
+    var bits = String(d.id).split('|');
+    Grove.setFilter('progModel-' + bits[0], bits[1]);
+  });
+
   /* ---- small helpers ------------------------------------------------------- */
 
   function ids() { return Object.keys(D.PROGRAMS); }
@@ -122,8 +129,13 @@
      says what that model asks for. Everything on these screens that differs
      between two programs differs because of this one field. */
 
-  function modelKey(id) { return (D.PRICING[id] || {}).model || 'quoted'; }
-  function modelOf(id) { return D.pricingModel(id); }
+  function modelKey(id) { return modelKeyOf(id); }
+  /* The model in force for this programme: what the data holds, unless she
+     has picked a different one on this screen. */
+  function modelKeyOf(id) {
+    return Grove.filter('progModel-' + id, (D.PRICING[id] || {}).model || 'quoted');
+  }
+  function modelOf(id) { return D.PRICING_MODELS[modelKeyOf(id)] || D.pricingModel(id); }
   function modelKeys() { return Object.keys(D.PRICING_MODELS); }
 
   function hasPlan(id) { return modelKey(id) === 'plan'; }
@@ -293,7 +305,8 @@
         : money(p.hourly) + ' an hour, up to ' + p.maxHours + ' hours';
     }
     if (key === 'perEvent') {
-      var amounts = uniq(p.events.map(function (e) { return e.amount; }));
+      var amounts = uniq((p.events || []).map(function (e) { return e.amount; }));
+      if (!amounts.length) return 'Not priced yet';
       if (amounts.length === 1) return money(amounts[0]) + ' a child';
       return money(Math.min.apply(null, amounts)) + ' to ' +
         money(Math.max.apply(null, amounts)) + ' a child';
@@ -497,7 +510,7 @@
     var p = D.PRICING[id];
     return ui.table(
       ['Event', 'When', 'Places', { label: 'Price a child', align: 'right' }],
-      p.events.map(function (e) {
+      (p.events || []).map(function (e) {
         var parts = eventParts(e);
         return {
           cells: [
@@ -512,8 +525,20 @@
     );
   }
 
+  /* True when the programme carries no figures for the model now selected —
+     which happens the moment she changes how it is priced. */
+  function unpriced(id, key) {
+    var p = D.PRICING[id] || {};
+    if (key === 'plan') return !p.plans;
+    if (key === 'perWeek') return p.week === undefined;
+    if (key === 'perHour') return p.hourly === undefined && p.base === undefined;
+    if (key === 'perEvent') return !p.events || !p.events.length;
+    return false;
+  }
+
   function priceTable(id) {
     var key = modelKey(id);
+    if (unpriced(id, key)) return blankTable(key);
     if (key === 'plan') return planTable(id);
     if (key === 'perWeek') return weekTable(id);
     if (key === 'perHour') return hourTable(id);
@@ -523,9 +548,37 @@
       'set. The registration fee is the only amount on file.');
   }
 
+  /* The price table for a model this programme has no figures for yet. Same
+     shape as the real one, empty, so she can see what it is going to ask. */
+  function blankTable(key) {
+    var ASKS = {
+      plan:     [['4 hours a month', 'e.g. $280'], ['8 hours a month', 'e.g. $540'],
+                 ['12 hours a month', 'e.g. $780'], ['16 hours a month', 'e.g. $960']],
+      perWeek:  [['A full week', 'e.g. $400'], ['A single day', 'e.g. $100'],
+                 ['An extra hour', 'e.g. $28']],
+      perHour:  [['An hour', 'e.g. $90']],
+      perEvent: [['The first event', 'e.g. $45']]
+    };
+    var rows = (ASKS[key] || []).map(function (r) {
+      return { cells: [
+        '<span class="cell-strong">' + esc(r[0]) + '</span>',
+        ui.input({ placeholder: r[1] }),
+        ui.mute('Nothing on file for this program yet')
+      ] };
+    });
+    return ui.table(
+      ['What families pay', { label: 'Price', shrink: true }, 'What it covers'],
+      rows
+    );
+  }
+
   /* The rate falls as the plan grows, and both ends of that are divided out
      of the ladder rather than written down. */
   function priceNote(id) {
+    if (unpriced(id, modelKey(id))) {
+      return 'This program has no prices for that model yet. Fill the table in and save, ' +
+        'and it is what families are quoted from then on.';
+    }
     if (!hasPlan(id)) return null;
     var p = D.PRICING[id];
     var rates = planKeys(p).map(function (k) { return p.plans[k] / planHours(k); });
@@ -552,10 +605,16 @@
       ui.field({
         label: 'How it is priced',
         hint: m.asks,
-        control: ui.select({
-          value: m.name,
-          options: modelKeys().map(function (k) { return D.PRICING_MODELS[k].name; })
-        })
+        control: h`<div class="choices">${raw(modelKeys().map(function (k) {
+          var mm = D.PRICING_MODELS[k];
+          return ui.choice({
+            id: id + '|' + k,
+            act: 'setProgModel',
+            title: mm.name,
+            sub: mm.asks,
+            on: k === modelKeyOf(id)
+          });
+        }).join(''))}</div>`
       })
     ];
 

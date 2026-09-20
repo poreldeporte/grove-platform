@@ -517,7 +517,7 @@
         ui.field({
           label: 'Expiry date',
           hint: 'The month and year printed under the number',
-          control: ui.input({ placeholder: 'MM / YY' })
+          control: ui.month({})
         }),
         ui.field({
           label: 'Security code',

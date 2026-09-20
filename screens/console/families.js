@@ -1379,7 +1379,7 @@
         ui.field({
           label: 'With us since',
           hint: 'Today. Change it only if they started earlier.',
-          control: ui.input({ value: todayDate() })
+          control: ui.date({ value: todayDate() })
         })
       ]));
 

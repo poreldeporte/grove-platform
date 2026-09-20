@@ -290,6 +290,22 @@
     return '<textarea class="textarea" placeholder="' + esc(o.placeholder || '') + '">' +
       esc(o.value || '') + '</textarea>';
   };
+  /* A date is picked from a calendar, never typed. @param {{value, min, max}} o */
+  C.date = function (o) {
+    o = o || {};
+    return '<input class="input" type="date"' +
+      (o.value ? ' value="' + esc(Grove.iso(o.value)) + '"' : '') +
+      (o.min ? ' min="' + esc(Grove.iso(o.min)) + '"' : '') +
+      (o.max ? ' max="' + esc(Grove.iso(o.max)) + '"' : '') + '>';
+  };
+
+  /* A card expiry is a month, so it gets a month picker rather than MM / YY. */
+  C.month = function (o) {
+    o = o || {};
+    return '<input class="input" type="month"' +
+      (o.value ? ' value="' + esc(o.value) + '"' : '') + '>';
+  };
+
   C.select = function (o) {
     return '<select class="select">' + (o.options || []).map(function (op) {
       var label = typeof op === 'string' ? op : op.label;

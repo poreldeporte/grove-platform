@@ -971,7 +971,7 @@
          The selects open on a prompt rather than on their first option, which
          had the CHILD 2 · LUCAS card answering "Girl" on his behalf. */
       ui.field({
-        label: 'Date of birth', control: ui.input({ placeholder: 'DD MMM YYYY' }),
+        label: 'Date of birth', control: ui.date({}),
         hint: kid
           ? 'Not on file yet — the age above comes from ' + who + '’s record.'
           : 'We use this to place them in the right age group.'
@@ -1270,7 +1270,7 @@
         control: ui.select({ options: ['Mornings', 'Early afternoon', 'After 4pm'] })
       }),
       ui.field({
-        label: 'Starting from', span: true, control: ui.input({ placeholder: '3 Aug 2026' })
+        label: 'Starting from', span: true, control: ui.date({})
       }),
       ui.field({
         label: 'What would they like to work on?', span: true,
@@ -1341,7 +1341,7 @@
         label: 'Where', span: true,
         control: ui.select({ options: ['At the studio', 'At our location'] })
       }),
-      ui.field({ label: 'Preferred date', control: ui.input({ placeholder: 'Sat 12 Sep 2026' }) }),
+      ui.field({ label: 'Preferred date', control: ui.date({}) }),
       ui.field({
         label: 'Preferred time',
         control: ui.select({ options: ['11:00am', '1:00pm', '3:00pm', '5:00pm'] })
@@ -1643,7 +1643,7 @@
         label: 'Card number', span: true,
         control: ui.input({ placeholder: '4242 4242 4242 4242' })
       }),
-      ui.field({ label: 'Expiry', control: ui.input({ placeholder: '04 / 29' }) }),
+      ui.field({ label: 'Expiry', control: ui.month({}) }),
       ui.field({ label: 'CVC', control: ui.input({ placeholder: '···' }) }),
       ui.field({ label: 'ZIP', control: ui.input({ placeholder: '33133' }) }),
       ui.field({

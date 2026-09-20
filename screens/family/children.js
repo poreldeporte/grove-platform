@@ -693,7 +693,7 @@
         ui.field({
           label: 'Date of birth',
           hint: 'This is how we put them with children their own age — 5 to 7, 8 to 11, or 12 and over.',
-          control: ui.input({ placeholder: 'e.g. 14 Mar 2018' })
+          control: ui.date({})
         }),
         ui.field({
           label: 'Photo (you can add this later)',

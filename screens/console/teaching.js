@@ -672,7 +672,7 @@
 
       var where = ui.card({ title: 'When and who' }, ui.fields(2, [
         ui.field({ label: 'Class', control: ui.select({ value: p.cls, options: classes }) }),
-        ui.field({ label: 'Date', control: ui.input({ value: p.date }) }),
+        ui.field({ label: 'Date', control: ui.date({ value: p.date }) }),
         ui.field({ label: 'Room', control: ui.select({ value: p.room, options: rooms() }) }),
         ui.field({
           label: 'Instructor',

@@ -204,6 +204,28 @@
     });
   };
 
+  /* A date input needs YYYY-MM-DD. The dataset writes dates the way a person
+     does — "29 Jul 2026", "1 July 2026", "2026-07-29" — so parse all three. */
+  var MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  Grove.iso = function (when) {
+    if (!when) return '';
+    var t = String(when).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+    var day = 0, mon = -1, year = 0;
+    t.replace(/,/g, ' ').split(/\s+/).forEach(function (bit) {
+      var n = parseInt(bit, 10);
+      if (!isNaN(n)) {
+        if (bit.length === 4 && n > 1000) year = n;
+        else if (!day) day = n;
+        return;
+      }
+      var i = MONTHS.indexOf(bit.slice(0, 3).toLowerCase());
+      if (i !== -1 && mon === -1) mon = i + 1;
+    });
+    if (!day || mon === -1 || !year) return '';
+    return year + '-' + (mon < 10 ? '0' : '') + mon + '-' + (day < 10 ? '0' : '') + day;
+  };
+
   /* --- text search helper -------------------------------------------------- */
 
   Grove.match = function (q) {

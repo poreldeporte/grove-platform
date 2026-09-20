@@ -1320,3 +1320,12 @@ a:hover { color: var(--plum); }
   border-color: var(--grove); background: var(--grove);
 }
 .pill-toggle[aria-pressed="true"] .pill-toggle__mark svg { opacity: 1; color: #fff; }
+
+/* Native date and month pickers keep the same box as every other field; the
+   browser's own calendar button sits inside it. */
+.input[type="date"],
+.input[type="month"] { padding-right: var(--s-2); }
+.input[type="date"]::-webkit-calendar-picker-indicator,
+.input[type="month"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.55; }
+.input[type="date"]:hover::-webkit-calendar-picker-indicator,
+.input[type="month"]:hover::-webkit-calendar-picker-indicator { opacity: 1; }
