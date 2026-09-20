@@ -333,28 +333,38 @@
      registration and they are fixed for the program year, so a cycle is just
      the next few dates on that pattern. `state` is scheduled, attended,
      missed or moved. */
+  /* The dated schedule, and the only record of what happened to each class. A
+     session carries its own outcome, so a class cannot be attended in one list
+     and missed in another — which is what two parallel arrays allowed.
+
+       scheduled  still to come
+       attended   they came
+       missed     told us in time: the hour stays in the plan and earns a make-up
+       used       told us late, or did not come: the hour is spent, no make-up
+       moved      rescheduled; movedFrom names the date it came from
+  */
   var SESSIONS = [
-    { child: 'emma', classId: 'c2', date: '2026-07-13', at: '3:15pm', hours: 1, state: 'attended' },
-    { child: 'emma', classId: 'c2', date: '2026-07-20', at: '3:15pm', hours: 1, state: 'attended' },
+    { child: 'emma', classId: 'c2', date: '2026-07-13', at: '3:15pm', hours: 1, state: 'missed', reason: 'Illness, told us 26 hours ahead', notice: 'in time' },
+    { child: 'emma', classId: 'c2', date: '2026-07-20', at: '3:15pm', hours: 1, state: 'missed', reason: 'Family travel, told us a week ahead', notice: 'in time' },
     { child: 'emma', classId: 'c2', date: '2026-07-27', at: '3:15pm', hours: 1, state: 'attended' },
     { child: 'emma', classId: 'c2', date: '2026-08-03', at: '3:15pm', hours: 1, state: 'scheduled' },
     { child: 'lucas', classId: 'c4', date: '2026-07-15', at: '3:15pm', hours: 1, state: 'attended' },
     { child: 'lucas', classId: 'c4', date: '2026-07-22', at: '3:15pm', hours: 1, state: 'attended' },
     { child: 'lucas', classId: 'c4', date: '2026-07-29', at: '3:15pm', hours: 1, state: 'scheduled' },
     { child: 'lucas', classId: 'c4', date: '2026-08-05', at: '3:15pm', hours: 1, state: 'scheduled' },
-    { child: 'zara', classId: 'c4', date: '2026-07-22', at: '3:15pm', hours: 1, state: 'attended' },
+    { child: 'zara', classId: 'c4', date: '2026-07-22', at: '3:15pm', hours: 1, state: 'missed', reason: 'Illness', notice: 'in time' },
     { child: 'zara', classId: 'c4', date: '2026-07-29', at: '3:15pm', hours: 1, state: 'scheduled' },
     { child: 'zara', classId: 'c4', date: '2026-08-05', at: '3:15pm', hours: 1, state: 'scheduled' },
     { child: 'zara', classId: 'c4', date: '2026-08-12', at: '3:15pm', hours: 1, state: 'scheduled' },
-    { child: 'noah', classId: 'c1', date: '2026-07-13', at: '2:15pm', hours: 1, state: 'attended' },
+    { child: 'noah', classId: 'c1', date: '2026-07-13', at: '2:15pm', hours: 1, state: 'missed', reason: 'Studio closed for the holiday', notice: 'in time' },
     { child: 'noah', classId: 'c1', date: '2026-07-20', at: '2:15pm', hours: 1, state: 'attended' },
     { child: 'noah', classId: 'c1', date: '2026-07-27', at: '2:15pm', hours: 1, state: 'attended' },
     { child: 'noah', classId: 'c1', date: '2026-08-03', at: '2:15pm', hours: 1, state: 'scheduled' },
-    { child: 'ava', classId: 'c2', date: '2026-07-20', at: '3:15pm', hours: 1, state: 'attended' },
-    { child: 'ava', classId: 'c2', date: '2026-07-27', at: '3:15pm', hours: 1, state: 'attended' },
+    { child: 'ava', classId: 'c2', date: '2026-07-20', at: '3:15pm', hours: 1, state: 'missed', reason: 'Illness', notice: 'in time' },
+    { child: 'ava', classId: 'c2', date: '2026-07-27', at: '3:15pm', hours: 1, state: 'used', reason: 'Told us on the day', notice: 'late' },
     { child: 'ava', classId: 'c2', date: '2026-08-03', at: '3:15pm', hours: 1, state: 'scheduled' },
     { child: 'ava', classId: 'c2', date: '2026-08-10', at: '3:15pm', hours: 1, state: 'scheduled' },
-    { child: 'sophia', classId: 'c2', date: '2026-07-13', at: '3:15pm', hours: 1, state: 'attended' },
+    { child: 'sophia', classId: 'c2', date: '2026-07-13', at: '3:15pm', hours: 1, state: 'missed', reason: 'School trip, told us three days ahead', notice: 'in time' },
     { child: 'sophia', classId: 'c4', date: '2026-07-15', at: '3:15pm', hours: 1, state: 'attended' },
     { child: 'sophia', classId: 'c5', date: '2026-07-16', at: '4:30pm', hours: 2, state: 'attended' },
     { child: 'sophia', classId: 'c2', date: '2026-07-20', at: '3:15pm', hours: 1, state: 'attended' },
@@ -558,20 +568,6 @@
     { child: 'cillian', classId: 'c5', date: '2026-07-30', at: '4:30pm', hours: 2, state: 'scheduled' },
     { child: 'cillian', classId: 'c5', date: '2026-08-06', at: '4:30pm', hours: 2, state: 'scheduled' },
     { child: 'cillian', classId: 'c5', date: '2026-08-13', at: '4:30pm', hours: 2, state: 'scheduled' }
-  ];
-
-  /* An absence. `spent` is the only thing that matters: told us in time and the
-     session stays in the child's pack, so the pack simply lasts a week longer.
-     Inside the notice period the session is spent, exactly as if they came. */
-  var ABSENCES = [
-    { id: 'ab1', child: 'Emma Johnson',    date: 'Mon 13 Jul · 3:15pm', reason: 'Illness, told us 26 hours ahead',   spent: false },
-    { id: 'ab2', child: 'Emma Johnson',    date: 'Mon 6 Jul · 3:15pm',  reason: 'Family travel, told us a week ahead', spent: false },
-    { id: 'ab3', child: 'Ava Smith',       date: 'Mon 13 Jul · 3:15pm', reason: 'Illness',                            spent: false },
-    { id: 'ab4', child: 'Ava Smith',       date: 'Mon 20 Jul · 3:15pm', reason: 'Told us on the day',                 spent: true  },
-    { id: 'ab5', child: 'Noah Rivera',     date: 'Mon 6 Jul · 2:15pm',  reason: 'Studio closed for the holiday',      spent: false },
-    { id: 'ab6', child: 'Zara Okafor',     date: 'Wed 8 Jul · 3:15pm',  reason: 'Illness',                            spent: false },
-    { id: 'ab7', child: 'Sophia Martinez', date: 'Mon 20 Jul · 3:15pm', reason: 'School trip, told us three days ahead', spent: false },
-    { id: 'ab8', child: 'Mia Chen',        date: 'Tue 21 Jul · 2:00pm', reason: 'Told us the same morning',           spent: true  }
   ];
 
   /* A catch-up class a family booked on top of their weekly place. It spends a
@@ -823,7 +819,6 @@
     INVOICES: INVOICES,
     WAITLIST: WAITLIST,
     SESSIONS: SESSIONS,
-    ABSENCES: ABSENCES,
     EXTRA_CLASSES: EXTRA_CLASSES,
     INVENTORY: INVENTORY,
     SUPPLY_REQUESTS: SUPPLY_REQUESTS,
@@ -917,8 +912,28 @@
     },
 
     /* Absences for one child, and whether each one cost them a session. */
+    /* Every absence in the studio, derived from the schedule. */
+    absences: function () {
+      return SESSIONS.filter(function (x) {
+        return x.state === 'missed' || x.state === 'used';
+      }).map(function (x) {
+        var kid = STUDENTS.filter(function (k) { return k.id === x.child; })[0];
+        return { id: x.child + '-' + x.date, child: kid ? kid.name : x.child,
+                 date: x.date, at: x.at, reason: x.reason,
+                 spent: x.state === 'used', session: x };
+      });
+    },
+
+    /* Derived from the schedule, never stored beside it. */
     absencesFor: function (name) {
-      return ABSENCES.filter(function (a) { return a.child === name; });
+      var kid = STUDENTS.filter(function (x) { return x.name === name; })[0];
+      if (!kid) return [];
+      return SESSIONS.filter(function (x) {
+        return x.child === kid.id && (x.state === 'missed' || x.state === 'used');
+      }).map(function (x) {
+        return { id: x.child + '-' + x.date, child: name, date: x.date, at: x.at,
+                 reason: x.reason, spent: x.state === 'used', session: x };
+      });
     },
 
     /* Every child on a class's roll. */

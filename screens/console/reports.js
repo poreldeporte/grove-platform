@@ -419,10 +419,10 @@
     var low = withFigure.filter(function (s) { return figure(s.att) < 90; });
     var worst = low.slice().sort(function (a, b) { return figure(a.att) - figure(b.att); })[0];
 
-    var kept = D.ABSENCES.filter(function (a) { return !a.spent; });
-    var spent = D.ABSENCES.filter(function (a) { return !!a.spent; });
-    var absLine = D.ABSENCES.length
-      ? count(D.ABSENCES.length, 'absence has', 'absences have') + ' been reported. ' + kept.length +
+    var kept = D.absences().filter(function (a) { return !a.spent; });
+    var spent = D.absences().filter(function (a) { return !!a.spent; });
+    var absLine = D.absences().length
+      ? count(D.absences().length, 'absence has', 'absences have') + ' been reported. ' + kept.length +
         ' came in more than ' + D.RULES.cancelNotice + ' ahead, so a make-up can be booked' +
         (spent.length
           ? ', and in ' + count(spent.length, 'case', 'cases') + ' it came later — the class counted as attended ' +

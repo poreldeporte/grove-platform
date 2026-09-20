@@ -244,7 +244,7 @@
   /* What the notice rule has done, counted off the absences on record.
      `spent: false` is a class that came back as a make-up. */
   function absences(spent) {
-    return D.ABSENCES.filter(function (a) { return !!a.spent === spent; }).length;
+    return D.absences().filter(function (a) { return !!a.spent === spent; }).length;
   }
 
   /* A pop-up is priced per event; print one figure only while they agree. */

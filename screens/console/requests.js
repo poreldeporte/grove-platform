@@ -279,7 +279,7 @@
 
   function makeupQueue() {
     var out = [];
-    D.ABSENCES.forEach(function (a) {
+    D.absences().forEach(function (a) {
       if (a.spent) return;
       var child = studentNamed(a.child);
       if (!onPlan(child)) return;
@@ -299,7 +299,7 @@
   /* Absences the notice rule already settled. Counted on the same population
      the queue is drawn from, so the two numbers describe one list. */
   function settledByRule() {
-    return D.ABSENCES.filter(function (a) {
+    return D.absences().filter(function (a) {
       return a.spent && onPlan(studentNamed(a.child));
     });
   }

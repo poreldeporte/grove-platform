@@ -1669,7 +1669,7 @@
   /* An absence names the session it was missed against ("Mon 20 Jul · 3:15pm"),
      which is this class when the day and the start time both match. */
   function absencesIn(c) {
-    return D.ABSENCES.filter(function (a) {
+    return D.absences().filter(function (a) {
       var text = String(a.date).toLowerCase();
       var dayHit = dayTokens(c).some(function (d) { return text.indexOf(d.toLowerCase()) !== -1; });
       return dayHit && text.indexOf(startTime(c)) !== -1;
