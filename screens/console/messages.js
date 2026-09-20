@@ -216,33 +216,15 @@
   }
 
   /* ---- one conversation ---------------------------------------------------
-     The transcript alternates sides using the grids that already exist: a
-     family message sits in the wide half of grid--sidebar, a studio message in
-     the wide half of grid--aside, each beside an empty cell. Family messages
-     are tinted plum and studio messages grove, which is what those two colours
-     mean everywhere else in the product. Consecutive messages from the same
-     person are grouped: only the first carries the name. */
+     The same conversation pane the family portal uses, so a message looks the
+     same to the studio as it does to the parent who sent it. Only the message
+     list scrolls; the composer stays pinned. The family's details sit beside
+     it, because answering usually means checking something first. */
 
-  function transcript(t) {
-    var lines = D.TRANSCRIPTS[t.id] || [];
-    if (!lines.length) {
-      return ui.empty('No messages yet', 'Nothing has been sent to this family.');
-    }
-    var prev = '';
-    return lines.map(function (m) {
-      var mine = m.m === 'us';
-      var day = m.d ? h`<p class="section-title">${m.d}</p>` : '';
-      var grouped = !m.d && prev === m.m;
-      prev = m.m;
-      var bubble = ui.notice({
-        kind: mine ? 'ok' : 'warn',
-        title: grouped ? m.s : (mine ? 'Studio' : t.who) + ' · ' + m.s,
-        text: m.t
-      });
-      return day + (mine
-        ? ui.grid('aside', ['<div></div>', bubble])
-        : ui.grid('sidebar', [bubble, '<div></div>']));
-    }).join('');
+  function chatLines(t) {
+    return (D.TRANSCRIPTS[t.id] || []).map(function (m) {
+      return { day: m.d || '', mine: m.m === 'us', text: m.t, time: m.s };
+    });
   }
 
   /* One child, as the register has them: the class they are in, or the class
@@ -277,69 +259,47 @@
       ];
     },
 
+    chat: true,
+
     body: function (ctx) {
       var t = thr(ctx);
       var f = famNamed(t.fam);
       var kids = kidsOf(t.fam);
+      var lines = chatLines(t);
 
-      var flags = h`<div class="flags">
-        ${raw(t.unread ? ui.pill('Unread', 'warn') : ui.pill('Answered', 'ok'))}
-        ${raw(ui.pill('Private to this family'))}
-      </div>`;
+      var conversation = lines.length
+        ? ui.chat({
+            name: t.fam + ' family',
+            initials: t.fam.slice(0, 2).toUpperCase(),
+            status: t.who + ' \u00b7 last message ' + t.when,
+            placeholder: 'Reply to the ' + t.fam + ' family\u2026',
+            send: { label: 'Send reply', msg: 'Sent to the ' + t.fam + ' family' }
+          }, lines)
+        : ui.card({ title: 'Conversation' },
+            ui.empty('No messages yet', 'Nothing has been sent to this family.'));
 
-      var conversation = ui.card({ title: 'Conversation' },
-        h`<div class="stack">${raw(transcript(t))}</div>`);
-
-      var reply = ui.card({
-        title: 'Reply',
-        fill: true,
-        note: 'A reply is private to this family. News for everyone, or for a whole program, belongs in Announcements.',
-        foot: ui.btn({
-          label: 'Send reply',
-          kind: 'primary',
-          msg: 'Sent to the ' + t.fam + ' family'
-        })
-      }, ui.field({
-        grow: true,
-        label: 'Message to ' + t.who,
-        control: ui.textarea({ placeholder: 'Write a reply…' })
-      }));
-
-      var contact = ui.card({ title: 'This family' }, ui.kv([
-        ['Guardian', esc(f.guardian)],
-        ['Email', esc(f.email)],
-        ['Phone', esc(f.phone)],
-        { k: 'Status', v: esc(f.status), tone: f.status === 'Active' ? null : 'clay' }
+      var about = ui.card({
+        title: 'This family',
+        head: ui.btn({ label: 'Open record', kind: 'quiet', size: 'sm', to: 'familyRecord', id: f.id })
+      }, ui.kv([
+        ['Guardian', f.guardian],
+        ['Email', f.email],
+        ['Phone', f.phone],
+        { k: 'Balance', v: Grove.money(f.balance), tone: f.balance > 0 ? 'clay' : null },
+        ['Status', f.status]
       ]));
 
       var children = ui.card({ title: 'Children', flush: true },
         kids.length
           ? ui.rows(kids.map(childRow))
-          : ui.empty('Nobody on the register', 'The family has an account but no child is enrolled.'));
+          : ui.empty('No children on the roll', 'This family has not enrolled anyone yet.'));
 
-      var account = ui.card({
-        title: 'Account',
-        note: 'Invoices and payment methods live on the family record.'
-      }, ui.kv([
-        ['Plan', esc(f.plan)],
-        { k: 'Balance', v: esc(Grove.money(f.balance)), tone: f.balance > 0 ? 'clay' : null },
-        ['Autopay', f.autopay ? 'On' : 'Off'],
-        ['Payment method', esc(f.card)],
-        ['With us since', esc(f.since)]
-      ]));
-
-      return flags + ui.grid('sidebar', [
-        ui.col([conversation, reply]),
-        ui.col([contact, children, account])
-      ]);
+      return h`<div class="chat-layout">
+        ${raw(conversation)}
+        <div class="chat-layout__aside">${raw(about)}${raw(children)}</div>
+      </div>`;
     }
   };
-
-  /* The crumb has to name the family, and the shell reads crumbTitle as a
-     value rather than calling it, so it is defined as a getter. */
-  Object.defineProperty(threadDef, 'crumbTitle', {
-    get: function () { return thr({ params: Grove.state.params }).fam + ' family'; }
-  });
 
   Grove.screen('thread', threadDef);
 

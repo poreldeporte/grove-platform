@@ -32,6 +32,13 @@
        post, so no message is worded two ways in two places.
      - the per-bubble time stamp is gone: the day divider above it already
        says when, and saying it twice is what made the dates look unreliable.
+       FAMILY_TRANSCRIPT carries no clock times at all, only dates, so a time
+       on a bubble would have to be invented.
+     - the transcript is now a conversation pane, not a long document. The
+       message list is the only thing that scrolls and the composer is pinned
+       under it, so a parent no longer scrolls past the whole history to
+       reply. A studio-wide notice is tinted and labelled "To all families",
+       which is the one thing a 1:1 chat cannot show by position alone.
      - cFamMessage — the single-announcement page — is deleted. Nothing in the
        portal linked to it; it repeated one line of copy that this thread and
        Home both show in full, restated "from the studio" three times, and
@@ -107,7 +114,7 @@
     return published().filter(function (a) {
       return !covered[stamp(a.when)];
     }).map(function (a) {
-      return { at: stamp(a.when), seq: -1, mine: false, text: a.head + '. ' + a.body };
+      return { at: stamp(a.when), seq: -1, mine: false, notice: true, text: a.head + '. ' + a.body };
     });
   }
 
@@ -119,66 +126,43 @@
   }
 
   /* ---- the conversation ---------------------------------------------------
-     One message per grid row. The studio sits in the wide left column; the
-     family's own messages sit in the wide right column, with an empty cell
-     ahead of them doing the pushing — so the sides read as a conversation
-     without a single inline style. */
+     One bubble per message: the studio on the left, the family on the right.
+     The studio's name sits in the chat header rather than on every bubble,
+     so the only bubble that needs a label is a studio-wide notice — which is
+     not addressed to this family in particular and should not read as if it
+     were. */
 
-  function thread() {
-    var last = '';
+  function lines() {
     return messages().map(function (m) {
-      var label = dateLabel(m.at);
-      var day = label === last ? '' : h`<p class="section-title">${label}</p>`;
-      last = label;
-
-      var bubble = ui.notice({
-        kind: m.mine ? 'warn' : null,
-        title: m.mine ? 'You' : STUDIO,
-        text: m.text
-      });
-      var line = m.mine
-        ? ui.grid('aside', [ui.mute(''), bubble])
-        : ui.grid('sidebar', [bubble]);
-
-      return day + line;
-    }).join('');
-  }
-
-  function composer() {
-    return h`<div class="section">
-      ${raw(ui.field({
-        label: 'Reply',
-        control: ui.textarea({ placeholder: 'Message the studio…' })
-      }))}
-      ${raw(ui.formActions([
-        { label: 'Send', kind: 'primary', msg: 'Sent — the studio usually replies the same day' }
-      ]))}
-    </div>`;
+      return {
+        day: dateLabel(m.at),
+        mine: m.mine,
+        text: m.text,
+        who: m.notice ? 'To all families' : '',
+        kind: m.notice ? 'notice' : ''
+      };
+    });
   }
 
   Grove.screen('fMessages', {
     surface: 'family',
+    chat: true,
     crumbTitle: 'Messages',
     eyebrow: 'talk to the studio',
     title: 'Messages',
-    sub: 'One conversation with the studio. Whatever you write reaches the front desk, and studio-wide news lands here too.',
+    sub: 'One conversation with the studio. Anything you write reaches the front desk; a tinted message went to every family.',
     actions: [
       { label: 'Report an absence', to: 'fSchedule' }
     ],
 
     body: function () {
-      var card = ui.card({
-        title: STUDIO,
-        head: ui.pill('Usually replies the same day', 'ok'),
-        note: 'Studio-wide news appears here as it is posted. It is written for every ' +
-              'family, so there is nothing to answer — but anything you write back comes ' +
-              'straight to the front desk.'
-      }, h`
-        <div class="stack">${raw(thread())}</div>
-        ${raw(composer())}
-      `);
-
-      return ui.grid(null, [card]);
+      return ui.chat({
+        name: STUDIO,
+        initials: 'GS',
+        status: 'Usually replies the same day',
+        placeholder: 'Message the studio\u2026',
+        send: { label: 'Send', msg: 'Sent \u2014 the studio usually replies the same day' }
+      }, lines());
     }
   });
 })();

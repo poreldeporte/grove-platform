@@ -351,6 +351,52 @@
     }).join(''))}</div>`;
   };
 
+  /* --- chat ------------------------------------------------------------------
+     A conversation pane: fixed header, scrolling message list, pinned composer.
+     Set `chat: true` on the screen so the page hands it the height.
+
+     @param {{name, status?, initials?, action?, placeholder?, send?:{label,msg}}} o
+     @param {Array<{mine?:boolean, who?:string, text:string, time?:string,
+                    day?:string, kind?:string}>} lines
+       A line with `day` opens a new date separator before it. */
+  C.chat = function (o, lines) {
+    var lastDay = '';
+    var body = (lines || []).map(function (m) {
+      var sep = '';
+      if (m.day && m.day !== lastDay) {
+        lastDay = m.day;
+        sep = h`<div class="chat__day"><span>${m.day}</span></div>`;
+      }
+      return sep + h`<div class="msg msg--${raw(m.mine ? 'out' : 'in')}">
+        <div class="bubble${raw(m.kind ? ' bubble--' + m.kind : '')}">
+          ${raw(m.who ? '<p class="bubble__who">' + esc(m.who) + '</p>' : '')}
+          <p class="bubble__text">${m.text}</p>
+          ${raw(m.time ? '<p class="bubble__time">' + esc(m.time) + '</p>' : '')}
+        </div>
+      </div>`;
+    }).join('');
+
+    var send = o.send || { label: 'Send', msg: 'Sent' };
+
+    return h`<section class="chat">
+      <header class="chat__head">
+        <span class="chat__avatar">${o.initials || (o.name || '?').slice(0, 2).toUpperCase()}</span>
+        <span class="chat__who">
+          <span class="chat__name">${o.name}</span>
+          ${raw(o.status ? '<span class="chat__status">' + esc(o.status) + '</span>' : '')}
+        </span>
+        ${raw(o.action ? C.btn(Object.assign({ size: 'sm' }, o.action)) : '')}
+      </header>
+      <div class="chat__body">${raw(body)}</div>
+      <div class="chat__foot">
+        <textarea class="composer" rows="1" placeholder="${o.placeholder || 'Write a message…'}"
+          aria-label="${o.placeholder || 'Write a message'}"></textarea>
+        <button type="button" class="chat__send" aria-label="${send.label}"
+          data-act="toast" data-msg="${send.msg}">${raw(Grove.icon('send'))}</button>
+      </div>
+    </section>`;
+  };
+
   /* --- empty ------------------------------------------------------------------------ */
 
   C.empty = function (title, text) {

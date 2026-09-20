@@ -59,6 +59,19 @@
     </button>`;
   }
 
+  function tabbar() {
+    var S = Grove.state;
+    if (!Grove.nav.surface(S.surface).rail) return '';
+    var current = Grove.nav.currentFor(S.screen);
+    var items = Grove.nav.items(S.surface).concat(Grove.nav.footItems(S.surface));
+    return h`<nav class="tabbar" aria-label="Sections">${raw(items.filter(function (i) {
+      return !i.gap;
+    }).map(function (i) {
+      return h`<button class="tabbar__item" type="button"${raw(i.k === current ? ' aria-current="page"' : '')}
+        data-act="go" data-to="${i.k}">${i.l}${raw(i.badge ? ' <span class="tabbar__badge">' + esc(i.badge) + '</span>' : '')}</button>`;
+    }).join(''))}</nav>`;
+  }
+
   function rail() {
     var S = Grove.state;
     var surface = Grove.nav.surface(S.surface);
@@ -92,7 +105,7 @@
      Always rendered. The first crumb is the portal, and it is always a link
      back to that portal's home, so every screen has a way out. */
 
-  function crumbs(def) {
+  function crumbs(def, ctx) {
     var S = Grove.state;
     var surface = Grove.nav.surface(S.surface);
     var trail = [{ label: surface.crumbRoot, to: surface.home }];
@@ -103,7 +116,9 @@
     // The screen's own title closes the trail unless it already did.
     var last = trail[trail.length - 1];
     if (!def.crumbs || !def.crumbs.length || last.to) {
-      trail.push({ label: def.crumbTitle || def.title });
+      var leaf = def.crumbTitle || def.title;
+      if (typeof leaf === 'function') leaf = leaf(ctx);
+      trail.push({ label: leaf });
     }
 
     return h`<nav class="crumbs" aria-label="Breadcrumb">${raw(trail.map(function (c, i) {
@@ -149,13 +164,14 @@
       <div class="frame-wrap">
         <div class="frame">
           ${raw(rail())}
-          <main class="scroll">
-            <div class="page"${raw(def.wide ? ' style="max-width:none"' : '')}>
-              ${raw(crumbs(def))}
+          <main class="scroll${raw(def.chat ? ' scroll--chat' : '')}">
+            <div class="page${raw(def.chat ? ' page--chat' : '')}"${raw(def.wide ? ' style="max-width:none"' : '')}>
+              ${raw(crumbs(def, ctx))}
               ${raw(pageHead(def, ctx))}
               <div class="page-body">${raw(body)}</div>
             </div>
           </main>
+          ${raw(tabbar())}
         </div>
       </div>
       ${raw(S.toast ? '<div class="toast" role="status">' + esc(S.toast) + '</div>' : '')}

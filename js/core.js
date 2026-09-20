@@ -53,7 +53,8 @@
     chevron: '<path d="m4 2.5 4 4-4 4"/>',
     back: '<path d="m7 2.5-4 4 4 4"/>',
     plus: '<path d="M7 2.5v9M2.5 7h9"/>',
-    alert: '<path d="M7 4v3.6M7 10.2v.1"/><circle cx="7" cy="7" r="5.6"/>'
+    alert: '<path d="M7 4v3.6M7 10.2v.1"/><circle cx="7" cy="7" r="5.6"/>',
+    send: '<path d="M7 11.5v-9M3.2 6.3 7 2.5l3.8 3.8"/>'
   };
 
   Grove.icon = function (name, cls) {
@@ -255,6 +256,12 @@
     root.setAttribute('data-viewport', state.viewport);
     root.setAttribute('data-surface', state.surface);
     root.innerHTML = Grove.shell(def);
+
+    /* A conversation opens on its newest message, the way every chat app does.
+       The pane is the only scrolling region on a chat screen, so this is the
+       one place scroll position has to be set by hand. */
+    var chat = root.querySelector('.chat__body');
+    if (chat) chat.scrollTop = chat.scrollHeight;
   };
 
   document.addEventListener('DOMContentLoaded', function () {
