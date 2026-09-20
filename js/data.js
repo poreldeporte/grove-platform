@@ -753,8 +753,11 @@
      itself; there is nothing to cancel in June. */
   var PLAN_YEAR = {
     label: '2026–27',
+    starts: '10 August 2026',
     ends: '18 June 2027',
-    note: 'Plans end with the school year. Nothing renews into the summer.'
+    note: 'A plan is a commitment for the school year and ends with it. Nothing renews into the summer.',
+    summerNote: 'Classes run through the summer as well, booked term by term rather than on a plan, ' +
+      'alongside the camps.'
   };
 
   /* The studio's own rules, as written on the registration form families sign.
@@ -788,6 +791,8 @@
 
   var STUDIO = {
     name: 'The Grove Art Studio',
+    address: '3059 Grand Avenue, Coconut Grove, FL 33133',
+    timezone: 'America/New_York',
     legal: 'The Grove Art Studio LLC',
     phone: '(786) 340-9229',
     email: 'contact@thegroveartstudio.com',
