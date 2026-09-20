@@ -1,59 +1,58 @@
 /* Family → Home. The parent's landing page, in the order a parent reads it:
-   what is waiting on you, what is happening tomorrow, what is coming, where
-   each child's sessions stand, and what the studio has said.
+   what is waiting on you, the next class, where each child's hours stand, and
+   what the studio has said.
 
-   Reworked for the person this portal is for — a parent or grandparent who is
-   busy, wary of getting something wrong online, and who rings the studio
-   rather than hunt for a control.
+   THE PRICING MODEL, AS IT IS NOW SETTLED. A plan is HOURS A MONTH, and only
+   After-School has one. The parent picks their day and time at registration
+   and it is fixed for the program year, so a cycle is a set of dates and the
+   month's hours are spent by those dated classes. The invoice is raised on the
+   last class of the cycle and covers the next cycle. Hours not booked are
+   lost. The plan runs to the end of the school year and ends by itself.
 
-   THE BILLING MODEL. A family buys a pack of sessions for a child. The child
-   attends, and when the last session in the pack is used the pack renews: it
-   charges again and grants another pack the same size. There is no billing
-   date, so nothing on this page says one. What this cost the file:
+   What that cost this file:
 
-     - the make-up machinery is gone from the parent's side entirely. There is
-       no credit to hold, book, chase or lose, so the "Emma has a class to make
-       up" notice, the booked-make-up rows under Coming up and the link to Book
-       a make-up have all been deleted rather than renamed. A session the
-       studio was told about in time is simply not spent — it stays in the
-       child's pack, and the pack lasts a week longer
-     - the "Your next payment · 1 Aug" row under Coming up has gone with it. A
-       charge is a number of classes away, not a day on the calendar, so it
-       cannot sit in a list ordered by date. Where each pack stands, and what
-       happens when it runs out, is now its own card
-     - what the family still owes was folded into that dated payment line. It
-       is a notice of its own now, at the top with the other things to do, and
-       it says plainly that it is not part of a pack
-     - no expiry date anywhere. A pack is paid for, so it is theirs until used
+     - the pack vocabulary is gone. No pack, no "sessions used", no "renews on
+       the 8th class", no "sessions never expire". The unit is an hour, the
+       cycle is a set of dates, and both are read off Grove.data
+     - "Tomorrow" has been replaced by "Next class". Tomorrow was a guess made
+       by matching a weekday against a timetable line; the dated schedule now
+       says which classes are booked and when, so the page reads dates instead
+       of inferring them. The "can't come" button moved with it
+     - "Sessions" is now "This cycle": hours used of hours bought, per child,
+       with the one sentence the owner asked for in her own terms — when the
+       next invoice comes, and the dates it covers
+     - the dates of the next cycle are projected from the last class of this
+       one, because the day and time are fixed for the year. That is the only
+       figure on the page not read straight from a row, and it is derived from
+       the child's own last class, their plan hours and the length of their
+       class, never written down
+     - the invoice sentence is written in the tense the calendar says. A class
+       is marked after it is taught, so the last class of a cycle can be a day
+       or two behind us; the page then says that class WAS, and still names
+       the dates the invoice covers. It never calls a past day a coming one
+     - the dates the invoice covers read as one list with one "and" at the end,
+       even when the cycle crosses a month: "12, 19, 26 August and 2 September"
+     - the make-up wording comes from D.RULES, including the expiry window,
+       which is a studio setting with two options and is rendered rather than
+       hard-coded. No screen should invent its own version of a rule a family
+       has signed. When the next class is itself a make-up, the card adds the
+       one rule that then applies — a make-up missed is used, not rebooked
+     - a class the studio added on top of the plan is called a MAKE-UP class,
+       not an extra class. "Extra classes" now means the paid ones the studio
+       charges for by hand, and the two must not wear the same word
+     - one notice for hours left with no class booked, because that is the only
+       place rule "hours not booked are lost" actually bites a parent. If it
+       ever fires, the answer is to book or to ring the desk
 
-     - the page answers its questions in order. The studio's noticeboard used
-       to sit second, above the family's own day; it is last now, because it is
-       the one block nobody has to act on
-     - "Next up" was a five-row table — Child, Class, When, Where, Teacher —
-       for one session belonging to one child, and it never mentioned Lucas,
-       who is in class tomorrow as well. Tomorrow is now one line per child,
-       the hour on the left and "can't come" on the same line
-     - every class on this page comes from the child's own enrolment — the
-       classes that child is on the roll for — and not from reading the words
-       in their timetable line
-     - the document notice named one unsigned document and ignored the other.
-       Documents counts two; so does Home, and when there is one it opens that
-       document instead of the list
-     - dates are spelled out — "Monday 13 July", not "Mon 13 Jul" — and every
-       one is derived from Grove.data.today rather than written down
-     - the programme colour pips are gone: a colour with no key is a code, and
-       the row already names the programme in words
-     - version numbers, publication dates and expiry counts are out of the
-       notices. What is left is the thing to do and the day to do it by
-     - the two ways to reach a person sit in a bar pinned to the foot of the
-       page, so the phone number is never something you have to scroll for
+   Deliberately NOT built here: extra classes when a school finishes later than
+   the studio's program, a private class, an event, any other service. Those
+   are the owner's one "make sale / post sale" — she picks the family, says
+   what it is for, and charges the card on file. On this page they arrive as a
+   line on the bill, which is why the money notice says a charge of that kind
+   is charged on its own and does not come out of the plan hours.
 
-   Kept deliberately: the studio's announcements are shown in the studio's own
-   words, dates and all, including the one offering two extra hours this
-   Friday. Rewriting a message the studio sent would be a lie, and under the
-   corrected model that announcement is straightforward — an extra class is a
-   class you book on top of the weekly place, and it spends a session like any
-   other. Emma has taken the 10:00 one, and it is under Coming up saying so. */
+   Kept: the studio's announcements in the studio's own words, and the two ways
+   to reach a person pinned to the foot of the page. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -71,8 +70,8 @@
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   /* ---- dates ------------------------------------------------------------------
-     Every date on this page is worked out from Grove.data.today, so no date is
-     written down twice and none can drift from the dataset. */
+     Every date on this page is worked out from Grove.data.today or from a dated
+     row, so no date is written down twice and none can drift from the dataset. */
 
   function today() {
     var p = String(D.today).replace(',', '').split(' ');   /* Tuesday 28 July 2026 */
@@ -81,10 +80,19 @@
   function plus(date, n) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
   }
-  function tomorrow() { return plus(today(), 1); }
+
+  /* '2026-08-05' in the dated schedule, and back again for comparing. */
+  function isoDate(text) {
+    var p = String(text).split('-');
+    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  }
+  function iso(d) {
+    var m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
+  }
 
   function longDate(d) { return DAY[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH[d.getMonth()]; }
-  function shortDate(d) { return ABBR[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()]; }
+  function behindUs(d) { return iso(d) < iso(today()); }
 
   /* 'Mon 13 Jul' → 'Monday 13 July'. A parent reads a day, not an abbreviation. */
   function spell(text) {
@@ -96,15 +104,6 @@
   /* The year is never in doubt on a page about this week. */
   function plainDate(text) { return spell(String(text).replace(/\s\d{4}$/, '')); }
 
-  /* The first date after tomorrow that falls on a given weekday. */
-  function nextAfter(abbr) {
-    var from = tomorrow();
-    for (var i = 1; i <= 7; i++) {
-      var d = plus(from, i);
-      if (ABBR[d.getDay()] === abbr) return d;
-    }
-    return null;
-  }
   /* 'Fri 31 Jul' or '31 Jul' → a real date in the season we are in. */
   function dateFrom(text) {
     var p = String(text).split(' ');
@@ -116,19 +115,31 @@
     return new Date(t.getFullYear() + (mon < t.getMonth() ? 1 : 0), mon, day);
   }
 
+  /* '3, 10, 17 and 24 August', and across a month boundary as '12, 19, 26
+     August and 2 September'. This is the line the owner used to write by hand.
+     The month rides on the last day of its own run, so the sentence carries
+     one "and", at the very end, however many months it crosses. */
+  function dateList(dates) {
+    var groups = [];
+    dates.forEach(function (d) {
+      var name = MONTH[d.getMonth()];
+      var last = groups[groups.length - 1];
+      if (last && last.name === name) last.days.push(d.getDate());
+      else groups.push({ name: name, days: [d.getDate()] });
+    });
+    var parts = [];
+    groups.forEach(function (g) {
+      g.days.forEach(function (day, i) {
+        parts.push(i === g.days.length - 1 ? day + ' ' + g.name : String(day));
+      });
+    });
+    return andList(parts);
+  }
+
   /* ---- words and figures --------------------------------------------------- */
 
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
-  function ordinal(n) {
-    var tens = n % 100, ones = n % 10;
-    var suffix = 'th';
-    if (tens < 11 || tens > 13) {
-      if (ones === 1) suffix = 'st';
-      else if (ones === 2) suffix = 'nd';
-      else if (ones === 3) suffix = 'rd';
-    }
-    return n + suffix;
-  }
+  function lower(text) { return String(text).charAt(0).toLowerCase() + String(text).slice(1); }
   /* Cents on a whole number are noise on a page a parent skims. */
   function price(n) { return Grove.money(n, { cents: n % 1 !== 0 }); }
 
@@ -147,39 +158,13 @@
   /* 'Visa ···1183 · exp 04/29' → 'Visa ···1183'. The expiry belongs to Billing. */
   function cardName() { return String(fam().card).split(' · ')[0]; }
 
+  function classOf(id) {
+    return D.CLASSES.filter(function (c) { return c.id === id; })[0];
+  }
   /* An After-School record is named by its length ("1 hour · After-School"),
      which is a duration and not a class name, so those rows carry the
      programme name instead. Schedule does the same. */
   function className(c) { return c.prog === 'as' ? D.program(c.prog).name : c.name; }
-
-  function entry(child, c) {
-    return {
-      child: child, day: c.day, time: c.time,
-      room: c.room, staff: c.staff, name: className(c)
-    };
-  }
-
-  /* The family's week: every class each child is on the roll for. The child's
-     own record carries the classes, so nothing here is read out of the words
-     in a timetable line, and a child in three classes shows three. */
-  function week() {
-    var list = [];
-    kids().forEach(function (s) {
-      D.classesOf(s).forEach(function (c) { list.push(entry(s.name, c)); });
-    });
-    return list;
-  }
-
-  function spansWeek(day) { return String(day).indexOf('–') !== -1; }
-
-  /* A camp week runs Monday to Friday; a weekly hour runs on its own day. */
-  function runsOn(day, date) {
-    if (spansWeek(day)) return date.getDay() >= 1 && date.getDay() <= 5;
-    return day === ABBR[date.getDay()];
-  }
-  function everyDay(day) {
-    return spansWeek(day) ? spell(day) : 'Every ' + DAY[ABBR.indexOf(day)];
-  }
 
   /* Only the end of a range carries the meridiem in this dataset, so both the
      sort key and the time chip have to look at the whole range. */
@@ -198,9 +183,56 @@
     return String(range).split('–')[0].replace(/(am|pm)/i, '') + ' ' + meridiem(range);
   }
 
-  /* ---- money ------------------------------------------------------------------
-     Nothing here is a date. A pack charges when its last session is used, so
-     the only figure with a day attached is something already owed. */
+  /* ---- the rules the family signed ------------------------------------------
+     Read from D.RULES, never restated. The make-up window is a studio setting
+     with two options, so the page renders whichever one is set. */
+
+  function makeupWindow() {
+    var w = String(D.RULES.makeupWindow);
+    return /^\d/.test(w) ? w : 'the ' + w;
+  }
+  /* The one thing a family needs told when the class in front of them is
+     itself a make-up. Found in the list rather than counted off it, so the
+     sentence cannot come loose if the studio reorders the rules. */
+  function neverRebooked() {
+    var hits = D.RULES.makeupNever.filter(function (t) { return /rebooked/i.test(t); });
+    return hits.length ? hits[0] : '';
+  }
+
+  /* ---- hours ------------------------------------------------------------------
+     A plan is hours a month. The hours are spent by the dated classes, so what
+     is left and what is booked are two different numbers, and the gap between
+     them is the only thing on this page a parent can lose. */
+
+  function dated(s) {
+    return D.SESSIONS.filter(function (x) {
+      return x.child === s.id && x.state === 'scheduled';
+    });
+  }
+  function bookedHours(s) {
+    return dated(s).reduce(function (n, x) { return n + x.hours; }, 0);
+  }
+  function looseHours(s) {
+    var p = D.plan(s);
+    if (!p.isPlan) return 0;
+    return Math.max(0, p.leftHours - bookedHours(s));
+  }
+
+  /* The dates the next invoice covers. The day and time are fixed for the
+     program year, so the next cycle is the same class, the same number of
+     hours on, counted from the last class of this one. */
+  function nextCycleDates(p) {
+    var last = p.renewsOn;
+    if (!last) return [];
+    var per = last.hours || 1;
+    var count = Math.max(1, Math.round(p.hours / per));
+    var from = isoDate(last.date);
+    var out = [];
+    for (var i = 1; i <= count; i++) out.push(plus(from, 7 * i));
+    return out;
+  }
+
+  /* ---- money ---------------------------------------------------------------- */
 
   function sum(list) { return list.reduce(function (n, l) { return n + l.amt; }, 0); }
   function unpaid() { return D.LEDGER.filter(function (l) { return !l.paid; }); }
@@ -224,11 +256,23 @@
       list.push({
         kind: 'warn',
         title: price(owing) + ' is still to pay',
-        text: oldest.what + ', from ' + plainDate(oldest.d) + '. It is not part of a pack, ' +
-              'so it will not be picked up when one renews.',
+        text: oldest.what + ', from ' + plainDate(oldest.d) + '. It is charged on its own ' +
+              'and does not come out of your plan hours.',
         action: { label: 'See billing', kind: 'primary', to: 'fBilling' }
       });
     }
+
+    kids().forEach(function (s) {
+      var spare = looseHours(s);
+      if (!spare) return;
+      list.push({
+        kind: 'warn',
+        title: firstName(s.name) + ' has ' + plural(spare, 'hour') + ' left with no class booked',
+        text: D.RULES.unusedHours + ' Book them on your schedule, or ring the desk and we ' +
+              'will do it for you.',
+        action: { label: 'See your schedule', kind: 'primary', to: 'fSchedule' }
+      });
+    });
 
     var papers = unsigned();
     if (papers.length === 1) {
@@ -250,168 +294,184 @@
     return list;
   }
 
-  /* ---- tomorrow -----------------------------------------------------------
-     One line per child, the hour on the left and "can't come" on the same
-     line. The old card described one session for one child in five table rows
-     — Child, Class, When, Where, Teacher — and Lucas, who is in class
-     tomorrow too, was not on the page at all. */
+  /* ---- the dated classes still to come ---------------------------------------
+     Straight off the dated schedule, plus anything the studio has added on top
+     of the plan. A class already behind us is not something still to come. */
 
-  function tomorrowCard() {
-    var when = tomorrow();
-    var list = week().filter(function (s) { return runsOn(s.day, when); })
-      .sort(function (a, b) { return minutes(a.time) - minutes(b.time); });
+  function coming() {
+    var from = iso(today());
+    var items = [];
 
-    var rows = list.map(function (s) {
-      var who = firstName(s.child);
+    ours(D.EXTRA_CLASSES).forEach(function (x) {
+      var bits = String(x.when).split(' · ');
+      var at = dateFrom(bits[0]);
+      if (!at || iso(at) < from) return;
+      items.push({
+        key: iso(at), mins: minutes(bits[1]), on: at, who: firstName(x.child),
+        lead: ui.timechip(chipTime(bits[1])),
+        makeup: true,
+        title: firstName(x.child) + ' · make-up class',
+        sub: longDate(at) + ' · ' + bits[1] + ' · ' + x.room + ' · with ' + x.staff +
+             ' — already booked, nothing to do'
+      });
+    });
+
+    kids().forEach(function (s) {
+      dated(s).forEach(function (x) {
+        if (x.date < from) return;
+        var c = classOf(x.classId);
+        var at = isoDate(x.date);
+        items.push({
+          key: x.date, mins: minutes(x.at), on: at, who: firstName(s.name),
+          lead: ui.timechip(chipTime(c ? c.time : x.at)),
+          title: firstName(s.name) + ' · ' + (c ? className(c) : 'Class'),
+          sub: longDate(at) + ' · ' + (c ? c.time : x.at) + ' · ' + plural(x.hours, 'hour') +
+               (c ? ' · ' + c.room + ' · with ' + c.staff : '')
+        });
+      });
+    });
+
+    items.sort(function (a, b) {
+      if (a.key === b.key) return a.mins - b.mins;
+      return a.key < b.key ? -1 : 1;
+    });
+    return items;
+  }
+
+  /* The soonest class, with the one button that can change it. */
+  function nextClassCard(list) {
+    var first = list.length ? list[0] : null;
+    var same = first ? list.filter(function (x) { return x.key === first.key; }) : [];
+
+    var rows = same.map(function (x) {
       return {
-        lead: ui.timechip(chipTime(s.time)),
-        title: esc(who + ' · ' + s.name),
-        sub: esc(everyDay(s.day) + ' · ' + s.time + ' · ' + s.room + ' · with ' + s.staff),
+        lead: x.lead,
+        title: esc(x.title),
+        sub: esc(x.sub),
         end: ui.btn({
-          label: who + ' can’t come',
+          label: x.who + ' can’t come',
           kind: 'quiet',
           size: 'sm',
-          msg: 'Thank you — we have told the studio that ' + who +
-               ' will not be in on ' + longDate(when)
+          msg: 'Thank you — we have told the studio that ' + x.who +
+               ' will not be in on ' + longDate(x.on)
         })
       };
     });
 
+    /* When the class in front of you is itself a make-up, the cancel rule
+       below would promise something the signed policy does not give. */
+    var isMakeup = same.filter(function (x) { return x.makeup; }).length > 0;
+
     return ui.card({
-      title: 'Tomorrow · ' + longDate(when),
+      title: 'Next class',
       flush: true,
       note: rows.length
-        ? 'Tell us more than 24 hours before a class and the session stays in the pack. ' +
-          'Inside 24 hours it is spent, the same as if they had come.'
+        ? 'Cancel at least ' + D.RULES.cancelNotice + ' before the class, here in the portal, ' +
+          'and you can take a make-up. Later than that, or a no-show, and ' +
+          lower(D.RULES.lateCancel) +
+          (isMakeup ? ' A make-up cannot ' + lower(neverRebooked()) + '.' : '')
         : null
     }, rows.length
       ? ui.rows(rows)
-      : ui.empty('Nothing tomorrow',
-          'No class for ' + andList(kids().map(function (s) { return firstName(s.name); })) +
-          ' on ' + longDate(when) + '.'));
+      : ui.empty('No class booked',
+          'Nothing is booked for ' + andList(kids().map(function (s) { return firstName(s.name); })) +
+          ' yet. Your schedule will show the days you chose.'));
   }
 
-  /* ---- coming up ------------------------------------------------------------
-     Dates a person recognises, in order, with a button on anything that can be
-     changed. An extra class — one booked on top of the weekly place — is here
-     because it is the one entry a parent might not be expecting, and because
-     it spends a session like any other class. */
+  /* ---- coming up ------------------------------------------------------------ */
 
-  function comingCard() {
-    var items = [];
-    var extras = ours(D.EXTRA_CLASSES);
-
-    extras.forEach(function (x) {
-      var bits = String(x.when).split(' · ');
-      var at = dateFrom(bits[0]);
-      if (!at) return;                 /* a booking the studio has not dated yet */
-      items.push({
-        at: at,
-        lead: shortDate(at),
-        title: esc(firstName(x.child) + ' · extra class'),
-        sub: esc(bits[1] + ' · ' + x.room + ' · with ' + x.staff +
-                 ' — already booked, nothing to do'),
-        end: ui.btn({ label: 'Change', kind: 'quiet', size: 'sm', to: 'fMessages' })
-      });
-    });
-
-    week().forEach(function (s) {
-      /* A class that runs all week is already on the Tomorrow card, and so is
-         a class that falls tomorrow. Neither is news. */
-      if (spansWeek(s.day) || runsOn(s.day, tomorrow())) return;
-      var at = nextAfter(s.day);
-      if (!at) return;
-      items.push({
-        at: at,
-        lead: shortDate(at),
-        title: esc(firstName(s.child) + ' · ' + s.name),
-        sub: esc(everyDay(s.day) + ' · ' + s.time + ' · ' + s.room + ' · with ' + s.staff)
-      });
-    });
-
-    items.sort(function (a, b) { return a.at - b.at; });
+  function comingCard(list) {
+    var rest = list.length
+      ? list.filter(function (x) { return x.key !== list[0].key; })
+      : [];
 
     return ui.card({
       title: 'Coming up',
       head: ui.btn({ label: 'See your schedule', kind: 'quiet', size: 'sm', to: 'fSchedule' }),
       flush: true,
-      note: extras.length
-        ? 'An extra class spends a session from the pack, the same as a weekly class.'
-        : null
-    }, items.length
-      ? ui.rows(items)
-      : ui.empty('Nothing booked yet', 'Your schedule will fill in as classes are booked.'));
+      note: 'A make-up is taken within ' + makeupWindow() + ', in ' + lower(D.RULES.makeupWhere)
+    }, rest.length
+      ? ui.rows(rest.map(function (x) {
+          return { lead: x.lead, title: esc(x.title), sub: esc(x.sub) };
+        }))
+      : ui.empty('Nothing else booked', 'The next class above is the only one on your schedule.'));
   }
 
-  /* ---- sessions ---------------------------------------------------------------
-     Where each child's pack stands, and what happens when it runs out. A pack
-     belongs to one child, so two children renew separately and at different
-     times — which is the whole reason this is a row per child and not one line
-     about the family. Every figure is read off the child's own record and the
-     studio's price list. */
+  /* ---- this cycle -------------------------------------------------------------
+     Hours used of hours bought, per child, and the sentence the owner asked
+     for: when the next invoice comes and the dates it covers. A plan belongs
+     to one child, so two children bill on different days — which is the whole
+     reason this is a row per child and not one line about the family. */
 
-  function sessionRows() {
+  function cycleRows() {
     var stopping = String(fam().plan).indexOf('not renewing') !== -1;
 
     return kids().map(function (s) {
-      var p = D.pack(s);
+      var p = D.plan(s);
       var who = firstName(s.name);
       var end = ui.btn({ label: 'See ' + who, kind: 'quiet', size: 'sm', to: 'fChild', id: s.id });
 
-      if (!p.isPack) {
+      if (!p.isPlan) {
         return {
           lead: ui.mute('—'),
-          title: esc(who + ' · no pack'),
-          sub: esc('Camp weeks and one-off classes are paid for when you book them, ' +
-                   'so there is nothing to renew.'),
+          title: esc(who + ' · no plan'),
+          sub: esc('Camp, no-school days, private classes and pop-ups are paid for when you ' +
+                   'book them. There is no plan and nothing to renew.'),
           end: end
         };
       }
 
-      var cost = D.PRICING.as.plans['p' + p.size];
-      var pays = fam().autopay
-        ? ' from ' + cardName()
-        : ', and we will ask you for it then';
+      var spare = looseHours(s);
+      var last = p.renewsOn;
+      var text = p.hours + ' hours a month · ' + price(p.price) + '. ';
 
-      var text;
       if (stopping) {
-        text = plural(p.left, 'class', 'classes') + ' left. When the last one is used the pack will ' +
-               'not renew, and nothing more is charged.';
-      } else if (p.left === 0) {
-        text = 'The pack is used up. The next class renews it — another ' +
-               plural(p.size, 'session') + (cost ? ', ' + price(cost) : '') + pays + '.';
+        text += 'This plan is not renewing' +
+                (last ? ', and ' + who + '’s last class ' +
+                        (behindUs(isoDate(last.date)) ? 'was ' : 'is ') +
+                        longDate(isoDate(last.date))
+                      : '') +
+                '. Nothing more is charged.';
+      } else if (last) {
+        /* The invoice is raised on the last class of the cycle. A class is
+           marked after it is taught, so that date can be a day or two behind
+           us — and a page dated today must not call a past day a coming one. */
+        var on = isoDate(last.date);
+        var covers = dateList(nextCycleDates(p));
+        var how = fam().autopay ? ' It is taken from ' + cardName() + '.'
+                                : ' We will ask you for it.';
+        text += behindUs(on)
+          ? who + '’s last class of this cycle was ' + longDate(on) + ', so your next ' +
+            'invoice, ' + price(p.price) + ', covers ' + covers + '.' + how
+          : 'Your next invoice, ' + price(p.price) + ', comes on ' + who +
+            '’s last class of this cycle, ' + longDate(on) + ', and covers ' + covers + '.' + how;
       } else {
-        text = plural(p.left, 'class', 'classes') + ' left. On the ' + ordinal(p.size) +
-               ' class it renews — another ' + plural(p.size, 'session') +
-               (cost ? ', ' + price(cost) : '') + pays + '.';
+        text += 'No class is booked for the rest of this cycle, so there is no invoice date yet.';
       }
 
-      var kept = D.absencesFor(s.name).filter(function (a) { return !a.spent; });
-      if (kept.length) {
-        text += ' ' + plural(kept.length, 'missed class', 'missed classes') +
-                ' stayed in the pack because you told us in time.';
+      if (spare) {
+        text += ' ' + plural(spare, 'hour') + (spare === 1 ? ' is' : ' are') + ' not booked.';
       }
 
       return {
-        lead: ui.timechip(p.left + ' left', p.left <= 1 ? 'amber' : null),
-        title: esc(who + ' · ' + p.used + ' of ' + p.size + ' used'),
+        lead: ui.timechip(p.leftHours + 'h left', spare ? 'amber' : null),
+        title: esc(who + ' · ' + p.usedHours + ' of ' + p.hours + ' hours used this cycle'),
         sub: esc(text),
         end: end
       };
     });
   }
 
-  function sessionsCard() {
-    var rows = sessionRows();
+  function cycleCard() {
+    var rows = cycleRows();
     return ui.card({
-      title: 'Sessions',
+      title: 'This cycle',
       head: ui.btn({ label: 'See billing', kind: 'quiet', size: 'sm', to: 'fBilling' }),
       flush: true,
-      note: 'There is no billing date. A pack renews when its last session is used, and ' +
-            'sessions never expire — they are yours until you use them.'
+      note: D.RULES.unusedHours + ' Your plan runs to ' + D.PLAN_YEAR.ends + ' and ends there.'
     }, rows.length
       ? ui.rows(rows)
-      : ui.empty('No sessions yet', 'Book a class and the pack will show here.'));
+      : ui.empty('No plan yet', 'Choose your hours and your day, and this is where they will show.'));
   }
 
   /* ---- the studio's news --------------------------------------------------- */
@@ -441,8 +501,7 @@
 
   /* ---- home -------------------------------------------------------------------
      The header carries one button. The two ways to reach a person are in a bar
-     pinned to the foot of the page, where they cannot be scrolled past, and
-     repeating them at the top would only be the same action twice. */
+     pinned to the foot of the page, where they cannot be scrolled past. */
 
   Grove.screen('fHome', {
     surface: 'family',
@@ -461,6 +520,7 @@
 
     body: function () {
       var list = todos();
+      var soon = coming();
 
       var waiting = list.length
         ? list.map(ui.notice).join('')
@@ -478,9 +538,9 @@
 
       return h`
         <div class="section">${raw(waiting)}</div>
-        <div class="section">${raw(tomorrowCard())}</div>
-        <div class="section">${raw(comingCard())}</div>
-        <div class="section">${raw(sessionsCard())}</div>
+        <div class="section">${raw(nextClassCard(soon))}</div>
+        <div class="section">${raw(comingCard(soon))}</div>
+        <div class="section">${raw(cycleCard())}</div>
         <div class="section">${raw(newsCard())}</div>
         ${raw(ui.formActions([
           { label: 'Message the studio', kind: 'primary', to: 'fMessages' },

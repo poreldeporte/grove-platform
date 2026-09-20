@@ -7,65 +7,78 @@
    allergy, the register, what she is teaching, and now and then her hours.
    Enrolment against capacity, fill rate, waiting lists and a child's
    attendance percentage are the studio's numbers, and they belong on the
-   owner's screens. This pass takes them off hers.
+   owner's screens. An earlier pass took them off hers.
 
-   Cut in this pass
+   WHAT THE PRICING MODEL CHANGES HERE, AND WHAT IT DOES NOT
+
+   A plan is hours a month, the plan ends with the school year, and hours not
+   booked are lost. None of that is a teacher's business and none of it has
+   come onto these screens: she is not selling anything, she is counting heads.
+   Two things do reach her, and both are about make-ups, because a make-up is
+   the one part of the model that walks into her room.
+
+     - a make-up is an extra hour the studio opens for one child on top of
+       their weekly place. It is booked against a room, an hour and a teacher
+       rather than against a class, so it is not on her timetable. It is still
+       an hour she is teaching and it still carries a child, so her week now
+       lists it — the child named, in amber, in the order she teaches it — and
+       that child's allergy is scanned with everybody else's. Lauren has one
+       this week and would otherwise have found out about it on the day
+     - a child taking a make-up inside a timetabled class is on that class's
+       register, flagged, because she does not know them and because a booked
+       make-up the child does not turn up for is used. The rule she is quoting
+       when a parent asks at the door — cancel in the portal 24 hours ahead and
+       there is a make-up, later than that and the class counts as attended —
+       is on the register card, read from D.RULES so that it cannot drift from
+       what families actually signed
+
+   The third thing is a silence. Only After-School has a plan, and a make-up
+   belongs to a plan, so a camp week, a no-school day, a pop-up and a private
+   class have none: they are booked and paid one at a time. A camp register
+   therefore does not quote the make-up rule at a parent, it says the true thing
+   instead, and which of the two it says is read off the price list rather than
+   written down here.
+
+   The match is the one the console already uses for absences and lesson plans:
+   a booking names a room, a day and an hour in free text, so it belongs to a
+   class when the room and the hour are the same and the class runs on that day.
+   A booking that finds a class is a visitor on that class's register; a booking
+   that finds none is an hour of its own — one or the other, never both, so no
+   child is counted twice in a week. On the current dataset the studio's one
+   booked make-up is a Friday hour in Studio 2, which is not a timetabled class,
+   so it shows in Lauren's week and no register carries a visitor. That is the
+   truth of the data rather than a decoration.
+
+   Nothing here is a pack, a session, a credit or a renewal.
+
+   Cut in earlier passes, and still cut
      - the five stat tiles above the register — Enrolled / On the register /
-       Marked / Present / Absent. Five tiles of telemetry stood above the list.
-       Marked and unmarked are now a line in the save bar, counted from the
-       rows; enrolled against capacity is the owner's number and is gone
+       Marked / Present / Absent. Marked and unmarked are a line in the save
+       bar, counted from the rows; enrolled against capacity is the owner's
+       number and is gone
      - every capacity figure on My classes: "18 of 20", "12 of 12 · 3
-       waiting", "1 place left", "Full", and the meter under each one. A
-       teacher taking a register does not act on any of them
+       waiting", "1 place left", "Full", and the meter under each one
      - the per-child attendance percentage on the register row. It is a
        judgement about the child, not a fact about this hour
-     - the five class cards. A card with a three-row key/value table and a
-       progress bar, five times over, is a filing cabinet. Time is what
-       organises a teacher's week, so the classes are now two lists: what is
-       on today, then the rest of the week
+     - the five class cards. Time is what organises a teacher's week, so the
+       classes are two lists: what is on today, then the rest of the week
      - the family name on the register row, to keep the row to one line of
        state. It is on the child's own record, one tap away
-     - the line under the register explaining that the list was shorter than
-       the room. It is not. The register is the class.
 
-   Changes this pass
-     - the roll is a join, not a guess. A child's record carries the classes
-       that child is in, so the roster comes from D.roster(c.id) and a child's
-       own hours from D.classesOf. Nothing here reads a placement out of the
-       free-text line on a child's record any more
-     - a camp register is eighteen children, so the list is in name order —
-       at that length she is looking for one name, not reading top to bottom —
-       and the card head carries how many children are in the room, counted
-       off the rows beneath it
-     - safety is the first thing on both screens, in clay, by name, with the
-       condition spelled out. On My classes it also says which of her hours
-       each child is in, grouped so a child in two of her classes is named
-       once
-     - "Mark all present" has come out of the page header and sits on the
-       register itself as "Everyone is here", because the common case is that
-       everybody came except one, and because a header button is the wrong
-       place for the thing she taps first
-     - Save is in a bar pinned to the bottom of the viewport with a line
-       beside it saying how many children are still unmarked — the pattern
-       the parent pass put on any screen whose whole purpose is one action
-     - the Present and Absent buttons are full size rather than small, and
-       each row says in words where the child stands: here, away today, or
-       not marked yet
-     - the page is called The register rather than Attendance, because that is
-       what she is holding, and the card head carries the date she is marking.
-       A class opened out of its own day says so rather than quietly writing
-       Tuesday against Wednesday's room
-     - an After-School class is titled by its programme name. The record's
-       name, "1 hour · After-School", is a duration, and the two Monday
-       classes were told apart only by small grey time text. The day is now
-       the headline of the time chip and the age band is on the title, so no
-       two rows read alike
+   Cut in this pass
+     - a card of its own for make-up hours. A make-up hour is an hour in her
+       week, so it sits in the week she already has, in time order, rather than
+       in a second list she would have to remember to read
+     - any control over it. She cannot grant a make-up, move one or price one,
+       so nothing here pretends she can: the hour appears, the child is named,
+       the rule is stated once, and the office is named as the place to ask
 
    Every figure is derived from the rows on screen or read from Grove.data;
    nothing is written down. Whose classes these are comes from ctx.persona, so
    this screen and Today can never disagree about whose week this is. Names,
-   ages, safety flags, rooms, hours, rolls and lesson plans all come from
-   Grove.data — there is no list of children in this file. */
+   ages, safety flags, rooms, hours, rolls, make-ups, the make-up rules and
+   lesson plans all come from Grove.data — there is no list of children in
+   this file. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -85,6 +98,14 @@
   function sentenceList(items) {
     if (items.length < 2) return items.join('');
     return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+  }
+
+  /* A rule out of D.RULES is a sentence of its own. Dropping its capital lets
+     it be joined to the clause before it without this screen rewriting the
+     rule itself. */
+  function lower(text) {
+    var s = String(text);
+    return s.charAt(0).toLowerCase() + s.slice(1);
   }
 
   /* ---- whose portal this is -------------------------------------------------
@@ -130,7 +151,7 @@
     return hour * 60 + parseInt(m[2], 10);
   }
 
-  /* The time chip wants a headline and a small line under it. Today's classes
+  /* The time chip wants a headline and a small line under it. Today's hours
      lead with the clock; the rest of the week leads with the day, because that
      is the thing she is looking for. */
   function clockChip(range) {
@@ -152,7 +173,9 @@
   function className(c) {
     return c.prog === 'as' ? D.program(c.prog).name : c.name;
   }
-  function oneToOne(c) { return c.cap <= 1 || c.band === '—'; }
+  /* A private class, the only hour that is genuinely one to one. The age band
+     is blank on a birthday party as well, and a party is not. */
+  function oneToOne(c) { return c.prog === 'priv'; }
 
   function classOf(id) {
     return D.CLASSES.filter(function (c) { return c.id === id; })[0];
@@ -170,17 +193,134 @@
     return mine(ctx).filter(function (c) { return !runsOn(c, TODAY_DAY); }).sort(byDayThenTime);
   }
 
+  /* ---- make-ups ---------------------------------------------------------------
+     A make-up is an hour the studio opens for a child who cancelled a class in
+     time. It is booked against a room, an hour and a teacher — never a class —
+     so it is read out of the free-text line the booking carries, the same way
+     the console reads an absence or a lesson plan.
+
+     'Fri 31 Jul · 10:00am' → day 'Fri', date 'Fri 31 Jul', time '10:00am'. */
+
+  function mkDay(x) { return String(x.when).split(' ')[0]; }
+  function mkDate(x) { return String(x.when).split(' · ')[0]; }
+  function mkTime(x) {
+    var bits = String(x.when).split('· ');
+    return (bits[1] || '').replace(/^\s+|\s+$/g, '');
+  }
+  function mkLabel(x) { return mkDay(x) + ' ' + startOf(mkTime(x)); }
+
+  function studentNamed(name) {
+    return D.STUDENTS.filter(function (s) { return s.name === name; })[0];
+  }
+
+  /* The make-up hours booked with this teacher that are not already one of her
+     classes. A make-up that falls inside a class of hers is on that class's
+     register and is counted in its roll, so listing it again as an hour of its
+     own would have her teaching the same child twice. What is left is the hour
+     that is genuinely not on her timetable, which is the whole reason it is
+     worth saying out loud. */
+  function myMakeups(ctx) {
+    var who = teacher(ctx);
+    var classes = mine(ctx);
+    return D.EXTRA_CLASSES.filter(function (x) {
+      if (x.staff !== who) return false;
+      return !classes.filter(function (c) {
+        return makeupsIn(c).filter(function (y) { return y.id === x.id; }).length > 0;
+      }).length;
+    });
+  }
+  function makeupsToday(ctx) {
+    return myMakeups(ctx)
+      .filter(function (x) { return mkDay(x) === TODAY_DAY; })
+      .sort(function (a, b) { return minutes(mkTime(a)) - minutes(mkTime(b)); });
+  }
+  function makeupsRest(ctx) {
+    return myMakeups(ctx)
+      .filter(function (x) { return mkDay(x) !== TODAY_DAY; })
+      .sort(function (a, b) {
+        var d = WEEK.indexOf(mkDay(a)) - WEEK.indexOf(mkDay(b));
+        return d || (minutes(mkTime(a)) - minutes(mkTime(b)));
+      });
+  }
+
+  /* A make-up taken inside a timetabled class: the booking names this room,
+     this hour and a day this class runs, and the child is not already on its
+     roll. All three have to agree — a booking in the same room earlier in the
+     day is somebody else's hour, not a visitor on this register. */
+  function makeupsIn(c) {
+    var roll = {};
+    D.roster(c.id).forEach(function (s) { roll[s.name] = true; });
+    return D.EXTRA_CLASSES.filter(function (x) {
+      return x.room === c.room &&
+             runsOn(c, mkDay(x)) &&
+             startOf(mkTime(x)) === startOf(c.time) &&
+             !roll[x.child];
+    });
+  }
+
+  /* Whether make-ups reach this hour at all. Only After-School has a plan, and
+     a make-up belongs to a plan — camp, no-school days, private classes and
+     pop-ups are booked one at a time. Read off the price list, so that giving
+     another programme a plan changes what this screen says with it. */
+  function hasPlan(c) {
+    var p = D.PRICING[c.prog];
+    return !!(p && p.plans);
+  }
+
+  /* The one make-up rule a teacher taking a register changes the outcome of: a
+     booked make-up the child does not turn up for is used. Picked out of
+     D.RULES by what it says rather than by where it sits in the list. */
+  function noShowRule() {
+    return D.RULES.makeupNever.filter(function (t) {
+      return String(t).indexOf('not attended') !== -1;
+    })[0];
+  }
+
   /* ---- who is in the room ----------------------------------------------------
      The roll is held on the children: each child's record carries the classes
      that child is in, and D.roster hands back the class's children. Read in
      name order, because a register of eighteen is scanned for one name rather
-     than read from the top. */
+     than read from the top. Anyone taking a make-up in this hour follows the
+     roll, so she can see at a glance that the list has grown by one. */
 
   function byName(a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); }
   function roster(c) { return D.roster(c.id).sort(byName); }
 
-  function flagged(list, kind) {
-    return list.filter(function (s) { return s.flagKind === kind; });
+  function register(c) {
+    var out = roster(c).map(function (s) { return { who: s, makeup: null }; });
+    makeupsIn(c).forEach(function (x) {
+      var s = studentNamed(x.child);
+      if (s) out.push({ who: s, makeup: x });
+    });
+    return out;
+  }
+  function whoOf(e) { return e.who; }
+  function visiting(entries) {
+    return entries.filter(function (e) { return !!e.makeup; });
+  }
+  function flagged(entries, kind) {
+    return entries.filter(function (e) { return e.who.flagKind === kind; }).map(whoOf);
+  }
+
+  /* Every hour she teaches this week, today first, each with the children who
+     will be standing in it. A make-up hour carries one child, and that child's
+     allergy matters exactly as much as anyone else's. */
+  function hourLabel(c) { return dayTokens(c).join('–') + ' ' + startOf(c.time); }
+
+  function myHours(ctx) {
+    var out = [];
+    function addClass(c) {
+      out.push({ label: hourLabel(c), people: register(c).map(whoOf) });
+    }
+    function addMakeup(x) {
+      var s = studentNamed(x.child);
+      out.push({ label: mkLabel(x), people: s ? [s] : [] });
+    }
+    myToday(ctx).forEach(addClass);
+    makeupsToday(ctx).forEach(addMakeup);
+    myRest(ctx).forEach(addClass);
+    makeupsRest(ctx).forEach(addMakeup);
+    return out;
   }
 
   /* ---- the office's published work -------------------------------------------
@@ -201,10 +341,10 @@
   function markKey(cid, sid) { return 'att-' + cid + '-' + sid; }
   function markOf(cid, sid) { return Grove.filter(markKey(cid, sid), ''); }
 
-  function tally(c, people) {
+  function tally(c, entries) {
     var t = { present: 0, absent: 0, toMark: 0 };
-    people.forEach(function (s) {
-      var m = markOf(c.id, s.id);
+    entries.forEach(function (e) {
+      var m = markOf(c.id, e.who.id);
       if (m === 'Present') t.present += 1;
       else if (m === 'Absent') t.absent += 1;
       else t.toMark += 1;
@@ -219,14 +359,14 @@
     if (!c) return;
     var cur = Grove.state.filters, next = {};
     Object.keys(cur).forEach(function (k) { next[k] = cur[k]; });
-    roster(c).forEach(function (s) { next[markKey(c.id, s.id)] = 'Present'; });
+    register(c).forEach(function (e) { next[markKey(c.id, e.who.id)] = 'Present'; });
     Grove.set({ filters: next });
     Grove.toast('All marked present');
   });
 
   /* Counted from the marks against the list shown. Never a literal. */
   function registerState(c) {
-    var people = roster(c);
+    var people = register(c);
     if (!people.length) return '';
     var t = tally(c, people);
     if (t.toMark === people.length) return ui.pill('Register not taken', 'amber');
@@ -235,16 +375,65 @@
   }
 
   /* ---- my classes -------------------------------------------------------------
-     Time is the organising principle: today, then the rest of the week. Every
-     row is the tap target for its own register, which is the biggest target a
-     row can be. */
+     Time is the organising principle: today, then the rest of the week. A
+     timetabled class and a make-up hour sit in the same list, in the order she
+     teaches them. Every class row is the tap target for its own register,
+     which is the biggest target a row can be; a make-up hour is not a class
+     and has no register, so it does not pretend to be tappable. */
+
+  var MAKEUP_NOTE = 'A make-up hour is an extra hour opened for one child on top of their ' +
+    'weekly place. It is not a class, so it has no register of its own.';
+
+  function classRow(ctx, c, onToday) {
+    var bits = [c.room, plural(register(c).length, 'child', 'children')];
+    if (onToday && spansWeek(c)) bits.push('every day this week');
+    var plan = onToday ? planFor(ctx, c) : null;
+    if (plan) bits.push(plan.lesson);
+    else if (oneToOne(c)) bits.push('one to one');
+    return {
+      lead: ui.timechip(onToday ? clockChip(c.time) : dayChip(c)),
+      title: ui.dot(D.program(c.prog).color) + ' ' + esc(titleOf(c)),
+      sub: esc(bits.join(' · ')),
+      end: onToday ? registerState(c) : '',
+      to: 'sAttendance',
+      id: c.id
+    };
+  }
+
+  /* A make-up answers a class the family cancelled in time — the absence is on
+     the child's record and nothing was spent for it. An hour bought on top of
+     the weekly place answers nothing, and the record says which, so the row
+     says which rather than calling both a make-up. A child joining a class
+     that is not theirs is always the first kind, because that is the only
+     thing the studio opens a free place for. */
+  function owedMakeup(name) {
+    return D.absencesFor(name).filter(function (a) { return !a.spent; }).length > 0;
+  }
+
+  function makeupRow(x, onToday) {
+    var owed = owedMakeup(x.child);
+    return {
+      lead: ui.timechip(onToday ? clockChip(mkTime(x)) : mkLabel(x), 'amber'),
+      title: esc(x.child),
+      sub: esc(x.room + ' · ' + mkDate(x) + ' · ' +
+        (owed ? 'making up a class they missed' : 'an hour on top of their usual week')),
+      end: ui.pill(owed ? 'Make-up' : 'Extra hour', 'amber')
+    };
+  }
+
+  /* Classes and make-up hours interleaved, in the order she teaches them. */
+  function ordered(items) {
+    return items
+      .sort(function (a, b) { return (a.d - b.d) || (a.m - b.m); })
+      .map(function (i) { return i.row; });
+  }
 
   Grove.screen('sClasses', {
     surface: 'studio',
     crumbTitle: 'Classes',
     eyebrow: 'your week',
     title: 'My classes',
-    sub: 'Today first, then the rest of the week. Tap a class to take its register. Only the classes you are assigned to — ask the office if one is missing.',
+    sub: 'Today first, then the rest of the week. Tap a class to take its register. Only the hours you are assigned to — ask the office if one is missing.',
     actions: function (ctx) {
       var next = myToday(ctx)[0];
       return [
@@ -258,12 +447,15 @@
     body: function (ctx) {
       var today = myToday(ctx);
       var rest = myRest(ctx);
-      var week = today.concat(rest);
+      var mkToday = makeupsToday(ctx);
+      var mkRest = makeupsRest(ctx);
 
       /* Safety before anything else, in clay, by name, with the hours she will
          be standing in front of that child. Grouped by child, so a child in
-         two of her classes is named once, and read in teaching order, so the
-         child she sees this morning is named first. */
+         two of her hours is named once, and read in teaching order, so the
+         child she sees this morning is named first. A make-up hour is one of
+         her hours, so a child coming in for one is scanned here as well. */
+      var week = myHours(ctx);
       var alerts = byChild(week, 'bad');
       var watch = byChild(week, 'warn');
 
@@ -291,45 +483,46 @@
           })
         : '';
 
-      var onToday = today.length
-        ? ui.card({ title: 'Today', flush: true }, ui.rows(today.map(function (c) {
-            var plan = planFor(ctx, c);
-            var bits = [c.room, plural(roster(c).length, 'child', 'children')];
-            if (spansWeek(c)) bits.push('every day this week');
-            if (plan) bits.push(plan.lesson);
-            else if (oneToOne(c)) bits.push('one to one');
-            return {
-              lead: ui.timechip(clockChip(c.time)),
-              title: ui.dot(D.program(c.prog).color) + ' ' + esc(titleOf(c)),
-              sub: esc(bits.join(' · ')),
-              end: registerState(c),
-              to: 'sAttendance',
-              id: c.id
-            };
-          })))
+      var todayItems = [];
+      today.forEach(function (c) {
+        todayItems.push({ d: 0, m: minutes(c.time), row: classRow(ctx, c, true) });
+      });
+      mkToday.forEach(function (x) {
+        todayItems.push({ d: 0, m: minutes(mkTime(x)), row: makeupRow(x, true) });
+      });
+
+      var onToday = todayItems.length
+        ? ui.card({
+            title: 'Today',
+            flush: true,
+            note: mkToday.length ? MAKEUP_NOTE : ''
+          }, ui.rows(ordered(todayItems)))
         : '';
 
+      var restItems = [];
+      rest.forEach(function (c) {
+        restItems.push({
+          d: WEEK.indexOf(dayTokens(c)[0]), m: minutes(c.time), row: classRow(ctx, c, false)
+        });
+      });
+      mkRest.forEach(function (x) {
+        restItems.push({
+          d: WEEK.indexOf(mkDay(x)), m: minutes(mkTime(x)), row: makeupRow(x, false)
+        });
+      });
+
       var later = ui.card({
-        title: today.length ? 'The rest of your week' : 'Your week',
-        flush: true
-      }, rest.length
-        ? ui.rows(rest.map(function (c) {
-            var bits = [c.room, plural(roster(c).length, 'child', 'children')];
-            if (oneToOne(c)) bits.push('one to one');
-            return {
-              lead: ui.timechip(dayChip(c)),
-              title: ui.dot(D.program(c.prog).color) + ' ' + esc(titleOf(c)),
-              sub: esc(bits.join(' · ')),
-              to: 'sAttendance',
-              id: c.id
-            };
-          }))
+        title: todayItems.length ? 'The rest of your week' : 'Your week',
+        flush: true,
+        note: (!mkToday.length && mkRest.length) ? MAKEUP_NOTE : ''
+      }, restItems.length
+        ? ui.rows(ordered(restItems))
         : ui.empty('Nothing else this week', 'Everything you are assigned to runs today.'));
 
       /* The constraint, stated where she would go looking for a way around it. */
       var help = ui.notice({
-        title: 'Something not right with a class?',
-        text: 'Missing materials go through a supply request and the office picks it up. Rosters and lesson plans are set by the office, so ask the desk rather than working around them.',
+        title: 'Something not right with your week?',
+        text: 'Missing materials go through a supply request and the office picks it up. Rosters, make-up hours and lesson plans are set by the office, so ask the desk rather than working around them.',
         action: { label: 'Request supplies', to: 'sSupplies' }
       });
 
@@ -347,21 +540,17 @@
   }
 
   /* One entry per child, carrying every one of her hours that child is in, so
-     Sophia Martinez is named once and not once per class. The child's own
-     classes come from the dataset; only the ones this teacher takes are
-     named, because those are the hours she is responsible for. */
-  function byChild(classes, kind) {
-    var order = [], seen = {}, teaches = {};
-    classes.forEach(function (c) { teaches[c.id] = true; });
-    classes.forEach(function (c) {
-      flagged(roster(c), kind).forEach(function (s) {
-        if (!seen[s.id]) {
-          seen[s.id] = { who: s, when: [] };
-          order.push(seen[s.id]);
-          D.classesOf(s).forEach(function (k) {
-            if (teaches[k.id]) seen[s.id].when.push(dayTokens(k).join('–') + ' ' + startOf(k.time));
-          });
-        }
+     Sophia Martinez is named once and not once per class. The hours are the
+     ones this teacher is standing in — a class of hers, or a make-up hour
+     booked with her — because those are the hours she is responsible for. */
+  function byChild(hours, kind) {
+    var order = [], seen = {};
+    hours.forEach(function (hr) {
+      hr.people.forEach(function (s) {
+        if (s.flagKind !== kind) return;
+        var got = seen[s.id];
+        if (!got) { got = seen[s.id] = { who: s, when: [] }; order.push(got); }
+        if (got.when.indexOf(hr.label) === -1) got.when.push(hr.label);
       });
     });
     return order;
@@ -393,14 +582,16 @@
 
     body: function (ctx) {
       var c = current(ctx);
-      var people = roster(c);
+      var people = register(c);
+      var guests = visiting(people);
       var t = tally(c, people);
 
       var alerts = flagged(people, 'bad');
       var watch = flagged(people, 'warn');
 
       /* Safety before anything else, by name, in clay. This is the one place
-         the allergy is spelled out — the rows below do not repeat it. */
+         the allergy is spelled out — the rows below do not repeat it. A child
+         here for a make-up is in this notice like anybody else. */
       var safety = alerts.length
         ? ui.notice({
             kind: 'bad',
@@ -425,8 +616,24 @@
           })
         : '';
 
+      /* The make-up rules, in the words families signed them in, read from
+         D.RULES. Two sentences and no control: she is the person a parent asks
+         at the door, and marking a child away is the moment the rule bites. */
+      var r = D.RULES;
+      var noShow = noShowRule();
       var lines = [];
       if (!runsOn(c, TODAY_DAY)) lines.push('This class does not run today.');
+      if (guests.length) {
+        lines.push((guests.length === 1
+          ? 'One child is here for a make-up and is flagged on the list.'
+          : words(guests.length) + ' children are here for a make-up and are flagged on the list.') +
+          (noShow ? ' A make-up cannot ' + lower(noShow) + '.' : ''));
+      }
+      lines.push(hasPlan(c)
+        ? 'A class cancelled in the portal ' + r.cancelNotice +
+          ' ahead gets a make-up; marked away on the day, ' + lower(r.lateCancel)
+        : D.program(c.prog).name + ' is a one-off booking rather than a plan, so a ' +
+          'missed day is not made up.');
       lines.push('If a child is here and not on the list, tell the office and they will add them.');
 
       /* How many are in the room, counted off the rows beneath it, beside the
@@ -436,11 +643,16 @@
       var head = people.length > 1
         ? '<div class="inline">' +
             ui.pill(plural(people.length, 'child', 'children')) +
+            (guests.length
+              ? ui.pill(guests.length === 1
+                  ? 'One is a make-up'
+                  : words(guests.length) + ' are make-ups', 'amber')
+              : '') +
             ui.btn({ label: 'Everyone is here', act: 'sMarkAll', cid: c.id }) +
           '</div>'
         : '';
 
-      var register = ui.card({
+      var sheet = ui.card({
         /* The card head carries the date being marked, so the page title can
            say what the screen is and the card can say which sitting it is. */
         title: runsOn(c, TODAY_DAY) ? D.today : c.day + ' · ' + c.time,
@@ -448,15 +660,16 @@
         head: head,
         note: lines.join(' ')
       }, people.length
-        ? ui.rows(people.map(function (s) {
+        ? ui.rows(people.map(function (e) {
+            var s = e.who;
             var m = markOf(c.id, s.id);
             var where = m === 'Present'
               ? '<span class="grove">Here</span>'
               : (m === 'Absent' ? '<span class="clay">Away today</span>' : 'Not marked yet');
             return {
               lead: esc('Age ' + s.age),
-              title: esc(s.name),
-              sub: where,
+              title: esc(s.name) + (e.makeup ? ' ' + ui.pill('Make-up', 'amber') : ''),
+              sub: where + (e.makeup ? ' · not on this class’s roll' : ''),
               end: ui.btns([
                 {
                   label: 'Present', kind: m === 'Present' ? 'primary' : null,
@@ -487,7 +700,7 @@
 
       return h`
         ${raw(safety)}${raw(watching)}
-        <div class="section">${raw(register)}</div>
+        <div class="section">${raw(sheet)}</div>
         ${raw(save)}
       `;
     }

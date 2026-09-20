@@ -4,29 +4,43 @@
    desk has been doing. It declares its header as data and returns only a body
    built from Grove.ui components.
 
-   Changes in the billing-model pass:
-     - the make-up queue is gone, machinery and all. A session cancelled more
-       than 24 hours ahead is simply not spent — it stays in the child's pack
-       and the pack lasts a week longer — so there is no credit to issue, hold,
-       approve, place or expire, and nothing here to ask her about. The
-       exception table that ranked "class full", "wrong age band", "credit
-       expired", "nowhere to place it" and "no such hour" has been deleted
-       rather than renamed, along with the date arithmetic underneath it, which
-       only ever measured how long a credit had left to live
-     - a pack renews when the last session in it is used, so the next charge is
-       a number of classes away rather than a day on the calendar. "Last class
-       in the pack" is the new card in that slot: the children who take the
-       final session of their pack at their very next class, what each pack
-       costs to renew, and how each charge is taken. It is the only place on
-       this screen where money that has not happened yet is shown, and every
-       figure in it is counted off the child's own pack
-     - a pack belongs to one child, not to a family, so every row on that card
-       is a child and two children in one family appear twice. The Johnsons
-       renew separately, on different classes, for different amounts
+   Changes in this pass — the screen moved onto the studio's final pricing
+   model, which is hours a month rather than a pack of sessions:
+
+     - "Last class in the pack" is gone, and with it every word of the pack
+       vocabulary: pack, sessions a month, "renews on the 8th class", sessions
+       that never expire. It read D.pack(child), which is the old shape and now
+       answers nothing, so the card had quietly emptied itself. In its place is
+       "Cycles ending soon", which is the same slot answering the question the
+       owner actually asks in the morning — whose invoice is about to be raised
+     - a plan is HOURS A MONTH, at the studio's own rates, and it belongs to
+       one child. A cycle is the set of dates that child's parent picked at
+       registration, and the month's hours are spent by those dated classes. So
+       every figure on the new card is read off D.plan(child): the hours, the
+       price, the hours used so far, and the dates
+     - the invoice is raised on the LAST class of the cycle and pays for the
+       cycle after it, so the card names both — "5 August · their next class"
+       against "covers 12, 19 and 26 August, then 2 September". The owner kept
+       this by hand precisely so she could see what the money buys, so the
+       dates are said out loud rather than summarised as a count
+     - there is no billing date, no renewal day and no "next charge on the 1st"
+       anywhere on this page. The date beside a child is their own class, taken
+       from their own rows; the dates it covers are those same classes carried
+       forward one cycle, a class at a time
      - the money rows say what the failed card is about to be asked for next.
-       A card that has just been refused is the card the next renewal will go
+       A card that has just been refused is the card the next invoice will go
        to, which is the reason to fix it this morning rather than at the end of
-       the week. That sentence is read off the family's own children
+       the week. That sentence now names the date the cycle ends and the amount
+       that follows it, both read off the family's own children
+     - the header's "Take a payment" — a button that asked nothing and did
+       nothing — is now "Post a sale", which is the one manual charge the
+       studio bills every exception through: a class or two when a school
+       finishes later than the programme, a private class that came up, an
+       event. One action rather than a rule per exception
+     - hours not booked are lost, and a plan ends with the school year. Both
+       are stated once, in the card's own note and foot, and both are read from
+       D.RULES and D.PLAN_YEAR so this screen cannot state a different rule
+       from Billing, Settings or the family portal
 
    Kept from the owner-fit pass:
      - the screen is a decision list first. Everything waiting on her was
@@ -54,18 +68,15 @@
        there is a card to charge, or there is not. The button is "Charge $45",
        or — for the Delgado family, who have no card and have written to say
        they have a new one — "Open their message"
-     - header actions went from three to one. "Add family" opened the family
-       list, which is a button that asks nothing, and "New program" is already
-       the primary action of the Programs screen, where it belongs
 
    Reading the roll rather than the prose:
      - every headcount on this page is counted off a class roster. A session in
        On today shows the enrolment and the places its class record holds, not
        a figure travelling alongside the session. Camp extended care is the one
        session with no class behind it, so it keeps the numbers the day carries
-     - every pack figure comes from D.pack(child) and every pack price from
-       PRICING.as.plans, so a renewal amount on this screen is the same amount
-       the registration flow quotes and the ledger records
+     - every plan figure comes from D.plan(child) and every price from that
+       plan, so an amount on this screen is the same amount the registration
+       flow quotes, Cycles ahead forecasts and the ledger records
      - Waiting for a place is built from the classes that have somebody waiting
        rather than from the distinct strings in the waitlist rows. A class with
        a queue therefore always names its instructor and its room, and the
@@ -99,11 +110,9 @@
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   function firstName(name) { return String(name).split(' ')[0]; }
 
-  /* 4 → '4th', 12 → '12th'. Used to name the class a pack renews on. */
-  function ordinal(n) {
-    var tail = ['th', 'st', 'nd', 'rd'];
-    var v = n % 100;
-    return n + (tail[(v - 20) % 10] || tail[v] || tail[0]);
+  function listOf(items) {
+    if (items.length < 2) return items.join('');
+    return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
   }
 
   /* Two buttons in a table cell. ui.btns wraps them onto two lines when the
@@ -121,78 +130,143 @@
     return /^\d/.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1);
   }
 
-  /* ---- packs -------------------------------------------------------------------
-     A family buys a pack of sessions for one child. The child attends, and when
-     the last session in the pack is used the pack charges again and grants
-     another of the same size. There is no billing date anywhere in here, and
-     nothing expires: a pack is paid for, so it is theirs until it is used.
-     Everything below is read off D.pack(child) and the studio's pack prices. */
-
-  function packPrice(size) {
-    var plans = D.PRICING.as.plans || {};
-    var p = plans['p' + size];
-    return typeof p === 'number' ? p : 0;
+  function foot(label, value) {
+    return '<span class="cell-mute">' + esc(label) + '</span>' +
+      '<span class="num strong">' + esc(value) + '</span>';
   }
+
+  /* ---- dates --------------------------------------------------------------------
+     A cycle is a set of dates, so this screen has to be able to say them out
+     loud. Nothing here knows a date literal: every date comes out of the
+     child's own rows in D.SESSIONS. */
+
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+  function toUTC(iso) {
+    var p = String(iso).split('-');
+    return new Date(Date.UTC(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10)));
+  }
+
+  function addWeeks(iso, weeks) {
+    var t = toUTC(iso);
+    t.setUTCDate(t.getUTCDate() + 7 * weeks);
+    return t.getUTCFullYear() + '-' + pad(t.getUTCMonth() + 1) + '-' + pad(t.getUTCDate());
+  }
+
+  function dayOf(iso) { return toUTC(iso).getUTCDate(); }
+  function monthOf(iso) { return MONTHS[toUTC(iso).getUTCMonth()]; }
+  function fmtDate(iso) { return dayOf(iso) + ' ' + monthOf(iso); }
+
+  /* "3, 10, 17 and 24 August", or "12, 19 and 26 August, then 2 September". */
+  function listDates(list) {
+    var groups = [], current = null;
+    list.forEach(function (iso) {
+      var m = monthOf(iso);
+      if (!current || current.month !== m) {
+        current = { month: m, days: [] };
+        groups.push(current);
+      }
+      current.days.push(String(dayOf(iso)));
+    });
+    return groups.map(function (g) {
+      return listOf(g.days) + ' ' + g.month;
+    }).join(', then ');
+  }
+
+  /* ---- plans and cycles ----------------------------------------------------------
+     A plan is HOURS A MONTH and it belongs to one child. The rate per hour
+     falls as the plan grows, and the parent chooses how to split the hours, so
+     a child on 16 hours taking two-hour classes comes eight times a month and
+     one taking one-hour classes comes sixteen. A cycle is the set of dates
+     they picked at registration, fixed for the programme year, and the month's
+     hours are spent by those dated classes. Hours not booked are lost.
+
+     Only After-School has a plan. Camp, no-school days, private classes,
+     pop-ups and birthdays are one-off bookings with no cycle and nothing to
+     renew, so a child on those alone never appears here. */
+
+  function planOf(s) { return D.plan(s); }
 
   function familyNamed(name) {
     return D.FAMILIES.filter(function (f) { return f.name === name; })[0] || null;
   }
+  function familyOf(s) { return familyNamed(s.family); }
 
-  /* A family that has said they are finishing. They keep what they have paid
-     for; the pack simply does not renew when it runs out. */
+  /* A family that has given notice. Their plan is not invoiced again; it ends
+     when this cycle does. */
   function notRenewing(f) {
     if (!f) return false;
     return /not renewing/i.test(String(f.plan)) || f.status === 'Cancelling';
   }
 
-  /* '2:15–3:15pm' -> '2:15pm'; '10:00am–1:00pm' -> '10:00am'. */
-  function startTime(c) {
-    var parts = String(c.time).split('–');
-    var a = String(parts[0] || '').toLowerCase();
-    if (a.indexOf('am') !== -1 || a.indexOf('pm') !== -1) return a;
-    var b = String(parts[1] || '').toLowerCase();
-    return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
+  /* "Visa ···1183 · exp 04/29" → "Visa ···1183"; "None saved" stays itself. */
+  function cardOf(f) { return f ? String(f.card).split(' · ')[0] : 'no card saved'; }
+
+  /* The invoice is raised on the last class of the cycle. */
+  function invoiceDate(s) {
+    var on = planOf(s).renewsOn;
+    return on ? on.date : null;
   }
 
-  /* The after-school hours a pack is spent on. Camp weeks and one-off bookings
-     are bought separately, so they are not what the pack pays for. */
-  function packHours(s) {
-    return D.classesOf(s)
-      .filter(function (c) { return c.prog === 'as'; })
-      .map(function (c) { return DAYS[c.day] + ' ' + startTime(c) + ' · ' + c.room; })
-      .join(', ');
+  /* The cycle ends at this child's very next class, which is what makes the
+     invoice this morning's business rather than next month's. */
+  function endsAtNextClass(s) {
+    return planOf(s).nextDates.length === 1;
   }
 
-  /* Children whose next class takes the last session in their pack. */
-  function lastInPack() {
+  /* The next cycle: every class in this one, carried forward by as many weeks
+     as that class runs in a cycle. Same weekday, same time, the month after —
+     which is the list of dates the invoice pays for. */
+  function nextCycle(s) {
+    var byClass = {}, order = [];
+    planOf(s).dates.forEach(function (x) {
+      if (!byClass[x.classId]) { byClass[x.classId] = []; order.push(x.classId); }
+      byClass[x.classId].push(x.date);
+    });
+    var out = [];
+    order.forEach(function (id) {
+      var runs = byClass[id].length;
+      byClass[id].forEach(function (iso) { out.push(addWeeks(iso, runs)); });
+    });
+    return out.sort();
+  }
+
+  function hoursText(s) {
+    return plural(planOf(s).hours, 'hour a month', 'hours a month');
+  }
+
+  /* Whose cycle ends at their next class, soonest invoice first. */
+  function cyclesEnding() {
     return D.STUDENTS.filter(function (s) {
-      var p = D.pack(s);
-      return p.isPack && p.renewsIn === 1;
+      return planOf(s).isPlan && invoiceDate(s) && endsAtNextClass(s);
     }).map(function (s) {
-      var f = familyNamed(s.family);
-      var p = D.pack(s);
+      var f = familyOf(s);
+      var p = planOf(s);
       var ends = notRenewing(f);
-      return { s: s, f: f, p: p, ends: ends, price: ends ? 0 : packPrice(p.size) };
+      return { s: s, f: f, p: p, on: invoiceDate(s), ends: ends, price: ends ? 0 : p.price };
     }).sort(function (a, b) {
-      if (b.price !== a.price) return b.price - a.price;
+      if (a.on !== b.on) return a.on < b.on ? -1 : 1;
+      if (a.s.family !== b.s.family) return a.s.family < b.s.family ? -1 : 1;
       return a.s.name < b.s.name ? -1 : 1;
     });
   }
 
-  /* The next charge coming to a family: the child of theirs whose pack runs out
-     soonest. Null when nobody in the family holds a pack. */
-  function nextRenewal(famName) {
+  /* The next invoice coming to a family: the child of theirs whose cycle ends
+     soonest. Null when nobody in the family holds a plan — a family on camp
+     weeks and one-off bookings has no cycle at all. */
+  function nextInvoiceFor(famName) {
     var kids = D.STUDENTS.filter(function (s) {
-      return s.family === famName && D.pack(s).isPack;
-    }).sort(function (a, b) { return D.pack(a).renewsIn - D.pack(b).renewsIn; });
+      return s.family === famName && planOf(s).isPlan && invoiceDate(s);
+    }).sort(function (a, b) {
+      var da = invoiceDate(a), db = invoiceDate(b);
+      return da === db ? 0 : (da < db ? -1 : 1);
+    });
     if (!kids.length) return null;
-    var s = kids[0], p = D.pack(s);
-    return { s: s, p: p, price: packPrice(p.size) };
-  }
-
-  function renewPhrase(n) {
-    if (n <= 1) return 'on the next class';
-    return 'in ' + n + ' classes';
+    var s = kids[0];
+    return { s: s, on: invoiceDate(s), price: planOf(s).price };
   }
 
   /* ---- matching the free-text records back to the records they name ------------
@@ -205,6 +279,15 @@
      foreign key in waiting. */
 
   function freePlaces(c) { return c ? Math.max(0, c.cap - c.en) : 0; }
+
+  /* '2:15–3:15pm' -> '2:15pm'; '10:00am–1:00pm' -> '10:00am'. */
+  function startTime(c) {
+    var parts = String(c.time).split('–');
+    var a = String(parts[0] || '').toLowerCase();
+    if (a.indexOf('am') !== -1 || a.indexOf('pm') !== -1) return a;
+    var b = String(parts[1] || '').toLowerCase();
+    return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
+  }
 
   /* A waitlist entry names its class as 'Mon 3:15pm · Ages 8–11', and the
      dataset counts a class's queue off that same day-and-start-time opening
@@ -314,12 +397,12 @@
           ' family is emailed the result'
       });
 
-      /* The same card is about to be asked for the next pack, which is the
+      /* The same card is about to be asked for the next cycle, which is the
          reason to fix this one this morning. */
-      var next = nextRenewal(inv.fam);
-      if (next && next.price) {
-        stands = (stands ? stands + ' ' : '') + firstName(next.s.name) + '’s pack renews ' +
-          renewPhrase(next.p.renewsIn) + ' — ' + plain(next.price) + ' to the same card.';
+      var next = nextInvoiceFor(inv.fam);
+      if (next && next.price && !notRenewing(familyNamed(inv.fam))) {
+        stands = (stands ? stands + ' ' : '') + firstName(next.s.name) + '’s cycle ends on ' +
+          fmtDate(next.on) + ', and that invoice — ' + plain(next.price) + ' — goes to the same card.';
       }
     }
 
@@ -416,7 +499,7 @@
     title: String(D.today).replace(/\s+\d{4}$/, ''),
     sub: 'Summer camp week 4 of 6 · after-school enrollment opens in 13 days.',
     actions: [
-      { label: 'Take a payment', kind: 'primary', msg: 'Payment taken at the desk · receipt emailed' }
+      { label: 'Post a sale', kind: 'primary', to: 'postSale' }
     ],
 
     body: function () {
@@ -481,68 +564,83 @@
         }))
       );
 
-      /* Packs about to run out. A pack renews on the class that spends its last
-         session, so this is a queue of charges, not a calendar. */
-      var running = lastInPack();
-      var renewing = running.filter(function (r) { return !r.ends; });
-      var ending = running.length - renewing.length;
-      var dueNext = sum(renewing, function (r) { return r.price; });
+      /* Cycles about to end. The invoice is raised on the last class of the
+         cycle and pays for the dates that follow, so this is a queue of
+         invoices with the dates each one buys written beside it. */
+      var ending = cyclesEnding();
+      var raising = ending.filter(function (r) { return !r.ends; });
+      var leaving = ending.length - raising.length;
+      var byHand = raising.filter(function (r) { return !(r.f && r.f.autopay); }).length;
+      var dueNext = sum(raising, function (r) { return r.price; });
 
-      var packNote = 'A pack renews when the last session in it is used, so the next charge is a ' +
-        'number of classes away rather than a day on the calendar. ';
-      if (renewing.length) {
-        packNote += plural(renewing.length, 'pack renews', 'packs renew') +
-          ' at these children’s next class, ' + plain(dueNext) + ' in all.';
+      var cycleNote = 'A plan is hours a month, spent by the dates the parent picked at ' +
+        'registration. The invoice is raised on the last class of the cycle and pays for the ' +
+        'dates listed beside it. ';
+      if (raising.length) {
+        cycleNote += plural(raising.length, 'invoice is', 'invoices are') +
+          ' raised at these children’s next class. ';
       } else {
-        packNote += 'None of these packs renews.';
+        cycleNote += 'Nothing is raised from these cycles. ';
       }
-      if (ending) {
-        packNote += ' ' + plural(ending, 'family has', 'families have') +
-          ' said they are not renewing, so that pack ends when it runs out and nothing is charged.';
+      if (byHand) {
+        cycleNote += byHand + ' of ' + raising.length + ' ' + (byHand === 1 ? 'is' : 'are') +
+          ' taken at the desk rather than on a card. ';
       }
+      if (leaving) {
+        cycleNote += plural(leaving, 'family has', 'families have') +
+          ' given notice, so nothing is raised when that cycle ends. ';
+      }
+      cycleNote += D.RULES.unusedHours;
 
-      var packs = ui.card(
+      var cycles = ui.card(
         {
-          title: 'Last class in the pack',
-          head: ui.btn({ label: 'Open billing', kind: 'quiet', size: 'sm', to: 'billing' }),
+          title: 'Cycles ending soon',
+          head: ui.btn({ label: 'Open cycles', kind: 'quiet', size: 'sm', to: 'renewals' }),
           flush: true,
-          note: packNote
+          note: cycleNote,
+          foot: foot('Every plan runs to ' + D.PLAN_YEAR.ends + ' and ends there',
+                     plain(dueNext) + ' at these classes')
         },
         ui.table(
-          ['Child', 'Pack', 'What happens next', { label: 'Amount', align: 'right', shrink: true }],
-          running.map(function (r) {
+          [
+            'Child',
+            'Plan and payment',
+            'This cycle',
+            'Invoice raised on',
+            { label: 'Amount', align: 'right', shrink: true }
+          ],
+          ending.map(function (r) {
             var s = r.s, f = r.f, p = r.p;
-            var what;
+            var how;
 
             if (r.ends) {
-              what = ui.two('Not renewing', 'the place ends when the pack runs out');
-            } else if (f && f.status !== 'Active') {
-              what = ui.two('Charges the card again', 'the account is ' +
-                String(f.status).toLowerCase() + ' — it is in the decisions above');
+              how = ui.two(hoursText(s), 'Notice given · this cycle is the last one');
+            } else if (f && f.balance > 0) {
+              how = ui.two(hoursText(s), 'The family owes ' + Grove.money(f.balance) +
+                ' · it is in the decisions above');
             } else if (f && f.autopay) {
-              what = ui.two('Charges automatically', f.card);
+              how = ui.two(hoursText(s), 'Charges ' + cardOf(f) + ' on the day');
             } else {
-              what = ui.two('Taken at the desk', 'autopay is off · ' + (f ? f.card : 'no card saved'));
+              how = ui.two(hoursText(s), 'Taken at the desk · autopay is off');
             }
 
             return {
               to: 'studentRecord', id: s.id,
               cells: [
                 ui.two(s.name, s.family + ' family'),
-                ui.two(
-                  p.used + ' of ' + p.size + ' used · ' + (r.ends
-                    ? 'the ' + ordinal(p.size) + ' class is the last one'
-                    : 'renews on the ' + ordinal(p.size) + ' class'),
-                  packHours(s)
-                ),
-                what,
+                how,
+                h`<div class="stack stack--sm">
+                  <div>${raw(ui.pill(p.usedHours + ' of ' + p.hours + ' hours used'))}</div>
+                  ${raw(ui.meter(p.usedHours, p.hours))}
+                </div>`,
+                ui.two(fmtDate(r.on) + ' · their next class', 'covers ' + listDates(nextCycle(s))),
                 r.price ? esc(plain(r.price)) : ui.mute('—')
               ]
             };
           }),
           {
-            emptyTitle: 'No pack runs out at the next class',
-            emptyText: 'Every child has more than one session left, so nothing renews yet.'
+            emptyTitle: 'No cycle ends at the next class',
+            emptyText: 'Every plan has more than one class left before its invoice is raised.'
           }
         )
       );
@@ -585,7 +683,7 @@
       return h`
         ${raw(decisions)}
         <div class="section">${raw(ui.grid(2, [today, activity]))}</div>
-        <div class="section">${raw(packs)}</div>
+        <div class="section">${raw(cycles)}</div>
         <div class="section">${raw(waitlists)}</div>
       `;
     }

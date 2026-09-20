@@ -1,84 +1,80 @@
 /* Registration → Confirmation. The last screen of the enrollment flow.
 
-   Simplified against the old confirmation:
-     - the filled hero card, the character SVG and the loose button row are
-       gone. The page header, two equal cards and one notice say the same
-       things, and the screen is now built like every other screen here.
-     - "A new parent portal is coming" is gone — the portal exists, and the
-       first button opens it.
-     - "Lucas is not enrolled yet" is gone. The rebuilt flow puts every child
-       you added on the same plan, so that row can no longer be true.
-     - the hard-coded $540 a month, "Monday 3:15pm for the whole school year"
-       and "next charge is 1 September" were written for the after-school
-       story and rendered on camp, pop-up and party bookings too. Every figure
-       here is recomputed from Grove.data.PRICING and the class actually
-       chosen, and one-off bookings say plainly that there is nothing more to
-       pay.
-     - "prorated first invoice" dropped: the rebuilt flow does not prorate.
+   MOVED ONTO THE SETTLED PRICING MODEL. A plan is HOURS A MONTH and only
+   After-School has one. The parent picks the day and time at registration and
+   it is fixed for the program year, so a cycle is a set of dates, the month's
+   hours are spent by those dated classes, the invoice is raised on the last
+   class of a cycle and covers the next one, and the plan runs to the end of
+   the school year and ends by itself.
 
-   Fixed after the visual review:
-     - the title named only the first child ("Emma is enrolled") on a booking
-       that had put two children on the same plan. It now names every child
-       the booking covers, and the verb agrees with how many there are.
-     - the screen declared the child enrolled, dated the first class and
-       showed a $1,275.00 invoice while steps 2 and 3 said the class was full,
-       the family had joined the waitlist and nothing had been charged. Every
-       line — title, sub-heading, card title, rows, footer and the next-steps
-       list — now reads the same asWaiting() state flow.js reads, from the
-       same class record, so the three screens cannot disagree.
-     - a private class said "Paid today" beside an amount, while step 3 says
-       nothing is charged until the studio approves the request and agrees a
-       time. It now says "Cost once approved", with "Due today" at zero, which
-       is what the running total on step 3 says.
-     - every amount is still derived from Grove.data.PRICING and the rows on
-       screen: the next-steps card spells the invoice out line by line and the
-       arithmetic lands on the same figure as the card beside it.
-     - the clip-art bird in the card footer is gone. It was the only off-palette
-       image in the prototype.
-     - "what to bring on the first day" is the studio's Seasonal Camp
-       announcement and tells you to send a snack. After-school families sign a
-       policy that forbids food in class, so the reminder now shows only on the
-       programmes whose policy set includes the food policy — camp, no-school
-       days and pop-ups.
-     - the two cards are balanced by content, so neither ends in dead space.
+   What that cost this file:
 
-   Rebuilt for the corrected billing model:
-     - a family buys a pack of sessions for a child, and the pack renews when
-       the last session in it is used. The confirmation no longer promises
-       “$540 a month from 1 September, billed on the 1st”. It names the next
-       charge and says how many classes away it is, both computed from the
-       pack the family chose.
-     - a pack belongs to one child. A booking for two children buys two packs,
-       which renew independently, so there is no one monthly bill to quote.
-     - “30 days written notice to cancel” and the word membership are gone. A
-       family stops by not renewing: they use what they have paid for.
-     - the make-up credit is gone. A class cancelled more than 24 hours ahead
-       is simply not spent — the session stays in the child’s pack — so there
-       is nothing to issue and nothing to expire. The camp, no-school and
-       pop-up footnote no longer mentions a credit either.
-     - no session expires, so no expiry date is shown anywhere here.
+     - the pack vocabulary is gone. No pack, no "sessions", no "renews on the
+       8th class", no "nothing expires". The unit is an hour: the screen
+       confirms the hours a month, what they cost, the rate an hour those
+       hours work out at, and how the parent chose to split them
+     - the confirmation now names the DATES. The first cycle is listed day by
+       day, and so is the cycle the next invoice covers, because that is the
+       line the owner wrote by hand and the reason she keeps control. The
+       dates are projected from the class the parent actually ticked and the
+       hours they actually bought, never written down
+     - the rules a family signs — 24 hours notice, what a late cancellation
+       costs, where a make-up may be taken, how long it lasts, no freezing,
+       hours not booked are lost, 30 days notice to cancel — are read from
+       Grove.data.RULES, and the plan year from Grove.data.PLAN_YEAR, so this
+       screen cannot invent its own version of a rule. The make-up window is a
+       studio setting with two options and is rendered, not hard-coded
+     - camp, no-school days, private classes, pop-ups and parties say plainly
+       that they are one-off bookings with no plan, no cycle and no renewal
+     - the sibling discount is read off PRICING.as.siblingFeeRelief and applies
+       to the registration fee, which is per child per year, not to tuition
 
-   The selections are read back from the same keys the flow writes, so the
-   figures here and on the review step agree. */
+   One honest notice rather than a control: if the day and time chosen do not
+   cover the hours bought — four fewer, or four more — the screen says so and
+   points at the desk. Hours not booked in a cycle are lost, so a parent should
+   not find that out later, and moving a day is a phone call, not a feature.
+
+   Kept from the previous pass: the title names every child the booking covers;
+   a full class is a waitlist place where nothing at all is charged and every
+   line says so; a private class is approved before it is scheduled, so it
+   shows a cost once approved and zero due today; the "what to bring" reminder
+   appears only on the programmes whose policies expect food.
+
+   The selections are read back from the keys the flow writes, so the figures
+   here and on the review step agree. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
   var P = D.PRICING;
 
   var DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  var FIRST_CLASS = 'Monday 17 Aug 2026';   /* the program year opens then */
+  var DAY_NAME = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+               'August', 'September', 'October', 'November', 'December'];
+
+  /* The one date on this screen that is not derived: the Monday the program
+     year opens. Every other date here is counted from it. flow.js shows the
+     same day, so the two steps cannot name different first classes. */
+  var OPENS = new Date(2026, 7, 17);
+  /* Four class weeks is the studio's month, the same four the review step
+     counts: a child on 4 hours taking one one-hour class comes four times, a
+     child on 16 taking two-hour classes comes eight. */
+  var CYCLE_WEEKS = 4;
   var BDAY_DATE = 'Sat 12 Sep 2026';        /* the date step 2 asks for */
   var REF = 'GRV-8841';
 
   /* ---- small helpers -------------------------------------------------------- */
 
   function pick(key, fallback) { return Grove.tab(key, fallback); }
-  function m(n) { return Grove.money(n); }
-  function m0(n) { return Grove.money(n, { cents: false }); }
+  /* Cents on a whole number are noise. $540, and $67.50 where it matters. */
+  function price(n) { return Grove.money(n, { cents: n % 1 !== 0 }); }
   function plural(n, one, many) { return n === 1 ? one : many; }
-  function ordinal(n) {
-    var ends = ['th', 'st', 'nd', 'rd'], v = n % 100;
-    return n + (ends[(v - 20) % 10] || ends[v] || ends[0]);
+  function lower(t) { return String(t).charAt(0).toLowerCase() + String(t).slice(1); }
+  function cap(t) { return String(t).charAt(0).toUpperCase() + String(t).slice(1); }
+  function countWord(n) {
+    var words = ['no', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
+    return words[n] || String(n);
   }
   function row(k, v, tone) { return { k: k, v: esc(v), tone: tone || null }; }
   function strongRow(k, v) {
@@ -89,15 +85,64 @@
     for (i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
+  function andList(list) {
+    if (list.length < 2) return list.join('');
+    return list.slice(0, list.length - 1).join(', ') + ' and ' + list[list.length - 1];
+  }
   function classesFor(p) {
     return D.CLASSES.filter(function (c) { return c.prog === p; });
   }
   function places(c) { var n = c.cap - c.en; return n > 0 ? n : 0; }
   function when(c) { return c.day + ' ' + c.time + ' · ' + c.room; }
+  function dayName(c) {
+    var i = DAY_ABBR.indexOf(c.day);
+    return i === -1 ? c.day : DAY_NAME[i];
+  }
 
   function progId(ctx) {
     var id = ctx && ctx.params ? ctx.params.id : null;
     return D.PROGRAMS[id] ? id : 'as';
+  }
+
+  /* ---- dates ------------------------------------------------------------------
+     A cycle is a set of dates, so this screen has to be able to count them. It
+     counts from the day the program year opens and from the class the parent
+     ticked — nothing here is a written-down date. */
+
+  function plusDays(d, n) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  }
+  function longDate(d) { return DAY_NAME[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH[d.getMonth()]; }
+  function fullDate(d) { return longDate(d) + ' ' + d.getFullYear(); }
+
+  /* '6, 8, 13, 15, 20, 22, 27 and 29 November', and across a month boundary
+     '17, 24, 31 August and 7 September' — the line the owner writes by hand.
+     The month is named once, at the end of its run, and only the last date in
+     the list takes the "and", so a cycle that crosses a month does not read
+     with two of them. */
+  function dateList(dates) {
+    return andList(dates.map(function (d, i) {
+      var next = dates[i + 1];
+      var endsRun = !next || next.getMonth() !== d.getMonth();
+      return d.getDate() + (endsRun ? ' ' + MONTH[d.getMonth()] : '');
+    }));
+  }
+
+  /* How long a class is, measured off its own time range rather than written
+     down a second time: '3:15–4:15pm' is an hour, '4:30–6:30pm' is two. */
+  function minutesOf(text, mer) {
+    var hm = String(text).replace(/(am|pm)/i, '').split(':');
+    var hour = Number(hm[0]) % 12;
+    if (/pm/i.test(mer)) hour += 12;
+    return hour * 60 + Number(hm[1] || 0);
+  }
+  function hoursOf(c) {
+    var parts = String(c.time).split('–');
+    if (parts.length < 2) return 1;
+    var endMer = (/(am|pm)/i.exec(parts[1]) || [''])[0];
+    var startMer = (/(am|pm)/i.exec(parts[0]) || [endMer])[0];
+    var n = (minutesOf(parts[1], endMer) - minutesOf(parts[0], startMer)) / 60;
+    return n > 0 ? n : 1;
   }
 
   /* ---- who is enrolling ------------------------------------------------------ */
@@ -125,41 +170,29 @@
   }
   function nameLine(names) {
     if (!names.length) return 'Your child';
-    if (names.length === 1) return names[0];
-    return names.slice(0, names.length - 1).join(', ') + ' and ' + names[names.length - 1];
+    return andList(names);
   }
   function isAre(names) { return names.length === 1 ? ' is' : ' are'; }
 
-  /* ---- what was chosen, per program ------------------------------------------ */
+  /* ---- the plan: hours a month ------------------------------------------------ */
 
   var PLAN_KEYS = ['p4', 'p8', 'p12', 'p16'];
   function planKey() {
-    var cur = pick('rPlan', 'p8');
+    /* The flow names the plan on one key; the older key is still read so a
+       part-finished booking does not lose the plan the parent chose. */
+    var cur = pick('rPlan', pick('rPack', 'p8'));
     return PLAN_KEYS.indexOf(cur) === -1 ? 'p8' : cur;
   }
-  /* A pack is a number of sessions bought for one child. There is no date in
-     it: when the last session is used the pack renews and charges again. */
-  function packSize() { return Number(planKey().slice(1)); }
-  function packPrice() { return P.as.plans[planKey()]; }
-  function renewLine() { return 'When the ' + ordinal(packSize()) + ' class is used'; }
-  /* Whose pack a session goes back into when a class is cancelled in time. */
-  function packOwner(names) {
-    return names.length === 1 ? names[0] + '’s pack' : 'that child’s pack';
+  function planHours() { return Number(planKey().slice(1)); }
+  function planPrice() { return P.as.plans[planKey()]; }
+  /* The rate falls as the plan grows. It is the plan's own arithmetic, so it
+     is divided out rather than quoted from anywhere. */
+  function hourRate() { return planPrice() / planHours(); }
+  function planLine() {
+    return planHours() + ' hours a month · ' + price(planPrice()) +
+      (kidCount() > 1 ? ', per child' : '');
   }
-  function renewTitle() {
-    return kidCount() > 1
-      ? 'Then ' + m(packPrice()) + ' each time a pack renews'
-      : 'Then ' + m(packPrice()) + ' on the ' + ordinal(packSize()) + ' class';
-  }
-  function renewSub() {
-    if (kidCount() > 1) {
-      return 'Each child holds their own pack. It renews when that child’s ' +
-        ordinal(packSize()) + ' class is used and buys another ' + packSize() +
-        ' sessions, so the packs renew at different times. There is no billing date.';
-    }
-    return 'The pack renews when the ' + ordinal(packSize()) + ' class is used and buys ' +
-      'another ' + packSize() + ' sessions. There is no billing date.';
-  }
+
   function asBands() {
     var out = [];
     classesFor('as').forEach(function (c) { if (out.indexOf(c.band) === -1) out.push(c.band); });
@@ -171,23 +204,127 @@
     var cur = pick('rBand', fallback);
     return asBands().indexOf(cur) === -1 ? fallback : cur;
   }
-  function asClass() {
-    var list = classesFor('as').filter(function (c) { return c.band === asBand(); });
-    var found = byId(list, pick('rClass', '')), i;
-    if (found) return found;
-    for (i = 0; i < list.length; i++) if (places(list[i]) > 0) return list[i];
-    return list[0] || null;
+  function asClassList() {
+    return classesFor('as').filter(function (c) { return c.band === asBand(); });
   }
-  /* The same two functions step 2 and step 3 use. A class with no place left
-     is a waitlist place: nothing is booked and nothing is charged. */
-  function asWaiting() {
-    var c = asClass();
-    return !!c && !places(c);
+  /* How many days after the program year opens this class first runs. */
+  function shiftOf(c) {
+    var wd = DAY_ABBR.indexOf(c.day);
+    return wd === -1 ? 0 : (wd - OPENS.getDay() + 7) % 7;
   }
-  function asWaitPosition() {
-    var c = asClass();
-    return c ? c.wl + 1 : 0;
+  function firstOn(c) { return plusDays(OPENS, shiftOf(c)); }
+
+  /* The weekly places the parent chose, one place per class ticked. The
+     defaults are the flow's own: tiles start filled up to the plan wherever
+     the age group allows it, classes with places before full ones, so a family
+     that changed nothing sees here exactly what the review step showed. */
+  function asDefaultIds() {
+    var list = asClassList(), want = planHours(), got = 0, out = [], order;
+    order = list.filter(function (c) { return places(c); })
+      .concat(list.filter(function (c) { return !places(c); }));
+    order.forEach(function (c) {
+      if (got + hoursOf(c) * CYCLE_WEEKS > want) return;
+      out.push(c.id);
+      got += hoursOf(c) * CYCLE_WEEKS;
+    });
+    if (!out.length && order.length) out.push(order[0].id);
+    return out;
   }
+  function asClasses() {
+    var def = asDefaultIds();
+    var out = asClassList().filter(function (c) {
+      return Grove.toggle('rClass-' + c.id, def.indexOf(c.id) !== -1);
+    });
+    out.sort(function (a, b) { return shiftOf(a) - shiftOf(b); });
+    return out;
+  }
+  function weeklyHours() {
+    return asClasses().reduce(function (n, c) { return n + hoursOf(c); }, 0);
+  }
+  function monthHours() { return weeklyHours() * CYCLE_WEEKS; }
+
+  /* How the parent split the hours — read off the classes, not asked twice. */
+  function splitLine() {
+    var list = asClasses(), lens = [], i;
+    if (!list.length) return 'Not chosen yet';
+    for (i = 0; i < list.length; i++) {
+      if (lens.indexOf(hoursOf(list[i])) === -1) lens.push(hoursOf(list[i]));
+    }
+    if (lens.length === 1) {
+      return countWord(list.length) + ' ' + lens[0] + '-hour ' +
+        plural(list.length, 'class', 'classes') + ' a week';
+    }
+    return countWord(list.length) + ' classes a week, ' + weeklyHours() + ' hours in all';
+  }
+
+  function classesLine() {
+    var list = asClasses();
+    if (!list.length) return '';
+    if (list.length === 1) return when(list[0]);
+    return andList(list.map(function (c) { return c.day + ' ' + c.time; }));
+  }
+  function classesProse() {
+    var list = asClasses();
+    if (!list.length) return '';
+    if (list.length === 1) {
+      return dayName(list[0]) + ' ' + list[0].time + ' in ' + list[0].room +
+        ' with ' + list[0].staff;
+    }
+    return andList(list.map(function (c) { return dayName(c) + ' ' + c.time; }));
+  }
+
+  /* ---- the cycle ---------------------------------------------------------------
+     The day and time are fixed for the program year, so a cycle is simply four
+     weeks of them. Two are projected the way the review step projects them:
+     the cycle the family starts on, and the one the next invoice covers. */
+
+  function cycleDates(cycle) {
+    var out = [];
+    asClasses().forEach(function (c) {
+      var w;
+      for (w = 0; w < CYCLE_WEEKS; w++) {
+        out.push(plusDays(firstOn(c), (cycle * CYCLE_WEEKS + w) * 7));
+      }
+    });
+    out.sort(function (a, b) { return a - b; });
+    return out;
+  }
+  function firstCycle() { return cycleDates(0); }
+  function nextCycle() { return cycleDates(1); }
+  function lastOfCycle() {
+    var list = firstCycle();
+    return list.length ? list[list.length - 1] : null;
+  }
+  function firstClassDate() {
+    var list = firstCycle();
+    return list.length ? list[0] : null;
+  }
+
+  /* ---- the rules the family signed --------------------------------------------
+     Every one of these is read from Grove.data.RULES. The expiry window is a
+     studio setting with two options, so it is rendered rather than chosen. */
+
+  function makeupWindow() {
+    var w = String(D.RULES.makeupWindow);
+    return /^\d/.test(w) ? w : 'the ' + w;
+  }
+
+  /* A class with no place left is a waitlist place: nothing is booked and
+     nothing is charged. */
+  function asFull() {
+    return asClasses().filter(function (c) { return !places(c); });
+  }
+  function asWaiting() { return asFull().length > 0; }
+  function asWaitText() {
+    var full = asFull();
+    if (!full.length) return '';
+    if (full.length === 1) return 'number ' + (full[0].wl + 1) + ' on the list';
+    return andList(full.map(function (c) {
+      return 'number ' + (c.wl + 1) + ' on ' + dayName(c);
+    }));
+  }
+
+  /* ---- the one-off programmes --------------------------------------------------- */
 
   function campClass() {
     var list = classesFor('camp');
@@ -240,22 +377,25 @@
 
   /* ---- what it costs — every figure from Grove.data.PRICING ------------------- */
 
-  /* After-school, itemised exactly as the running total on step 3 itemises it,
-     so the two screens land on the same number from the same arithmetic. */
+  /* After-school, itemised exactly as the running total on step 3 itemises it.
+     The registration fee is per child per year and the sibling relief comes
+     off that fee, never off the tuition. */
   function asMoney() {
     var n = kidCount();
-    var base = P.as.plans[planKey()] * n;
+    var base = planPrice() * n;
     var fee = P.as.regFee * n;
-    var relief = P.as.regFee * 0.5 * (n - 1);
+    var relief = P.as.regFee * P.as.siblingFeeRelief * (n - 1);
     return { n: n, base: base, fee: fee, relief: relief, invoice: base + fee - relief };
   }
   function asBreakdown() {
     var q = asMoney();
-    var packs = q.n === 1
-      ? 'A pack of ' + packSize() + ', ' + m(q.base)
-      : q.n + ' packs of ' + packSize() + ' at ' + m(packPrice()) + ' each, ' + m(q.base);
-    return packs + ', plus ' + m(q.fee) + ' registration' +
-      (q.relief ? ' less ' + m(q.relief) + ' sibling discount' : '') + ' — ' + m(q.invoice) + '.';
+    var plans = q.n === 1
+      ? planHours() + ' hours a month, ' + price(q.base)
+      : q.n + ' plans of ' + planHours() + ' hours at ' + price(planPrice()) + ' each, ' + price(q.base);
+    return plans + ', plus ' + price(q.fee) + ' registration for ' +
+      plural(q.n, 'one child', q.n + ' children') +
+      (q.relief ? ' less ' + price(q.relief) + ' sibling discount' : '') +
+      ' — ' + price(q.invoice) + '.';
   }
 
   function campTotal() {
@@ -279,17 +419,17 @@
   function moneyRows(p) {
     if (p === 'as') {
       return [
-        row(asWaiting() ? 'First invoice, if a place opens' : 'First invoice', m(asMoney().invoice)),
-        strongRow('Due today', m(0))
+        row(asWaiting() ? 'First invoice, if a place opens' : 'First invoice', price(asMoney().invoice)),
+        strongRow('Due today', price(0))
       ];
     }
-    if (p === 'camp') return [strongRow('Paid today', m(campTotal()))];
-    if (p === 'nsd') return [strongRow('Paid today', m(nsdTotal()))];
-    if (p === 'pop') return [strongRow('Paid today', m(popTotal()))];
+    if (p === 'camp') return [strongRow('Paid today', price(campTotal()))];
+    if (p === 'nsd') return [strongRow('Paid today', price(nsdTotal()))];
+    if (p === 'pop') return [strongRow('Paid today', price(popTotal()))];
     /* A private is approved before it is scheduled, so nothing is taken on
        submit — the same two rows step 3 shows. */
     if (p === 'priv') {
-      return [row('Cost once approved', m(privTotal())), strongRow('Due today', m(0))];
+      return [row('Cost once approved', price(privTotal())), strongRow('Due today', price(0))];
     }
     return [strongRow('Cost', 'Quote to follow')];
   }
@@ -297,17 +437,16 @@
   /* ---- the one-line summary under the title ----------------------------------- */
 
   function bookedLine(p) {
-    var c, ev, hrs, days;
+    var c, ev, hrs, days, first;
 
     if (p === 'as') {
-      c = asClass();
-      if (!c) return 'Your place is being held while we find the right class.';
+      if (!asClasses().length) return 'Your place is being held while we find the right class.';
       if (asWaiting()) {
-        return c.day + ' ' + c.time + ' in ' + c.room + ' with ' + c.staff +
-          ', number ' + asWaitPosition() + ' on the list.';
+        return planLine() + ' · ' + classesProse() + ', ' + asWaitText() + '.';
       }
-      return c.day + ' ' + c.time + ' in ' + c.room + ' with ' + c.staff +
-        ', every week from ' + FIRST_CLASS + '.';
+      first = firstClassDate();
+      return planLine() + ' · ' + classesProse() +
+        (first ? ', every week from ' + fullDate(first) + '.' : '.');
     }
     if (p === 'camp') {
       c = campClass();
@@ -351,23 +490,33 @@
   }
 
   function bookedRows(p) {
-    var pr = D.program(p), rows = [], c, ev, hrs;
+    var pr = D.program(p), rows = [], c, ev, hrs, list, first;
 
     rows.push({ k: 'Program', v: h`${raw(ui.dot(pr.color))} ${pr.name}` });
 
     if (p === 'as') {
-      c = asClass();
-      rows.push(row('Pack', packSize() + ' sessions, ' + m0(packPrice()) + ' a pack' +
-        (kidCount() > 1 ? ', per child' : '')));
-      if (!asWaiting()) rows.push(row('Renews', renewLine()));
+      list = asClasses();
+      rows.push(row('Plan', planLine()));
+      rows.push(row('Rate', price(hourRate()) + ' an hour'));
+      rows.push(row('Your split', splitLine()));
       rows.push(row('Age group', 'Ages ' + asBand()));
-      rows.push(c ? row('Class', when(c)) : row('Class', 'Not chosen', 'mute'));
+      rows.push(list.length
+        ? row(plural(list.length, 'Class', 'Classes'), classesLine())
+        : row('Class', 'Not chosen', 'mute'));
+
       if (asWaiting()) {
-        rows.push(row('Waitlist', 'Number ' + asWaitPosition() + ' on the list'));
-        rows.push(row('First class', 'The week after a place is offered'));
+        rows.push(row('Waitlist', cap(asWaitText())));
+        rows.push(row('First class', plural(asFull().length,
+          'The week after a place is offered', 'The week after the places are offered')));
       } else {
-        rows.push(row('First class', FIRST_CLASS));
+        first = firstClassDate();
+        rows.push(first ? row('First class', fullDate(first))
+                        : row('First class', 'To be confirmed', 'mute'));
+        rows.push(firstCycle().length
+          ? row('This cycle', dateList(firstCycle()))
+          : row('This cycle', 'Dated once you have a class', 'mute'));
       }
+      rows.push(row('Plan year', D.PLAN_YEAR.label + ' · ends ' + D.PLAN_YEAR.ends));
 
     } else if (p === 'camp') {
       c = campClass();
@@ -379,6 +528,7 @@
       if (campExtra()) {
         rows.push(row('Extra hours', '+' + campExtra() + plural(campExtra(), ' hr', ' hrs') + ' a day'));
       }
+      rows.push(row('Plan', 'None — a one-off booking'));
 
     } else if (p === 'nsd') {
       c = nsdClass();
@@ -386,12 +536,14 @@
       rows.push(c ? row('Hours', nsdStart(c) + ' to ' + nsdEnd(c))
                   : row('Hours', nsdHours() + ' hours'));
       rows.push(c ? row('Room', c.room) : row('Room', 'To be confirmed', 'mute'));
+      rows.push(row('Plan', 'None — a one-off booking'));
 
     } else if (p === 'priv') {
       hrs = privHours();
       rows.push(row('Hours', hrs + plural(hrs, ' hour', ' hours') + ' at ' +
-        m0(P.priv.hourly) + ' an hour, per child'));
+        price(P.priv.hourly) + ' an hour, per child'));
       rows.push(row('Scheduling', 'Approved, then agreed with you'));
+      rows.push(row('Plan', 'None — a one-off booking'));
 
     } else if (p === 'pop') {
       ev = popEvent();
@@ -399,6 +551,7 @@
       rows.push(row('Event', ev.label));
       rows.push(row('When', popWhen(ev)));
       rows.push(c ? row('Ages', c.band) : row('Ages', 'All ages'));
+      rows.push(row('Plan', 'None — a one-off booking'));
 
     } else {
       rows.push(row('Where', 'At the studio'));
@@ -414,41 +567,69 @@
     return { title: h`${raw(ui.dot(color))} ${title}`, sub: esc(text) };
   }
 
+  /* The two rules every after-school family signs, in the studio's own words
+     rather than this screen's. */
+  function makeupStep(color) {
+    return step(color, 'Cancel ' + D.RULES.cancelNotice + ' ahead and you get a make-up',
+      'Later than that, or a no-show, and ' + lower(D.RULES.lateCancel) +
+      ' A make-up is taken within ' + makeupWindow() + ', in ' + lower(D.RULES.makeupWhere));
+  }
+  function yearStep(color) {
+    return step(color, 'Your plan runs to ' + D.PLAN_YEAR.ends + ' and ends there',
+      D.PLAN_YEAR.note + ' To stop before then: ' + D.RULES.cancelPlan);
+  }
+
   function nextRows(p) {
-    var color = D.program(p).color, q;
+    var color = D.program(p).color, q, first, last, who;
 
     if (p === 'as') {
       q = asMoney();
       if (asWaiting()) {
         return [
           step(color, 'Waitlist confirmation, by email',
-            'The class you asked for, your place on the list and what the invoice would be.'),
+            plural(asFull().length,
+              'The class you asked for, your place on the list and what the invoice would be.',
+              'The classes you asked for, your places on the list and what the invoice would be.')),
           step(color, 'Nothing has been charged',
             'Joining the list is free, and nothing is charged while you wait.'),
-          step(color, 'Number ' + asWaitPosition() + ' on the list',
+          step(color, cap(asWaitText()),
             'Places are offered in the order families join. Nobody is turned away.'),
           step(color, 'If a place opens you have 24 hours',
             'We email you the moment one does. Accept, and a secure payment link follows.'),
           step(color, 'What that first invoice covers', asBreakdown()),
-          step(color, 'Then ' + m(packPrice()) + ' when the pack runs out',
-            'A pack renews on the ' + ordinal(packSize()) + ' class, not on a date. ' +
-            'Nothing renews while you wait, and no session expires.')
+          step(color, 'Your dates start when your place does',
+            'Your day and time are then fixed for the program year, and the first cycle is ' +
+            'dated from your first class. Nothing is charged, and nothing renews, while you wait.'),
+          yearStep(color)
         ];
       }
+
+      first = firstClassDate();
+      last = lastOfCycle();
+      who = bookedNames('as');
+
       return [
         step(color, 'Enrollment confirmation, by email',
-          'Your pack, your weekly schedule, the first class date and what renews when.'),
-        step(color, 'A secure payment link for ' + m(q.invoice), asBreakdown()),
-        step(color, 'First class ' + FIRST_CLASS,
-          'The program year opens then. All materials are provided — dress for mess.'),
-        step(color, renewTitle(), renewSub()),
-        step(color, 'Tell us 24 hours ahead and the session is not spent',
-          'Cancel in the portal more than 24 hours before a class and it stays in ' +
-          packOwner(bookedNames('as')) + ', so the pack lasts a week longer. Inside 24 hours ' +
-          'it is spent, exactly as if they had come.'),
-        step(color, 'Stop by not renewing',
-          'There is no notice to give and nothing expires. Use the sessions you have paid ' +
-          'for, tell us not to renew, and the pack does not charge again.')
+          'Your hours, your day and time, the dates of this cycle and the day the next ' +
+          'invoice comes.'),
+        step(color, 'A secure payment link for ' + price(q.invoice), asBreakdown()),
+        step(color, first ? 'First class ' + fullDate(first) : 'Your first class',
+          first
+            ? 'The program year opens then. This cycle is ' + dateList(firstCycle()) +
+              '. All materials are provided — dress for mess.'
+            : 'We will confirm the day and time, and date your first cycle from it. All ' +
+              'materials are provided — dress for mess.'),
+        step(color, 'Your next invoice comes on ' +
+          (last && who.length === 1 ? who[0] + '’s' : 'the') + ' last class of this cycle',
+          (last ? 'That is ' + longDate(last) + ', ' + price(q.base) + ', and it covers ' +
+                  dateList(nextCycle()) + '. '
+                : 'We date it as soon as your day and time are set. ') +
+          'Your day and time are fixed for the program year, so every cycle after this one ' +
+          'is the same class on the same day.'),
+        makeupStep(color),
+        step(color, 'Book your hours inside the cycle',
+          D.RULES.unusedHours + ' ' + D.RULES.freeze),
+        yearStep(color)
       ];
     }
 
@@ -471,8 +652,9 @@
           'Sending it does not reserve an instructor or a room.'),
         step(color, 'We call to agree the time',
           'Once the request is approved we contact you to set the day and the hour.'),
-        step(color, 'Then a payment link for ' + m(privTotal()),
-          'Nothing is charged until the class is confirmed.')
+        step(color, 'Then a payment link for ' + price(privTotal()),
+          'Nothing is charged until the class is confirmed. A private class is a one-off ' +
+          'booking: there is no plan and nothing renews.')
       ];
     }
 
@@ -482,13 +664,13 @@
       step(color, 'Your place is held',
         'It is on the roster from today. Nobody else can take it.'),
       step(color, 'Nothing further to pay',
-        'A single payment. Camps, day camps and pop-ups are non-refundable.'),
+        'A single payment. There is no plan, no cycle and nothing renews.'),
       step(color, 'A booked day is a held place',
-        'Missing it does not move the day. This is bought on its own, not out of a session pack.')
+        'Missing it does not move the day. Camps, day camps and pop-ups are non-refundable.')
     ];
   }
 
-  /* The first-session reminder is the studio's own announcement, word for
+  /* The first-day reminder is the studio's own announcement, word for
      word. It asks you to send a snack, so it is shown only on the programmes
      whose policies expect food — after-school families agree to the opposite. */
   function bringText() {
@@ -498,7 +680,32 @@
     return a ? a.body : '';
   }
 
+  /* Hours not booked in a cycle are lost, so if the day and time chosen do not
+     cover the hours bought, the screen says so once and points at the desk.
+     Moving a day is a phone call, not a control on this page. */
+  function splitNotice() {
+    var want = planHours(), got = monthHours();
+    if (!asClasses().length || asWaiting() || got === want) return '';
+    if (got < want) {
+      return ui.notice({
+        kind: 'warn',
+        title: 'Not all of your hours are on a day yet',
+        text: 'Your plan buys ' + want + ' hours a month and your day and time cover ' + got +
+          '. ' + D.RULES.unusedHours + ' Ring the desk on ' + D.STUDIO.phone +
+          ' and we will add the day that suits you.'
+      });
+    }
+    return ui.notice({
+      kind: 'warn',
+      title: 'Your days use more hours than the plan buys',
+      text: 'Your plan buys ' + want + ' hours a month and your day and time cover ' + got +
+        '. Ring the desk on ' + D.STUDIO.phone + ' and we will either move you up a plan or ' +
+        'take a day off.'
+    });
+  }
+
   function reminder(p) {
+    if (p === 'as') return splitNotice();
     if (p === 'bday') {
       return ui.notice({
         kind: 'ok',

@@ -3,85 +3,78 @@
    Written for a parent who is not confident with a screen: one question per
    page, the action always in view, and a way to ask a person on both screens.
 
-   Reworked to match the Schedule pass:
-     - the list was one five-column table — Document, Published, Signed,
-       Status, button — which asks a parent to read a grid to find out whether
-       anything needs them. It is now two plainly named groups: "Waiting for
-       your signature", with a full-size Read and sign button on each row, and
-       "Signed and on file", which is quiet: the name and the day you signed
-       it, nothing else
-     - the list carries a sticky action bar naming the first document
-       outstanding ("Read and sign Payment terms"), so the one thing a parent
-       came to do is on screen before they scroll and after they scroll. Its
-       hint counts what is left after it. One button, not two: a phone frame
-       is 430px wide and a button cannot wrap, so a second one pushed the
-       hint off the side of the screen
-     - the document page led with "Version 4 · published 1 July 2026" and
-       closed with a Signature card reading Status / Signed by / Applies to.
-       That is the studio's filing card, not a letter. The subtitle now says
-       in one sentence what the document is about, a notice says whether it
-       still needs the parent and where the button is, and who it applies to
-       is a sentence in the summary card
-     - the signing action moved out of the page header into a sticky bar, the
-       complaint that started this pass. It reads "Sign this document",
-       because by then the parent is on the page and reading it
-     - a photo permission is optional, so its line at the top says it is
-       waiting for an answer rather than a signature, and its bar offers "No
-       thank you" as an equal second button rather than leaving refusing as
-       something a parent has to work out for themselves. The three documents
-       nobody can decline offer "Not now" and the desk number instead
-     - both screens carry an "If you are not sure" card with the desk number.
-       The number is the one Console → Settings says families see;
-       screens/family/schedule.js printed a different one, so one of the two
-       is wrong and it is not this file's to change
+   The list is two plainly named groups: "Waiting for your signature", with a
+   full-size Read and sign button on each row, and "Signed and on file", which
+   is quiet — the name and the day you signed it. A sticky bar names the first
+   document outstanding, so the one thing a parent came to do is on screen
+   before they scroll and after they scroll. The document page is a letter, not
+   a filing card: a line at the top saying whether it still needs the parent,
+   the whole text beside a plain summary, and the signing action in a bar
+   pinned to the bottom. A photo permission is optional, so its second button
+   is "No thank you" rather than leaving refusing as something a parent has to
+   work out; the three nobody can decline offer "Not now" and the desk number.
 
-   Rewritten again for the corrected billing model. The studio does not bill by
-   the calendar: a family buys a pack of sessions for one child, the child
-   attends, and when the last session in the pack is used the pack renews — it
-   charges again and grants another pack the same size. So:
-     - the payment clauses no longer say tuition is billed on the 1st, or that
-       a payment holds a place for the month. They say what a pack costs, that
-       a pack belongs to one child, and that it renews on the last session.
-       The prices are read from PRICING and the pack sizes from the family's
-       own children, so the document quotes the same figures the studio keeps
-     - the make-up credit is deleted, not renamed. A session cancelled more
-       than 24 hours ahead is simply not spent, so there is nothing to issue,
-       nothing to approve and nothing to expire. A family that wants to catch
-       a class up books an extra class, which spends a session like any other
-     - sessions do not expire, so the clause about classes left over at the end
-       of a paid month has gone, and with it the 30 days written notice. A
-       family is not a member and does not cancel: they use the sessions they
-       have paid for and the pack does not renew
+   Rewritten again for the settled pricing model. The pack vocabulary is gone
+   from the clause text as well as from the screen furniture, because the
+   studio does not sell packs:
 
-   Removed, and why a parent does not need it:
-     - version numbers everywhere. "Version 4" is how the studio files its
-       paperwork. The one date kept on each row is the one a parent can act
-       on: the day they signed it, or, for a document still waiting, nothing
-       at all — it is waiting now
-     - the Published column. Only the current version can be signed, so the
-       day it was written changes nothing a parent can do
-     - the Status column and the Signed / Not signed pills. Which group a
-       document is in says the same thing in words
-     - the Signature card's Status and Signed by rows. The page already says
-       both, in a sentence, at the top
-     - every make-up, credit and expiry from the clause text as well as the
-       screen furniture. A session a parent told us about in time was never
-       spent, so there is nothing to keep a record of
+     - a plan is HOURS A MONTH, not sessions. The rate card is read from
+       PRICING (4 hours $280 · 8 $540 · 12 $780 · 16 $960) and each child's own
+       plan from D.plan(), so the document cannot quote a figure the studio
+       does not charge. How the hours are split into classes is the parent's
+       choice and is not a price
+     - a cycle is a set of dates fixed at registration. The invoice is raised
+       on the last class of the cycle and covers the next one, naming the dates
+       it covers. The clause says that; the dates themselves are on Billing,
+       which is where a parent can act on them
+     - the rate card also says why the prices are not one price multiplied: the
+       hourly rate falls as the plan grows, worked out by dividing each plan
+       price by its hours rather than quoted, so it cannot disagree with the
+       prices in the same sentence
+     - hours not booked are lost, word for word from D.RULES.unusedHours, and
+       nothing is added to it. The clause used to carry a refund rule and a
+       no-passing-to-a-sibling rule that D.RULES does not hold; a document a
+       family signs may not say more than the studio's own rules say
+     - the plan is annual and ends by itself at the end of the school year,
+       from D.PLAN_YEAR. Nothing renews into the summer
+     - make-ups are back, because they are what families sign: cancel in the
+       portal at least 24 hours ahead and there is a make-up; later than that,
+       or a no-show, and the class counts as attended. The window, what a
+       make-up cannot do, and that plans are never frozen all come from
+       D.RULES, so this page cannot drift from the registration form. The
+       freezing clause is now D.RULES.freeze and nothing else — it used to offer
+       to “sort it out with you”, which reads as an exception to a rule that has
+       none. A parent who needs one messages the desk from the card below
+     - the make-up window is rendered from D.RULES.makeupWindow rather than
+       written out. The studio is moving from "same cycle" to "30 days from the
+       missed class"; when Settings changes it, this document changes with it
+     - one clause covers every exception the owner asked for — an extra class
+       when a school runs on later than the studio's program, a private class
+       that comes up, an event, any other service. It is one charge on the card
+       on file, named on your Billing page. There is no rule per exception
+     - cancelling a plan is 30 days written notice, by email or in the portal,
+       from D.RULES.cancelPlan
+
+   The document page also carries a short at-a-glance list under the summary —
+   each child's plan and the registration fee on the payment terms, the notice
+   period and the make-up window on the policies. Those are the figures a
+   parent rings the desk about, so they are on the page in a form they can read
+   at a glance as well as in the clause they are agreeing to.
 
    Kept although it looks like clutter:
      - the full clause text of every document, including the ones already
        signed. A parent being asked to agree to something must be able to read
-       all of it without ringing anyone, and a parent who signed last year
-       must be able to check what they agreed to
-     - the allergy line in the medical form ("Emma (Allergy · peanuts)"). It
-       is read from the children's records and it is the one thing on that
-       form a parent must check is right
-     - the emergency number and the guardian name in the medical clauses, for
-       the same reason
-     - the $25 late fee, the 7-day grace, the $1 a minute after 10 minutes,
-       the 30 days notice and the registration fee. They are what the parent
-       is agreeing to, so they are quoted from the same named figures Console
-       → Settings uses */
+       all of it without ringing anyone
+     - the allergy line in the medical form ("Emma (Allergy · peanuts)"), read
+       from the children's records, and the emergency number and guardian name
+     - the $25 late fee, the 7-day grace, the $1 a minute after 10 minutes and
+       the registration fee. They are what the parent is agreeing to, so they
+       are quoted from the same named figures Console → Settings uses
+
+   Removed, and why a parent does not need it: version numbers, the Published
+   column, the Status column and the Signed / Not signed pills, and the
+   Signature card's Status and Signed by rows. Which group a document is in
+   says the same thing in words. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -94,17 +87,22 @@
 
   /* Amounts and windows Grove.data does not hold. They are named here for the
      same reason Console → Settings names them: the clause text and the
-     summary above it then quote one figure, and the wording matches the
-     policy text in screens/registration/flow.js verbatim. */
+     summary above it then quote one figure. Everything the dataset does hold —
+     the notice period, the make-up rules, the plan year, every price — is read
+     from it below and never written out here. */
   var GRACE_DAYS = 7;          // "due within 7 days"
   var LATE_FEE = 25;           // "a $25 late fee"
   var PICKUP_GRACE = 10;       // "10 minutes grace"
   var PICKUP_RATE = 1;         // "a late fee of $1 per minute"
-  var CANCEL_HOURS = 24;       // "at least 24 hours before the class"
 
   var P = D.PRICING;
+  var R = D.RULES;
+  var Y = D.PLAN_YEAR;
 
   function money(n) { return Grove.money(n, { cents: false }); }
+  /* An hourly rate can land on a half-dollar — the 8-hour plan works out at
+     $67.50 — so cents are shown only when there are any. */
+  function rate(n) { return Grove.money(n, { cents: n % 1 !== 0 }); }
 
   function current(ctx) {
     var id = ctx.params.id;
@@ -131,24 +129,68 @@
   }
   function first(s) { return String(s.name).split(' ')[0]; }
 
-  /* What the household's packs cost, said as a sentence. The size comes from
-     the child's own record and the price from the studio's rate card, so the
-     document cannot quote a figure the studio does not charge. A child who
-     only does camp and one-off bookings holds no pack and is left out. */
-  function packPrice(size) {
-    return P.as.plans['p' + size];
+  /* ---- the plan, said in the studio's words ---------------------------------
+     A plan is hours a month. The hours come from the child's own record and
+     the price from the studio's rate card, so a clause cannot quote a figure
+     the studio does not charge. A child who only does camp and one-off
+     bookings holds no plan and is left out. */
+
+  function planKids() {
+    return kids().filter(function (s) { return D.plan(s).isPlan; });
   }
-  function packKids() {
-    return kids().filter(function (s) {
-      var p = D.pack(s);
-      return p.isPack && packPrice(p.size);
+  function planLine(s) {
+    var p = D.plan(s);
+    return p.hours + ' hours a month · ' + money(p.price);
+  }
+  function planPrices() {
+    return andList(planKids().map(function (s) {
+      var p = D.plan(s);
+      return first(s) + ' is on ' + p.hours + ' hours a month at ' + money(p.price);
+    }));
+  }
+
+  /* The whole rate card, smallest plan first. */
+  function planKeys() {
+    return Object.keys(P.as.plans).sort(function (a, b) {
+      return Number(String(a).slice(1)) - Number(String(b).slice(1));
     });
   }
-  function packPrices() {
-    return andList(packKids().map(function (s) {
-      var p = D.pack(s);
-      return first(s) + '’s pack of ' + p.size + ' is ' + money(packPrice(p.size));
+  function planSize(k) { return Number(String(k).slice(1)); }
+  function planRates() {
+    return andList(planKeys().map(function (k) {
+      return planSize(k) + ' hours is ' + money(P.as.plans[k]);
     }));
+  }
+  /* Why the four prices are not one price multiplied: the hourly rate falls as
+     the plan grows. Both ends are divided out of the rate card above rather
+     than quoted, so the sentence cannot disagree with the prices beside it. */
+  function hourlyRange() {
+    var keys = planKeys();
+    var lo = keys[0], hi = keys[keys.length - 1];
+    function per(k) { return P.as.plans[k] / planSize(k); }
+    return 'The bigger the plan, the lower the hourly rate: ' + rate(per(lo)) +
+      ' an hour on ' + planSize(lo) + ' hours, down to ' + rate(per(hi)) +
+      ' an hour on ' + planSize(hi) + '.';
+  }
+
+  /* What the one-off programmes cost, for the clause that says a plan does not
+     cover them. Every figure is read from the rate card. */
+  function oneOffPrices() {
+    var pop = (P.pop.events[0] || {}).amount;
+    return 'a camp week is ' + money(P.camp.week) + ', or ' + money(P.camp.day) +
+      ' a day; a no-school day is ' + money(P.nsd.base) + ', with ' +
+      money(P.nsd.extraHour) + ' for each extra hour; a private class is ' +
+      money(P.priv.hourly) + ' an hour; a pop-up class is ' + money(pop) +
+      ' a child; and a birthday party is quoted when you ask';
+  }
+
+  /* The four things a make-up cannot do, as D.RULES lists them. Only the first
+     letter of each changes, so that they read as one sentence. */
+  function lower(s) { return String(s).charAt(0).toLowerCase() + String(s).slice(1); }
+  function neverList() {
+    var items = R.makeupNever.map(lower);
+    if (items.length < 2) return items.join('');
+    return items.slice(0, -1).join('; ') + '; or ' + items[items.length - 1];
   }
 
   /* Who a document is about: the child it names, or every child on the
@@ -181,6 +223,7 @@
 
      `line`     one sentence, used as the page subtitle and the list row
      `summary`  what changed, or what it covers, in plain sentences
+     `facts`    the figures a parent rings the desk about, at a glance
      `optional` a permission a parent is free to refuse, which changes the
                 second button on the signing bar from "Not now" to a real
                 answer */
@@ -190,64 +233,89 @@
     var f = household();
 
     if (d.id === 'd1') {
-      var prices = packPrices();
+      var prices = planPrices();
+      var facts = planKids().map(function (s) {
+        return [first(s) + '’s plan', esc(planLine(s))];
+      });
+      facts.push(['Registration', esc(money(P.as.regFee) + ' a ' + P.as.regFeePer)]);
+      facts.push(['Your plan ends', esc(Y.ends)]);
+
       return {
-        line: 'What a pack of sessions costs, when it renews, and what happens if a payment ' +
-          'is late.',
-        summary: 'The studio has rewritten this one. What is different: a ' + money(LATE_FEE) +
-          ' late fee once the ' + GRACE_DAYS + ' days are up, how many times we try a card ' +
-          'that has failed, that sessions you have paid for never expire, and that stopping ' +
-          'is simply a pack not renewing.',
+        line: 'What a plan costs, when the invoice comes, and what happens if a payment is late.',
+        summary: 'The studio has rewritten this one. What is different: a plan is a number of ' +
+          'hours a month rather than a number of classes, the invoice comes on the last class ' +
+          'of a cycle and covers the next one, hours you do not book are lost, and the plan ' +
+          'ends with the school year rather than renewing into the summer.',
+        facts: facts,
         optional: false,
         clauses: [
-          { h: 'What you buy, and when it renews',
-            p: 'You buy a pack of sessions for a child, and the pack is charged when you buy ' +
-               'it. ' + (prices ? prices + '. ' : '') + 'There is no billing date: when the ' +
-               'last session in a pack is used, the pack renews — it charges again and gives ' +
-               'you another pack the same size. A pack belongs to one child, so each child’s ' +
-               'pack renews on their own last session and is charged on its own.' },
+          { h: 'What a plan is',
+            p: 'A plan is a number of hours a month of after-school classes: ' + planRates() +
+               '. ' + hourlyRange() + ' How those hours are split is yours to choose — ' +
+               'two-hour classes mean fewer visits, one-hour classes mean more — and the ' +
+               'split does not change the price. ' +
+               (prices ? prices + '.' : '') },
+          { h: 'The cycle, and when the invoice comes',
+            p: 'You picked your day and time when you registered and they are fixed for the ' +
+               'program year. A cycle is that set of dates, and the month’s hours are used up ' +
+               'by them. The invoice is raised on the last class of the cycle and covers the ' +
+               'next one, and it names the dates it covers. Your Billing page shows the same ' +
+               'dates before the invoice goes out.' },
+          { h: 'Hours you do not book',
+            p: R.unusedHours + ' There is no balance carried forward.' },
+          { h: 'The plan ends with the school year',
+            p: 'This is the ' + Y.label + ' program year. Your plan runs to ' + Y.ends +
+               ' and ends there. ' + Y.note },
           { h: 'If a payment is late',
             p: 'Payment is due within ' + GRACE_DAYS + ' days. After that a ' + money(LATE_FEE) +
-               ' late fee is added to your account. A child is not admitted to class before ' +
-               'the pack is paid for.' },
+               ' late fee is added to your account. A child is not admitted to class before the ' +
+               'cycle is paid for.' },
           { h: 'If a card fails',
             p: 'We try the card again on day 1, day 3 and day 7. After the third try someone ' +
                'rings you — your child’s place is never cancelled silently.' },
-          { h: 'Refunds, and sessions you have not used',
-            p: 'Payments are not refundable. Sessions do not expire: a pack is paid for, so ' +
-               'every session in it stays with your child until it is used, however long that ' +
-               'takes. Sessions cannot be passed to a brother or sister.' },
+          { h: 'Anything the plan does not cover',
+            p: 'A plan covers after-school classes only. Camp, a no-school day, a private ' +
+               'class, a pop-up and a birthday party are booked one at a time and charged when ' +
+               'you book them: ' + oneOffPrices() + '. The studio can also charge the card on ' +
+               'file for anything else you have asked for — an extra class or two when school ' +
+               'runs on later than our program does, a private lesson that comes up, an event. ' +
+               'Every charge names what it is for and appears on your Billing page.' },
           { h: 'The registration fee',
             p: 'A one-time registration fee of ' + money(P.as.regFee) + ' per child covers ' +
                'materials and software, and it is not refundable. Siblings get ' +
                P.as.siblingRelief + '.' },
-          { h: 'If you stop',
-            p: 'Tell us, by message in the portal or by email, and the pack does not renew. ' +
-               'You take the sessions you have already paid for and nothing further is ' +
-               'charged. There is no notice period and nothing to cancel.' }
+          { h: 'If you stop before the year ends',
+            p: 'Tell us in writing, by email or by message in the portal: ' + R.cancelPlan }
         ]
       };
     }
 
     if (d.id === 'd2') {
       return {
-        line: 'Cancelling a class, drop-off and pick-up, and when to keep a poorly child at home.',
+        line: 'Cancelling a class, make-ups, drop-off and pick-up, and when to keep a poorly ' +
+          'child at home.',
         summary: 'The rules that come up most: how much notice we need when a class is going ' +
-          'to be missed, what happens to the session when you tell us in time, and the few ' +
-          'minutes grace at the door. The last paragraph is the one about accidents and lost ' +
-          'belongings.',
+          'to be missed, what a make-up can and cannot do, and the few minutes grace at the ' +
+          'door. The last paragraph is the one about accidents and lost belongings.',
+        facts: [
+          ['Cancel by', esc(R.cancelNotice + ' before the class')],
+          ['Make-up window', esc(R.makeupWindow)],
+          ['Late pick-up', esc(money(PICKUP_RATE) + ' a minute after ' + PICKUP_GRACE + ' minutes')]
+        ],
         optional: false,
         clauses: [
           { h: 'Cancelling a class',
-            p: 'Tell us at least ' + CANCEL_HOURS + ' hours before the class, in the portal, ' +
-               'and the session stays in your child’s pack — the pack simply lasts a week ' +
-               'longer. Inside ' + CANCEL_HOURS + ' hours the session is spent, exactly as if ' +
-               'they had come.' },
-          { h: 'Catching a class up',
-            p: 'If you would rather catch the class up than let the pack run on a week, book ' +
-               'an extra class in the portal, in any class that suits your child’s age and has ' +
-               'room. It spends a session from their pack like any other class, and a booked ' +
-               'extra class that is then missed is spent in the same way.' },
+            p: 'Cancel in the portal at least ' + R.cancelNotice + ' before the class and your ' +
+               'child gets a make-up.' },
+          { h: 'Later than that, or a no-show',
+            p: R.lateCancel + ' There is nothing left to book and nothing to claim back.' },
+          { h: 'Taking a make-up',
+            p: 'Take it in ' + lower(R.makeupWhere) +
+               ' It has to be used inside the studio’s make-up window — ' +
+               R.makeupWindow + ' — and after that it is gone. A make-up cannot ' + neverList() +
+               '.' },
+          { h: 'Freezing a plan',
+            p: R.freeze },
           { h: 'Drop-off and pick-up',
             p: 'Children are dropped off and collected at the studio door by a parent or ' +
                'guardian. There are ' + PICKUP_GRACE + ' minutes grace at both ends; after ' +
@@ -255,9 +323,9 @@
                'arrival joins for the remaining time only.' },
           { h: 'Health',
             p: 'Children with a cough, a runny nose or any other sign of illness stay home — ' +
-               'tell us as soon as you know, and if that is more than ' + CANCEL_HOURS +
-               ' hours before the class the session stays in their pack. The studio is cleaned ' +
-               'and disinfected before, during and after every class.' },
+               'tell us as soon as you know, and if that is more than ' + R.cancelNotice +
+               ' before the class there is a make-up. The studio is cleaned and disinfected ' +
+               'before, during and after every class.' },
           { h: 'Accidents and lost belongings',
             p: 'You release The Grove Art Studio LLC, its owners, staff and instructors from ' +
                'liability for injuries, accidents or lost belongings during studio activities, ' +
@@ -276,6 +344,10 @@
         summary: 'The allergies and conditions the studio keeps by the door, your permission ' +
           'for staff to get emergency treatment if we cannot reach you, and the rule that ' +
           'nobody gives a child medication without your written say-so.',
+        facts: [
+          ['Emergency contact', esc(f.guardian)],
+          ['Number we ring', esc(f.phone)]
+        ],
         optional: false,
         clauses: [
           { h: 'What the form holds',
@@ -303,6 +375,7 @@
         'class, at camp and at studio events on its website, on Instagram and in print. ' +
         'Saying no changes nothing about ' + who + '’s place in class, and you can change ' +
         'your mind either way at any time.',
+      facts: [],
       optional: true,
       clauses: [
         { h: 'What you are agreeing to',
@@ -374,9 +447,9 @@
       return (n === 1 ? 'One document needs' : n + ' documents need') +
         ' your signature. Everything else is signed and kept here for you.';
     },
-    /* Signing is not a header action any more: with two documents waiting,
-       one button in the corner can only guess which one you meant. The bar at
-       the foot of the page names the first one. */
+    /* Signing is not a header action: with two documents waiting, one button
+       in the corner can only guess which one you meant. The bar at the foot of
+       the page names the first one. */
     actions: [
       { label: 'Ask a question', to: 'fMessages' }
     ],
@@ -525,13 +598,21 @@
         ? prose(m.clauses)
         : ui.empty('No text on file', 'Ask the studio and we will send you a copy.'));
 
+      /* The summary in sentences, and under it the two or three figures a
+         parent rings the desk about. Both are read from the dataset, so a
+         figure here is the figure the studio charges. */
+      var told = h`<div class="stack stack--sm">
+        <p>${m.summary}</p>
+        <p>${'It is about ' + coverNames(d) + '.'}</p>
+      </div>`;
+      var aboutBody = m.facts && m.facts.length
+        ? h`<div class="stack">${raw(told)}${raw(ui.kv(m.facts))}</div>`
+        : told;
+
       var about = ui.card({
         title: aboutTitle(d),
         note: 'If the studio ever changes this, we will ask you to read it again.'
-      }, h`<div class="stack stack--sm">
-        <p>${m.summary}</p>
-        <p>${'It is about ' + coverNames(d) + '.'}</p>
-      </div>`);
+      }, aboutBody);
 
       var help = helpCard('Ring the desk on ' + DESK + ' and we will talk it through, or send ' +
         'a message and we will write back.' +

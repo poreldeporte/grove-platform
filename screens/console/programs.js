@@ -5,118 +5,85 @@
    registration page say about it. Everything else on these screens is read
    from somewhere that already owns it.
 
-   THIS PASS — THE BILLING MODEL
+   THIS PASS — THE FINAL PRICING MODEL
 
-   A price on this page used to buy a month. It buys a pack of sessions: the
-   family pays once, the child attends, and when the last session in the pack
-   is used the pack renews and charges again. There is no billing date, so
-   nothing on this page names one.
-     - "$280 to $960 a month" in the Price column now reads as pack prices,
-       and the ladder is four packs rather than four monthly allowances.
-       "4 sessions a month" is "A pack of 4", and what a pack covers is the
-       class it renews on plus what one session works out at — $960 for 16 is
-       $60 a session, taken off the price in that same row. PRICING.as
-       .extraClassRate holds those same four numbers and is no longer quoted
-       as a separate charge: a catch-up class spends a session from the pack
-       like any other class, so there is nothing extra to bill
-     - the standing rules lost "Recurring monthly, on the 1st", the 30-day
-       cancellation notice and the make-up credit line. A pack is charged
-       again on its last session; a class cancelled more than 24 hours ahead
-       simply is not spent, so there is no credit to issue, approve or expire;
-       and a family who is finished lets the pack not renew rather than
-       giving notice
-     - sessions do not expire, and the rules say so where the expiry rule
-       used to be
-     - the After-School sentence families read no longer says "billed month
-       to month. Four to sixteen sessions a month"
+   The studio sells two things, and this page now says which is which on every
+   row. After-School Art is a PLAN: hours a month, four, eight, twelve or
+   sixteen, and the parent chooses how to split them into classes. Everything
+   else — a camp week, a no-school day, a private class, a pop-up, a party —
+   is a ONE-OFF booking, paid for when it is booked, with no plan, no cycle
+   and no renewal.
 
-   THIS PASS
+     - the pack vocabulary is gone. No "pack of 8", no "sessions used", no
+       "renews on the 8th class". A price row reads "8 hours a month · $540",
+       and what it covers is the hourly rate divided out of that same row
+       plus the splits those hours make against this program's own class
+       lengths — "8 classes of 1 hour or 4 of 2 hours". PRICING.as
+       .extraClassRate is never quoted as a separate charge: it is the same
+       number as the plan's own hourly rate, so it is divided out rather than
+       restated
+     - the Price cell in the list carries a second line, "A plan · hours a
+       month" or "One-off booking". That distinction is the whole shape of the
+       pricing and it was invisible while every row read as a price alone
+     - the standing rules are D.RULES and D.PLAN_YEAR as written, not this
+       file's own version of them: the 24-hour cancel, what a late cancel
+       costs, where a make-up may be taken, the four things a make-up cannot
+       do, the make-up window rendered from whichever option is set, that
+       plans are not frozen, that hours not booked are lost, and the 30 days
+       notice to cancel. A one-off program shows none of them, because none of
+       them are true of a birthday party or a pop-up ticket
+     - renewal is replaced by the plan year. A plan runs to PLAN_YEAR.ends and
+       ends there, so nothing on this page renews and nothing is billed on a
+       date of the month
+     - the exceptions — an extra class when a child's school finishes later
+       than the program, a private class that comes up, an event — are not
+       modelled here. One standing rule points at the one action the owner
+       already uses, Billing → Post a sale, and says what it does not do: it
+       does not add hours to a cycle and it does not change a plan
+     - the registration fee is per child PER YEAR, which is what
+       PRICING.as.regFeePer says. It was being read out as "One-time, per
+       child, once a year", which is two different answers in one line
+     - "session" is gone from the private class too. Three hours is one
+       booking; the word only ever meant a unit that no longer exists
+     - the 24-hour cancel and what a late cancel costs are two rows, not one
+       sentence. R.lateCancel is written to stand alone, so glued to the rule
+       before it the pair read as a contradiction. The plan's own cancellation
+       row says "Cancelling the plan", so it cannot be mistaken for it
+     - "Session length" in How it runs is "Class length": a class is a class,
+       and the hours are what is bought
+
+   THE SHAPE, CARRIED OVER
 
    The list
      - six cards became one table. A card carried four facts and a paragraph
-       of registration copy she wrote herself, so comparing the price or the
-       fill rate of two programs meant scrolling a screenful. Six rows do it
-       in a glance, which is what a table is for. The paragraph is on the
-       record, where it is edited
-     - the per-card "Open" button is gone: the row is the link
-     - "Copy a program" is gone. It raised a toast claiming classes had been
-       created, and nothing was. Copying a program and starting one are the
-       same decision, and a studio with six programs makes it about never —
-       so there is one way to do it, not two
-     - "Six programs" was written as a literal in the page sub. Every figure
-       on the screen is now counted off the rows on show, including the foot
+       of registration copy, so comparing the price or the fill rate of two
+       programs meant scrolling a screenful. The paragraph is on the record,
+       where it is edited
+     - the row is the link; there is no per-card "Open" and no "Copy a
+       program", which raised a toast claiming classes had been created
+     - every figure on the screen is counted off the rows on show, foot
+       included
 
-   The record (was "the builder")
-     - three of its five controls were not controls. "Age bands" offered the
-       bands its own classes already carry or "No age grouping"; "Session
-       length" offered the lengths of those same classes; "Places per class"
-       was an input whose hint said it was read from the classes. None of the
-       three could change a class, so all three are stated in "How it runs",
-       which is where the rest of the class facts already were
-     - what she actually opens this page to change was not editable at all:
-       the price. The pack prices and the registration fee are now inputs, so
-       the page can keep the promise the list makes
-     - the price table lost its "Sessions" column, which restated the pack
-       name, and its "Extra class" column, which was really the per-session
-       rate and now reads as one on the pack's own line. One table shape —
-       what families pay, the price, what it covers — serves all six programs
-       instead of one shape for After-School and nothing for the other five
-     - "Add a plan" is gone. It admitted in its own toast that it did nothing,
-       and the four-step ladder has not changed in years
-     - "Save changes" moved out of the header into a bar pinned to the foot of
-       the viewport, because the page is three screens long and the button was
-       only reachable at the top of it. The bar states the consequence of
-       saving — how many children are enrolled on the program whose price is
-       being changed — counted from the class rows
-     - the two "Written once in Settings and applied to every program" notes
-       said the same sentence twice, and the Standing rules note carried a
-       changelog line about twelve controls that meant nothing to an owner.
-       One sentence, once, plus a link to Settings
-     - a full class, the waitlist and the visible places count were three
-       facts inside an Eligibility card with nothing else in it. They are one
-       standing rule now, and the card is gone
-     - every card opened After-School Art whatever you clicked. A row now
-       opens its own program, and the price table is built from that
-       program's own pricing shape
-     - once six programs share this page the standing rules had to stop being
-       After-School Art's. Renewal, missed classes, catching up and not
-       renewing were being stated over a birthday party and a pop-up ticket,
-       where none of them are true. A program sold as packs shows all of
-       them; a program bought once shows the three that still apply
-     - "Classes: 5" left the How it runs card: the note under it already
-       counts them, and the two cards on that row now end within a line of
-       each other
+   The record
+     - three of its five controls were not controls — age bands, session
+       length and places per class all restated what the classes already
+       carry. They are stated in "How it runs" instead
+     - what she opens this page to change is the price, so the prices are
+       inputs. One table shape serves all six programs: what families pay,
+       the price, what it covers
+     - "Save changes" is pinned to the foot of the viewport, because the page
+       is three screens long, and it states the consequence of saving —
+       counted from the rows, in children rather than places, because a child
+       in three classes is one family's bill and not three
 
-   STANDING DECISIONS CARRIED OVER
-     - no status pill and no term dates: Grove.data holds neither a term
-       calendar nor an enrolment state, and the previous build printed a
-       start date for classes that had been running since spring
-     - the badge PNGs stay out. A program is marked with ui.dot(color), the
-       way it is marked everywhere else
-     - the blurbs are the registration copy, word for word. The After-School
-       one is the exception this pass: its old sentence sold a month, so it
-       now says what a pack is and when it renews */
+   STANDING DECISIONS
+     - no status pill and no term dates: Grove.data holds neither
+     - the badge PNGs stay out; a program is marked with ui.dot(color)
+     - the blurbs are the registration copy, and the After-School one is built
+       from the plan ladder and the plan year so it cannot drift from them */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
-
-  /* What each program is, in the same words families are shown at
-     registration, so screens/registration/pick.js and this page cannot
-     describe the same program differently. */
-  var BLURB = {
-    as: 'A fixed weekly place across the school year. You buy a pack of sessions — four, eight, twelve or sixteen — and it renews when the last one is used.',
-    camp: 'Full days of making through the summer and school breaks. Take a whole week or pick individual days.',
-    nsd: 'For teacher workdays and county holidays. Three hours as standard, extend by the hour if you need to.',
-    priv: 'One-to-one time with an instructor, on a subject your child chooses. Up to three hours in a session.',
-    bday: 'A party built round a theme and a project, picked from forty-four activities. Tell us what you want and we will price it.',
-    pop: 'One-off evenings for a single project. Clay Night is the next one, and it is nearly gone.'
-  };
-
-  /* The four packs the studio sells. The key counts the sessions in the pack:
-     p8 is eight sessions, bought together and renewed together. Nothing here
-     is a monthly allowance — how fast a pack is used is how often the child
-     comes. */
-  var PACK_KEYS = ['p4', 'p8', 'p12', 'p16'];
 
   Grove.on('togglePolicy', function (d) {
     var id = Grove.state.params.id || 'as';
@@ -137,23 +104,40 @@
     return uniq(list).join(sep || ', ');
   }
 
+  /* "1 hour or 2 hours", "4, 8, 12 or 16". */
+  function orList(words) {
+    if (!words.length) return '';
+    if (words.length === 1) return words[0];
+    return words.slice(0, -1).join(', ') + ' or ' + words[words.length - 1];
+  }
+
   function plural(n, one, many) {
     return n + ' ' + (n === 1 ? one : many);
   }
 
-  /* 'p8' → 8. The pack key is the number of sessions in the pack. */
-  function packSize(key) { return parseInt(key.slice(1), 10); }
+  /* A plan is hours a month. 'p8' is eight hours, not eight classes. */
+  function planHours(key) { return parseInt(key.slice(1), 10); }
 
-  /* 8 → '8th'. A pack renews on a class, never on a date, so the next charge
-     is always said as a class. */
-  function ordinal(n) {
-    var tens = n % 100, unit = n % 10, suffix = 'th';
-    if (tens < 11 || tens > 13) {
-      if (unit === 1) suffix = 'st';
-      else if (unit === 2) suffix = 'nd';
-      else if (unit === 3) suffix = 'rd';
-    }
-    return n + suffix;
+  function planKeys(p) {
+    return Object.keys(p.plans || {}).sort(function (a, b) {
+      return planHours(a) - planHours(b);
+    });
+  }
+
+  /* After-School is the only program with a plan. Everything else is bought
+     once, at the price of the day. */
+  function hasPlan(id) { return !!D.PRICING[id].plans; }
+  function quoted(id) { return !!D.PRICING[id].quoteOnly; }
+
+  function soldAs(id) {
+    return hasPlan(id) ? 'A plan · hours a month' : 'One-off booking';
+  }
+
+  function planProgramsLine() {
+    var names = ids().filter(hasPlan).map(function (id) { return D.program(id).name; });
+    if (!names.length) return 'No program is sold as a plan';
+    return joinList(names) +
+      (names.length === 1 ? ' is the only program sold as a plan' : ' are the only programs sold as a plan');
   }
 
   function classesOf(id) {
@@ -169,6 +153,20 @@
   function capacity(list) {
     var n = 0;
     list.forEach(function (c) { n += c.cap; });
+    return n;
+  }
+
+  /* Children, not places. A child in three of this program's classes fills
+     three places and gets one bill, and it is the bill this page changes. */
+  function childrenOn(id, planOnly) {
+    var seen = {}, n = 0;
+    classesOf(id).forEach(function (c) {
+      D.roster(c.id).forEach(function (s) {
+        if (seen[s.id]) return;
+        seen[s.id] = true;
+        if (!planOnly || s.planHours > 0) n += 1;
+      });
+    });
     return n;
   }
 
@@ -209,37 +207,64 @@
     return hrs === 1 ? '1 hour' : hrs + ' hours';
   }
 
-  /* "1 hour or 2 hours", read off the class times rather than typed. */
-  function lengthLine(list) {
+  /* The class lengths this program actually runs, shortest first. */
+  function classLengths(list) {
     var mins = [];
     list.forEach(function (c) {
       var m = lengthOf(c);
       if (m && mins.indexOf(m) === -1) mins.push(m);
     });
     mins.sort(function (a, b) { return a - b; });
-    var words = mins.map(lengthWord);
-    if (!words.length) return '—';
-    if (words.length === 1) return words[0];
-    return words.slice(0, -1).join(', ') + ' or ' + words[words.length - 1];
+    return mins;
   }
 
-  /* A class nobody is teaching is worth seeing from here, so it reads the way
-     it reads on the Classes screen. */
-  function staffLine(list) {
-    return uniq(list.map(function (c) { return c.staff; })).map(function (name) {
-      return name === 'Unassigned'
-        ? '<span class="clay">Unassigned</span>'
-        : esc(name);
-    }).join(', ');
+  function lengthLine(list) {
+    return orList(classLengths(list).map(lengthWord)) || '—';
+  }
+
+  /* "8 classes of 1 hour or 4 of 2 hours" — the ways a month's hours divide
+     against this program's own class lengths. Registration asks the parent
+     how they would like to split their hours; these are the answers. */
+  function splitLine(hours, list) {
+    var parts = [];
+    classLengths(list).forEach(function (mins) {
+      var each = mins / 60;
+      var n = each ? hours / each : 0;
+      if (!n || n !== Math.floor(n)) return;
+      parts.push(parts.length
+        ? n + ' of ' + lengthWord(mins)
+        : n + ' classes of ' + lengthWord(mins));
+    });
+    return orList(parts);
+  }
+
+  /* What each program is, in the same words families are shown at
+     registration, so screens/registration/pick.js and this page cannot
+     describe the same program differently. The After-School sentence is built
+     from the plan ladder and the plan year rather than typed out. */
+  var BLURB = {
+    camp: 'Full days of making through the summer and school breaks. Take a whole week or pick individual days.',
+    nsd: 'For teacher workdays and county holidays. Three hours as standard, extend by the hour if you need to.',
+    priv: 'One-to-one time with an instructor, on a subject your child chooses. Up to three hours in one booking.',
+    bday: 'A party built round a theme and a project, picked from forty-four activities. Tell us what you want and we will price it.',
+    pop: 'One-off evenings for a single project. Clay Night is the next one, and it is nearly gone.'
+  };
+
+  function blurb(id) {
+    if (!hasPlan(id)) return BLURB[id] || '';
+    var hours = planKeys(D.PRICING[id]).map(function (k) { return String(planHours(k)); });
+    return 'A fixed weekly place across the school year. You buy hours a month — ' +
+      orList(hours) + ' — and choose how to split them into classes. The plan runs to ' +
+      D.PLAN_YEAR.ends + ' and ends there.';
   }
 
   function priceLine(id) {
     var p = D.PRICING[id];
     if (p.quoteOnly) return 'Quoted per party';
-    if (id === 'as') {
-      var first = PACK_KEYS[0], last = PACK_KEYS[PACK_KEYS.length - 1];
-      return money(p.plans[first]) + ' for a pack of ' + packSize(first) +
-        ', up to ' + money(p.plans[last]) + ' for ' + packSize(last);
+    if (hasPlan(id)) {
+      var keys = planKeys(p), first = keys[0], last = keys[keys.length - 1];
+      return money(p.plans[first]) + ' for ' + planHours(first) + ' hours a month, up to ' +
+        money(p.plans[last]) + ' for ' + planHours(last);
     }
     if (id === 'camp') {
       return money(p.week) + ' a week, or ' + money(p.day) + ' a day';
@@ -250,7 +275,7 @@
     if (id === 'priv') {
       return money(p.hourly) + ' an hour, up to ' + p.maxHours + ' hours';
     }
-    return money(p.events[0].amount) + ' a ticket';
+    return money(p.events[0].amount) + ' a child';
   }
 
   function feeLine(id) {
@@ -285,9 +310,12 @@
     eyebrow: 'what you run',
     title: 'Programs',
     sub: function () {
-      return plural(ids().length, 'program', 'programs') +
-        '. Open one to change what it costs and what families are told about it. ' +
-        'Days, rooms and places belong to its classes.';
+      var all = ids(), rest = all.length - all.filter(hasPlan).length;
+      return plural(all.length, 'program', 'programs') + '. ' + planProgramsLine() +
+        ' — hours a month, to the end of the school year. ' +
+        (rest === 1 ? 'The other one is booked and paid for one at a time.'
+                    : 'The other ' + rest + ' are booked and paid for one at a time.') +
+        ' Open one to change what it costs and what families are told about it.';
     },
     actions: [
       { label: 'New program', kind: 'primary', to: 'programBuilder', id: 'new' }
@@ -309,7 +337,7 @@
           cells: [
             '<span class="cell-strong">' + ui.dot(p.color) + ' ' + esc(p.name) + '</span>',
             ui.mute(agesLine(id)),
-            esc(priceLine(id)),
+            ui.two(priceLine(id), soldAs(id)),
             esc(feeLine(id)),
             esc(String(list.length)),
             fillCell(pen, pcap)
@@ -338,8 +366,8 @@
 
   /* ---- the program record ---------------------------------------------------
      One shape for all six programs. What differs between them is the pricing,
-     and that difference is real: a plan ladder, a week rate, an hourly rate,
-     a ticket, or a quote. */
+     and that difference is real: a plan in hours a month, a week rate, an
+     hourly rate, a ticket, or a quote. */
 
   function current(ctx) {
     var id = ctx && ctx.params ? ctx.params.id : '';
@@ -356,10 +384,15 @@
     return { cells: [strong(label), priceCell(amount), ui.mute(covers)] };
   }
 
+  /* PRICING.as.regFeePer reads "child, once a year", so this fee is not a
+     one-time charge and saying so was wrong: it is charged per child, every
+     year. The sibling relief is relief on THIS fee and never on tuition, and
+     PRICING.as.siblingRelief already says which. */
   function feeRow(id) {
     var p = D.PRICING[id];
+    var per = 'Per ' + (p.regFeePer || 'child, one time');
     var covers = p.regFee
-      ? 'One-time, per child' + (p.siblingRelief ? ' · ' + p.siblingRelief : '')
+      ? per + (p.siblingRelief ? ' · ' + p.siblingRelief : '')
       : 'No registration fee on this program';
     return priceRow('Registration fee', p.regFee, covers);
   }
@@ -376,19 +409,17 @@
     var list = classesOf(id);
     var rows = [];
 
-    if (id === 'as') {
-      PACK_KEYS.forEach(function (k) {
-        var size = packSize(k);
+    if (hasPlan(id)) {
+      planKeys(p).forEach(function (k) {
+        var hours = planHours(k);
+        var split = splitLine(hours, list);
         rows.push(priceRow(
-          'A pack of ' + size,
+          hours + ' hours a month',
           p.plans[k],
-          /* What a session works out at, divided out of the price in this same
-             row, so the four packs can be compared. PRICING.as.extraClassRate
-             carries the same four numbers; it is not quoted as a charge,
-             because a catch-up class spends a session rather than costing
-             extra. */
-          'Renews when the ' + ordinal(size) + ' session is used · ' +
-            money(p.plans[k] / size) + ' a session'
+          /* The hourly rate divided out of the price in this same row.
+             PRICING.as.extraClassRate holds the same four numbers and is not
+             quoted as a charge: an hour is an hour, whichever plan buys it. */
+          money(p.plans[k] / hours) + ' an hour' + (split ? ' · ' + split : '')
         ));
       });
     } else if (id === 'camp') {
@@ -401,7 +432,7 @@
       rows.push(priceRow('Each hour after that', p.extraHour,
         'Up to ' + p.maxHours + ' hours in a day'));
     } else if (id === 'priv') {
-      rows.push(priceRow('An hour', p.hourly, 'Up to ' + p.maxHours + ' hours in a session'));
+      rows.push(priceRow('An hour', p.hourly, 'Up to ' + p.maxHours + ' hours in one booking'));
     } else if (id === 'pop') {
       p.events.forEach(function (e) { rows.push(priceRow(e.label, e.amount, e.sub)); });
     }
@@ -414,54 +445,81 @@
     );
   }
 
-  /* A program sold as packs charges again every time a pack renews, so a new
-     price reaches a family who has already signed up. Everything else is
-     bought once, at the price of the day. */
-  function renews(id) {
-    return !!D.PRICING[id].plans;
+  /* The rate falls as the plan grows, and both ends of that are divided out
+     of the ladder rather than written down. */
+  function priceNote(id) {
+    if (quoted(id)) {
+      return 'Every party is quoted by hand from the activity list, so there is no standing price to set.';
+    }
+    if (!hasPlan(id)) return null;
+    var p = D.PRICING[id];
+    var rates = planKeys(p).map(function (k) { return p.plans[k] / planHours(k); });
+    return 'Hours are the unit, not classes. The parent chooses how to split them at registration, ' +
+      'and the rate falls from ' + money(rates[0]) + ' an hour on the smallest plan to ' +
+      money(rates[rates.length - 1]) + ' on the largest.';
   }
 
-  /* What saving is going to do, in her own terms, counted from the class rows
+  /* What saving is going to do, in her own terms, counted from the rows
      rather than written down. She has nobody to undo a price for her. */
   function consequence(id) {
-    if (D.PRICING[id].quoteOnly) {
+    if (quoted(id)) {
       return 'Parties are quoted by hand, so nothing here changes a quote already given';
     }
-    var en = enrolled(classesOf(id));
-    if (!en) return 'Nobody is enrolled yet, so a new price applies to new bookings only';
-    var who = en === 1 ? '1 child is' : en + ' children are';
-    return renews(id)
-      ? who + ' enrolled — a new price is what they pay the next time a pack renews'
-      : who + ' already booked at the old price — a new price applies from here on';
+    if (hasPlan(id)) {
+      var on = childrenOn(id, true);
+      if (!on) return 'Nobody is on a plan yet, so a new price applies to new plans only';
+      return (on === 1 ? '1 child is' : on + ' children are') +
+        ' on a plan — a new price is what they pay on their next invoice';
+    }
+    var booked = childrenOn(id);
+    if (!booked) return 'Nobody is booked yet, so a new price applies to new bookings only';
+    return (booked === 1 ? '1 child is' : booked + ' children are') +
+      ' already booked at the old price — a new price applies from here on';
   }
 
-  /* The rules are the studio's, not the program's, but not every one of them
-     touches every program: a party does not renew and a ticket to Clay Night
-     is not a session out of a pack. Listing all eight that suit After-School
-     Art on all six programs would state four things that are not true. */
+  /* The rules are the studio's, and they come from D.RULES and D.PLAN_YEAR so
+     that no two screens carry a different version of what a family signed.
+     Not every rule touches every program: a party does not have a cycle, and
+     a make-up cannot be taken on a pop-up ticket, so a one-off program is
+     spared the eight that belong to a plan. */
+  function windowLine(w) {
+    return /^\d/.test(String(w)) ? 'Within ' + w : 'Within the ' + w;
+  }
+
   function ruleRows(id) {
-    var p = D.PRICING[id];
-    var rows = [];
+    var R = D.RULES, Y = D.PLAN_YEAR, rows = [];
 
-    rows.push(['Paying', p.quoteOnly
-      ? 'Quoted by hand, then invoiced'
-      : (renews(id)
-        ? 'A pack is charged when it is bought, and again when its last session is used'
-        : 'Paid when the family books')]);
-    rows.push(['Grace period', '7 days, then a $25 late fee']);
-    rows.push(['Refunds', renews(id)
-      ? 'A pack is not refunded — the sessions stay with the child until they are used'
-      : 'Non-refundable once the place is held']);
+    if (quoted(id)) {
+      rows.push(['Paying', esc('Quoted by hand from the activity list, then invoiced')]);
+    } else if (hasPlan(id)) {
+      rows.push(['Paying', esc('The invoice is raised on the last class of a cycle, lists the dates ' +
+        'of the next one and covers them, on the card on file')]);
+      rows.push(['The ' + Y.label + ' plan year', esc('Runs to ' + Y.ends + '. ' + Y.note)]);
+      rows.push(['Hours not booked', esc(R.unusedHours)]);
+      /* Two rules, two rows. Run together they read as a contradiction —
+         "cancel and it becomes a make-up. The class is counted as attended" —
+         because R.lateCancel is written to stand on its own and loses its
+         condition when it is glued to the sentence before it. */
+      rows.push(['Cancelling a class', esc('Cancel in the portal at least ' + R.cancelNotice +
+        ' before the class and it becomes a make-up.')]);
+      rows.push(['A late cancel or a no-show', esc(R.lateCancel)]);
+      rows.push(['Taking a make-up', esc(R.makeupWhere + ' ' + windowLine(R.makeupWindow) + '.')]);
+      rows.push(['A make-up cannot', esc(R.makeupNever.join(' · '))]);
+      rows.push(['Freezing', esc(R.freeze)]);
+      rows.push(['Cancelling the plan', esc(R.cancelPlan)]);
+    } else {
+      rows.push(['Paying', esc('Paid when the family books. There is no plan, no cycle and nothing renews')]);
+    }
 
-    if (renews(id)) {
-      rows.push(['Sessions', 'They do not expire. The pack is paid for, so it is theirs until used']);
-      rows.push(['Missing a class', 'More than 24 hours notice and the session stays in the pack; inside 24 hours it is spent']);
-      rows.push(['Catching up', 'Book an extra class in any age-appropriate class; it spends a session like any other']);
-      rows.push(['Not renewing', 'The family uses the sessions they have paid for and the pack does not renew']);
-    }
-    if (!p.quoteOnly) {
-      rows.push(['When a class is full', 'The family joins the waitlist, and registration shows the places left']);
-    }
+    /* The one mechanism for every exception. An extra class because a child's
+       school finishes later than the program, a private class that comes up,
+       an event: one charge, one amount, one reason, on the card on file. The
+       owner calls it posting a sale and it already exists on Billing, so this
+       page names it rather than growing a control of its own. */
+    rows.push(['Anything extra', esc('An extra class, a private class, an event or any other service ' +
+      'is one charge on the card on file, posted from Billing → Post a sale. It does not add ' +
+      'hours to a cycle or change a plan')]);
+
     return rows;
   }
 
@@ -481,7 +539,7 @@
       ui.field({
         label: 'What families should know',
         control: ui.textarea({
-          value: id === 'new' ? '' : (BLURB[id] || ''),
+          value: id === 'new' ? '' : blurb(id),
           placeholder: 'One or two sentences for the registration page'
         }),
         hint: 'Shown to families on the registration page.'
@@ -499,9 +557,9 @@
       note: 'Read from the ' + (list.length === 1 ? 'one class' : plural(list.length, 'class', 'classes')) +
         ' this program is running. A day, a room, a place count or a teacher is changed on the class itself.'
     }, list.length ? ui.kv([
-      /* No "Classes: 5" row — the note under this card already counts them. */
+      ['Sold as', esc(soldAs(id))],
       ['Runs on', esc(joinList(list.map(function (c) { return c.day; })))],
-      ['Session length', esc(lengthLine(list))],
+      ['Class length', esc(lengthLine(list))],
       ['Ages', esc(agesLine(id))],
       ['Places per class', esc(joinList(list.map(function (c) { return String(c.cap); }), ' / '))],
       ['Rooms', esc(joinList(list.map(function (c) { return c.room; })))],
@@ -512,9 +570,7 @@
     var prices = ui.card({
       title: 'Prices',
       flush: true,
-      note: D.PRICING[id].quoteOnly
-        ? 'Every party is quoted by hand from the activity list, so there is no standing price to set.'
-        : null,
+      note: priceNote(id),
       foot: '<span class="mute">Registration shows</span>' +
         '<span class="strong">' + esc(priceLine(id)) + '</span>'
     }, priceTable(id));
@@ -556,6 +612,16 @@
       ], { sticky: true, hint: consequence(id) });
   }
 
+  /* A class nobody is teaching is worth seeing from here, so it reads the way
+     it reads on the Classes screen. */
+  function staffLine(list) {
+    return uniq(list.map(function (c) { return c.staff; })).map(function (name) {
+      return name === 'Unassigned'
+        ? '<span class="clay">Unassigned</span>'
+        : esc(name);
+    }).join(', ');
+  }
+
   /* A new program needs a name and a sentence. Its classes, its prices and
      the day it opens are all set somewhere that already owns them, so asking
      for them here would be asking twice. */
@@ -570,12 +636,13 @@
       },
       {
         title: 'Set what it costs',
-        sub: 'The price table appears on this page as soon as the program exists.'
+        sub: 'The price table appears on this page as soon as the program exists. A new program ' +
+          'is booked and paid for one at a time: ' + esc(planProgramsLine()) + '.'
       },
       {
         title: 'The standing rules already apply',
-        sub: 'Paying, renewal and missed classes come from Settings, the same as every ' +
-          'other program, and the required policies follow the program type.'
+        sub: 'Paying, make-ups and cancelling come from Settings, the same as every other ' +
+          'program, and the required policies follow the program type.'
       },
       {
         title: 'Nobody can book it yet',
@@ -602,11 +669,15 @@
       return id === 'new' ? 'New program' : D.program(id).name;
     },
     sub: function (ctx) {
-      if (current(ctx) === 'new') {
+      var id = current(ctx);
+      if (id === 'new') {
         return 'A name and a sentence are enough to create it. Its classes and its prices come after.';
       }
-      return 'What this program costs, and what families are told about it. Days, rooms and places ' +
-        'are read from its classes; billing and policies from Settings.';
+      return (hasPlan(id)
+        ? 'Sold as a plan: hours a month, to the end of the school year. '
+        : 'Booked and paid for one at a time. ') +
+        'What this program costs, and what families are told about it. Days, rooms and places ' +
+        'are read from its classes; the standing rules from Settings.';
     },
 
     body: function (ctx) {

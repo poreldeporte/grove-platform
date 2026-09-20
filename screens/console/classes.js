@@ -5,27 +5,37 @@
    tables, and she comes here for two things: who is in a room, and whether a
    room is over its capacity. Density is right on this screen. Ceremony is not.
 
-   Billing was corrected on this pass. A family buys a pack of sessions for one
-   child; the child attends; when the last session in the pack is used the pack
-   renews and charges again. There is no billing date and no month, so the next
-   charge is a number of classes away. Told more than 24 hours ahead, a missed
-   session is simply not spent — it stays in the pack. That leaves nothing to
-   credit, approve, place or expire, so the make-up machinery is gone:
+   This pass moves the screen onto the final pricing model. A plan is HOURS A
+   MONTH — 4, 8, 12 or 16 — and only After-School has one. A class spends its
+   own length: an hour class spends an hour, the Thursday two-hour class spends
+   two, so a child on sixteen hours comes eight times or sixteen depending on
+   how the parent split them. Everything else in the studio — camp, no-school
+   days, private classes, pop-ups, birthdays — is a one-off booking with no
+   plan and no cycle. What that changed here:
 
-     - the "Make-ups from this class" card, its four-state credit vocabulary and
-       its colour map, and every link into the credit queue. What replaced it is
-       the fact underneath: Absences, read off D.ABSENCES, saying for each one
-       whether the session was spent or stayed in the child's pack
-     - the roster's "To make up" column, which counted credits. The column now
-       reads the child's pack — used of size, and how many classes until it
-       renews — because that is what a class costs the family
-     - the over-capacity explanation, on all three screens, which blamed a
-       make-up booking landing after the last enrollment and offered to move it.
-       The thirteenth place is an ordinary enrollment; the notice now says so
-       and names whether another class in the band could take it
-     - "a class to make up", "a make-up credit is counted in classes" and the
-       credit-issuing toast on the cancel screen. Cancelling a date spends
-       nobody's session, which is the whole of what a family needs told
+     - the roster's "Pack" column. It read D.pack, which no longer carries
+       anything (a child carries planHours now), so it was printing a blank
+       column while still talking about packs. It is now "Plan", read off
+       D.plan: the hours the child buys a month, and how many of them this
+       cycle has used
+     - the pack vocabulary everywhere else — "spends a session", "renews when
+       its last session is used", "a number of classes away". An invoice is
+       raised on a child's last class of the cycle and covers the next one, so
+       the roster counts the children whose cycle ends in this room
+     - the Absences card, which said a session "stays in the pack". The signed
+       rule is simpler and harder: cancel in the portal at least 24 hours ahead
+       and the child gets a make-up; later than that, or a no-show, and the
+       class counts as attended. The notice period, where a make-up may be
+       taken, what a late cancellation costs and the make-up window all come
+       from D.RULES word for word — the window reads whichever of the two
+       settings is current — so Settings decides them and this file does not
+     - the cancel screen, which promised the pack would last a week longer. The
+       studio called the date off, so no hours come off anybody's plan
+
+   Exceptions are not modelled here. A child whose school runs a week later
+   than the programme, a private class that comes up, an event — each of those
+   is one manual charge on the family's billing, which is exactly why this
+   screen carries no control for any of them.
 
    What earlier passes cut, and this one keeps cut:
      - the seven programme chips. Twelve classes fit on one screen without
@@ -33,7 +43,7 @@
        already named in full under every class name
      - "The class" card on the record — a third printing of the eyebrow, the sub
        and the flag pills sitting directly above it
-     - "What a place costs" on the record: four pack prices she cannot change
+     - "What a place costs" on the record: four plan prices she cannot change
        here and that are identical for every class in the programme. The record
        states once, in the sub, how a place is paid for and where prices live
      - the header's "Lesson plan" button, which opened the plan the Lesson plans
@@ -43,9 +53,9 @@
 
    Everything counted here is counted off the rows being shown. The roster is
    the class — D.roster(id) returns the children on the roll — so "12 enrolled"
-   is the length of the list printed underneath it, the renewal pill counts the
-   packs in that same list, and the waitlist pill counts the rows in its own
-   card. */
+   is the length of the list printed underneath it, the invoice pill counts the
+   children in that same list whose cycle ends in this room, and the waitlist
+   pill counts the rows in its own card. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -101,6 +111,13 @@
 
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
+  /* A rule in D.RULES is written as its own sentence. This drops one into the
+     middle of another sentence without restating it in different words. */
+  function lowerFirst(text) {
+    var s = String(text);
+    return s.charAt(0).toLowerCase() + s.slice(1);
+  }
+
   /* '2:15–3:15pm' -> '2:15pm'; '10:00am–1:00pm' -> '10:00am'. */
   function startTime(c) {
     var parts = String(c.time).split('–');
@@ -109,15 +126,32 @@
     var b = String(parts[1] || '').toLowerCase();
     return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
   }
+  function endTime(c) {
+    var parts = String(c.time).split('–');
+    return String(parts[parts.length - 1] || '').toLowerCase();
+  }
 
   /* '3:15pm' -> 915, so a day column can be read straight down. */
-  function startMinutes(c) {
-    var m = /^(\d{1,2}):(\d{2})(am|pm)$/.exec(startTime(c));
-    if (!m) return 0;
+  function minutesOf(text) {
+    var m = /^(\d{1,2}):(\d{2})(am|pm)$/.exec(String(text));
+    if (!m) return null;
     var hour = parseInt(m[1], 10) % 12;
     if (m[3] === 'pm') hour += 12;
     return hour * 60 + parseInt(m[2], 10);
   }
+  function startMinutes(c) {
+    var n = minutesOf(startTime(c));
+    return n === null ? 0 : n;
+  }
+
+  /* How long one class runs, read off the same When column the table prints:
+     '4:30–6:30pm' is two hours, and two hours is what it takes off a plan. */
+  function classHours(c) {
+    var a = minutesOf(startTime(c)), b = minutesOf(endTime(c));
+    if (a === null || b === null || b <= a) return 0;
+    return Math.round(((b - a) / 60) * 10) / 10;
+  }
+  function hoursPhrase(n) { return plural(n, 'hour', 'hours'); }
 
   /* Clock time first; room and name only break a tie. */
   function byTime(a, b) {
@@ -165,8 +199,8 @@
     return D.CLASSES.filter(function (c) { return !thisWeek(c); });
   }
 
-  /* The next few dates a class runs. There are no session rows to read, so the
-     dates are walked forward from today across the class's own days. */
+  /* The next few dates a class runs, walked forward from today across the
+     class's own days. */
   function sessionDates(c, limit) {
     var one = datedAt(c);
     if (one) return [one];
@@ -406,21 +440,23 @@
   /* ---- class record --------------------------------------------------------
      What she came for is the roster, so the roster is the first and widest
      card. The old "The class" card under it repeated the eyebrow, the sub and
-     the three flag pills; the old price card listed four pack prices she cannot
+     the three flag pills; the old price card listed four plan prices she cannot
      change from here, so the record states in one line how a place is paid for
      and where the prices live. */
 
-  /* How a place here is paid for. After-School Art runs on packs, so a class
-     spends a session; a camp week, a no-school day, a pop-up and a private
-     class are paid for when they are booked. */
+  /* How a place here is paid for. After-School is the only programme with a
+     plan, and a plan is hours a month: this class takes its own length out of
+     them. Everything else is booked and paid for once. */
   function priceLine(c) {
+    var hrs = classHours(c);
     if (c.prog === 'as') {
-      return 'A class here spends one session from the child’s pack, and a pack renews ' +
-        'when its last session is used. Pack prices are set under Programs.';
+      return 'A class here uses ' + (hrs ? hoursPhrase(hrs) : 'hours') +
+        ' of the child’s monthly plan, and a plan runs to ' + D.PLAN_YEAR.ends +
+        ' and ends there. Plan prices are set under Programs.';
     }
-    return 'A place here is priced on ' + prog(c).name +
-      ' — the same for every class in the programme, paid for when it is booked — ' +
-      'and the prices are set under Programs.';
+    return 'A place here is a one-off booking on ' + prog(c).name +
+      ' — no plan and no cycle — paid for when it is booked, the same for every class in the ' +
+      'programme, and the prices are set under Programs.';
   }
 
   var recordDef = {
@@ -474,32 +510,30 @@
         : '';
 
       /* Eight to eighteen children, so the roll is a table: one line each, and
-         age, attendance, the child's pack and the safety note read down their
+         age, attendance, the child's plan and the safety note read down their
          columns rather than being folded into a sentence under the name. */
       var flagged = kids.filter(function (k) { return !!k.flag; });
       var urgent = flagged.some(function (k) { return k.flagKind === 'bad'; });
 
-      /* A pack pays for an After-School place. On a camp or a pop-up roll the
-         column would say nothing about what that class cost, so it is left off. */
-      var packCol = c.prog === 'as' && kids.some(function (k) { return D.pack(k).isPack; });
-      var renewing = !packCol ? [] : kids.filter(function (k) {
-        var p = D.pack(k);
-        return p.isPack && p.renewsIn <= 1 && renews(k);
-      });
+      /* Only After-School runs on a plan. On a camp or a pop-up roll the column
+         would say nothing about what that class cost, so it is left off. */
+      var planCol = c.prog === 'as' && kids.some(function (k) { return D.plan(k).isPlan; });
+      var invoicing = !planCol ? [] : kids.filter(function (k) { return invoicedHere(k, c); });
 
       var cols = ['Child',
                   { label: 'Age', align: 'right', shrink: true },
                   { label: 'Attendance', align: 'right', shrink: true }];
-      if (packCol) cols.push('Pack');
+      if (planCol) cols.push('Plan');
       cols.push('Safety note');
 
       var rosterNote = [];
       if (flagged.length) {
         rosterNote.push('Safety notes here are the ones every teacher sees on this roster and on the attendance sheet.');
       }
-      if (packCol) {
-        rosterNote.push('A pack belongs to one child, not to the family. It renews when its last session is ' +
-          'used, so a child with one class left renews at their next class.');
+      if (planCol) {
+        rosterNote.push('A plan is hours a month, not classes, and a class here uses ' +
+          (classHours(c) ? hoursPhrase(classHours(c)) : 'hours') + ' of them. The invoice is raised ' +
+          'on a child’s last class of the cycle and covers the dates of the next one.');
       }
 
       var rosterCard = ui.card({
@@ -508,14 +542,14 @@
           (flagged.length
             ? ui.pill(plural(flagged.length, 'safety note', 'safety notes'), urgent ? 'bad' : 'warn')
             : '') +
-          (renewing.length
-            ? ui.pill(plural(renewing.length, 'pack renews next class', 'packs renew next class'))
+          (invoicing.length
+            ? ui.pill(plural(invoicing.length, 'invoice raised in this class', 'invoices raised in this class'))
             : '') +
           '<span class="mute">' + esc(kids.length + ' enrolled') + '</span></span>',
         flush: true,
         note: rosterNote.join(' ')
       }, kids.length
-        ? ui.table(cols, kids.map(function (k) { return kidRow(k, packCol); }))
+        ? ui.table(cols, kids.map(function (k) { return kidRow(k, planCol); }))
         : ui.empty('Nobody enrolled yet', 'The first child to register for this class appears here.')
       );
 
@@ -540,25 +574,27 @@
         };
       })));
 
-      /* There is nothing to settle here any more, so this card is a record, not
-         a queue. The only thing worth reading on a row is whether the session
-         was spent, which is the one thing 24 hours of notice decides. */
-      var spent = missed.filter(function (a) { return !!a.spent; });
+      /* There is nothing to settle here, so this card is a record, not a queue.
+         The only thing worth reading on a row is whether the class was counted
+         as attended, which is the one thing 24 hours of notice decides. */
+      var counted = missed.filter(function (a) { return !!a.spent; });
       var absences = ui.card({
         title: 'Absences',
         head: '<span class="inline">' +
-          (spent.length ? ui.pill(plural(spent.length, 'session spent', 'sessions spent'), 'warn') : '') +
+          (counted.length ? ui.pill(counted.length + ' counted as attended', 'warn') : '') +
           '<span class="mute">' + esc(plural(missed.length, 'absence', 'absences')) + '</span></span>',
         flush: true,
-        note: 'Told more than 24 hours ahead, the session stays in the child’s pack and the pack ' +
-          'lasts a week longer. Inside 24 hours it is spent, the same as coming.'
+        note: 'Cancelled in the portal at least ' + D.RULES.cancelNotice +
+          ' before the class, the child gets a make-up. ' + D.RULES.makeupWhere +
+          ' Later than that, or a no-show: ' + lowerFirst(D.RULES.lateCancel) +
+          ' Make-up window: ' + D.RULES.makeupWindow + ', set under Settings.'
       }, ui.rows(missed.map(function (a) {
         return {
           title: esc(a.child),
           sub: esc(a.date + ' · ' + a.reason),
           end: a.spent
-            ? ui.pill('Session spent', 'warn')
-            : ui.pill('Stayed in the pack', 'ok')
+            ? ui.pill('Counted as attended', 'warn')
+            : ui.pill('Make-up offered', 'ok')
         };
       })));
 
@@ -592,41 +628,42 @@
 
   Grove.screen('classRecord', recordDef);
 
-  /* A family that has told us to stop still holds the pack it paid for — it
-     simply does not renew. The dataset says so on the family's plan, so a child
-     of that family is never counted as a renewal that is about to arrive. */
-  function renews(k) {
+  /* A family that has given notice keeps its hours to the end of the school
+     year; there is simply no invoice after this cycle. The dataset says so on
+     the family's plan, so a child of that family is never counted as an
+     invoice about to be raised. */
+  function billsAgain(k) {
     var fam = D.FAMILIES.filter(function (f) { return f.name === k.family; })[0];
     return !fam || String(fam.plan).indexOf('not renewing') === -1;
   }
 
-  /* Where one child's pack stands. Nothing here is a date: the next charge is a
-     number of classes away, and the sessions do not expire. */
-  function packCell(k) {
-    var p = D.pack(k);
-    if (!p.isPack) return ui.mute('—');
-    var when;
-    if (!renews(k)) {
-      when = p.renewsIn === 1
-        ? 'last class in the pack, then it ends'
-        : plural(p.renewsIn, 'class', 'classes') + ' left, then it ends';
-    } else if (p.renewsIn === 0) {
-      when = 'the pack is used up';
-    } else {
-      when = p.renewsIn === 1 ? 'renews at the next class' : p.renewsIn + ' classes to renewal';
-    }
-    return ui.two(p.used + ' of ' + p.size + ' used', when);
+  /* The invoice for the next cycle is raised on the child's last class of this
+     one. Sophia's last class is her Thursday two-hour, so she is counted on
+     that roster and not on the two she also attends. */
+  function invoicedHere(k, c) {
+    var p = D.plan(k);
+    return p.isPlan && billsAgain(k) && !!p.renewsOn && p.renewsOn.classId === c.id;
+  }
+
+  /* Where one child's plan stands: the hours they buy a month, and how many of
+     them this cycle has already used. Hours, never classes — this class takes
+     its own length out of them. */
+  function planCell(k) {
+    var p = D.plan(k);
+    if (!p.isPlan) return ui.mute('—');
+    return ui.two(plural(p.hours, 'hour a month', 'hours a month'),
+      p.usedHours + ' of ' + p.hours + ' hours used this cycle');
   }
 
   /* One line of the roll. The family is under the name because two children
      on the same roster can share a first name. */
-  function kidRow(k, packCol) {
+  function kidRow(k, planCol) {
     var cells = [
       ui.two(k.name, k.family + ' family'),
       ui.mute(String(k.age)),
       ui.mute(k.att)
     ];
-    if (packCol) cells.push(packCell(k));
+    if (planCol) cells.push(planCell(k));
     cells.push(k.flag ? ui.pill(k.flag, k.flagKind) : '<span class="mute">—</span>');
     return { to: 'studentRecord', id: k.id, cells: cells };
   }
@@ -646,8 +683,8 @@
      off an hour for a room full of children and messages every family, and
      Sabrina has nobody to undo it for her — so it asks which date and states,
      before she commits, exactly what will happen. The studio called it off, so
-     nobody spends a session for it. The button sits in a bar pinned to the
-     bottom of the viewport, never below the explanation. */
+     it costs nobody their hours. The button sits in a bar pinned to the bottom
+     of the viewport, never below the explanation. */
 
   Grove.screen('classCancel', {
     surface: 'console',
@@ -663,6 +700,8 @@
 
     body: function (ctx) {
       var c = cls(ctx);
+      var onPlan = c.prog === 'as';
+      var hrs = classHours(c);
       var dates = sessionDates(c, 4);
       var keys = dates.map(dateKey);
       var picked = Grove.filter('cancelSession', keys[0]);
@@ -693,9 +732,12 @@
       var lines = [];
       if (c.en) {
         lines.push({
-          title: 'No session is spent',
-          sub: esc('The session stays in each child’s pack, so the pack simply lasts a week longer. ' +
-            whoLine(c) + '.')
+          title: onPlan ? 'No hours come off a plan' : 'Nothing is used up',
+          sub: esc(onPlan
+            ? 'The ' + (hrs ? hoursPhrase(hrs) : 'time') + ' is not counted against anybody’s monthly ' +
+              'hours. ' + whoLine(c) + '.'
+            : 'A place here is a one-off booking, not a plan, so there is nothing to spend. ' +
+              whoLine(c) + '.')
         });
         lines.push({
           title: c.en === 1 ? 'Their family is told' : 'Their families are told',
@@ -704,8 +746,11 @@
         });
         lines.push({
           title: 'No money moves',
-          sub: 'Nothing is refunded and nothing is charged. A pack renews on the class that uses ' +
-            'its last session, and this date no longer uses one.'
+          sub: esc(onPlan
+            ? 'Nothing is refunded and nothing is charged. The next invoice is still raised on the ' +
+              'child’s last class of this cycle.'
+            : 'Nothing is charged for a date the studio called off. Anything you decide to give back ' +
+              'goes through the family’s billing.')
         });
       } else {
         lines.push({
@@ -731,11 +776,13 @@
       }, ui.rows(lines));
 
       var hint = c.en
-        ? plural(c.en, 'child', 'children') + ' · no session spent · no money moves'
+        ? plural(c.en, 'child', 'children') +
+          (onPlan ? ' · no hours used' : ' · nothing used up') + ' · no money moves'
         : 'Nobody is enrolled, so nothing is sent';
 
       var done = c.en
-        ? 'Cancelled · ' + plural(c.en, 'family told', 'families told') + ' and no session spent'
+        ? 'Cancelled · ' + plural(c.en, 'family told', 'families told') +
+          (onPlan ? ' and no hours used' : ' and no money moved')
         : 'Cancelled · nobody was enrolled, so nothing was sent';
 
       var buttons = when

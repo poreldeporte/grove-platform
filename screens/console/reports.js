@@ -3,7 +3,7 @@
    Written for Sabrina at a desk. She is comfortable with a table of numbers,
    so this is a table of numbers — rows, not paragraphs in cards. What she came
    for is not "how is the studio doing", it is "what needs me today", and the
-   screen now answers that in its first row.
+   screen answers that in its first row.
 
    No charts, deliberately. The old screen drew a 38px eight-bar sparkline on
    every card. At that size the bars say nothing a sentence cannot say better,
@@ -15,68 +15,61 @@
    table foot are all computed from Grove.data, so the number and the rows
    cannot disagree.
 
-   Rebuilt for how the studio actually bills. A family buys a pack of sessions
-   for one child; the pack renews when its last session is used. There is no
-   month, no billing date and no cycle, so:
-     - "Monthly recurring revenue" is gone. It counted a monthly commitment
-       that does not exist. What is honestly committed is the value of the
-       sessions families have already paid for and not yet taken, and what is
-       forecastable is the packs a class or two from renewing. That is the
-       report now, and neither figure is a monthly one.
-     - the make-up credits report is gone entirely, not renamed. A session
-       cancelled in time is simply not spent — it stays in the child's pack, so
-       there is no credit to issue, approve, book or expire, and no queue to
-       report on. What is left worth knowing is how many absences kept their
-       session and how many were spent, which belongs in Attendance, and that
-       is where it now sits.
-     - sessions do not expire, so no report counts anything lapsing.
+   Rebuilt again for the settled pricing model. A plan is HOURS A MONTH, only
+   after-school has one, and it runs to the end of the school year and ends by
+   itself. So:
+     - the pack report is gone, vocabulary and all. There is no pack, no
+       "sessions used" and no "renews on the 8th class". What is true is that
+       54 children are on a plan, those plans commit a number of hours a month,
+       and a cycle of those hours is worth a countable amount. That is report
+       one, and it also answers whose cycle ends next, because the invoice is
+       raised on the last class of the cycle and covers the next one. A last
+       class already behind us is an invoice already raised, and the row now
+       says so rather than dating a "next invoice" in the past.
+     - there is still no monthly recurring revenue figure, and for a new
+       reason: nothing recurs monthly. A plan is annual, it ends in June, and
+       camp, no-school days, private classes, pop-ups and birthdays are one-off
+       bookings with no cycle at all. Reporting an MRR would be inventing one.
+     - hours not booked in a cycle are lost, so nothing is carried forward and
+       no report counts a balance. The plan report says whether any hours are
+       sitting unbooked, because that is the only thing that can be lost.
+     - a new report reads D.SALES: the one manual charge the owner already
+       calls "make sale / post sale". Extra classes when a school finishes
+       later, a private class that comes up, an event — one action, one amount,
+       one reason, on the card on file. The exceptions are charged, not
+       modelled, so there is one report rather than three.
+     - the make-up rules are read from D.RULES, never restated here. The
+       make-up window in particular is a setting with two options, and this
+       screen prints whichever is set rather than deciding for Settings.
 
-   Also cut in this pass:
-     - the eight prose cards. Three rows of cards, about 1100px of scroll, and
-       a figure that needs nothing from her sat at the same weight as "$803
-       out, one card declined twice". The reports are now two tables: the ones
-       carrying a deadline, a failure or money that has not arrived, and the
-       ones that are only worth knowing. The split is derived from the rows,
-       and the rule is printed on the card so it is not magic.
+   Also cut in an earlier pass and still cut:
+     - the eight prose cards. The reports are two tables: the ones carrying a
+       deadline, a failure or money that has not arrived, and the ones that are
+       only worth knowing. The split is derived from the rows, and the rule is
+       printed on the card so it is not magic.
      - "Export all · CSV". Reports of that many different shapes cannot be one
        CSV. Export lives on the report you are actually looking at.
-     - the per-card "Open" button. The whole row is the link; two controls for
-       one decision is one too many.
-     - "Refreshes · Overnight", which was the same line on every report and was
-       not even true — the figures are read live from the rows.
-     - the card note "A report is a read of the data, never a place to edit
-       it." The sticky bar names the screen where the change is made, which
-       says the same thing once and does something about it.
-     - "Period · 28 July 2026" as a headline stat. It was identical on every
-       one and there is nothing she can do about the date. It is stated once in
-       the toolbar and once in the footnotes of each report.
-     - `rows` and `rowNoun` on each built report. Nothing read them; the table
-       foot carries the row count, and the one place they still said "families
-       on a monthly plan" was a sentence nobody could see.
-     - the detail's header buttons. The one thing to do from a report is to go
-       and do it somewhere else, so that button is pinned to the bottom of the
-       viewport with the state line beside it.
+     - the per-card "Open" button. The whole row is the link.
+     - "Refreshes · Overnight", which was not even true — the figures are read
+       live from the rows.
+     - "Period · 28 July 2026" as a headline stat, identical on every report.
+       It is stated once in the toolbar and once in the footnotes.
 
    Kept deliberately:
-     - no money button on this screen. It would be tempting to put "Retry the
-       card" on Collection health, and that is exactly how a product ends up
-       with six places to reduce what a family owes. A report reads; Billing
-       charges.
-     - every report, including the ones that need nothing today. A figure with
-       no action is not automatically decoration — it is decoration when nobody
-       says what it means. Each one says what it means in a sentence, and the
-       ones with nothing to do say why there is nothing to do.
+     - no money button on this screen. A report reads; Billing charges.
+     - every report, including the ones that need nothing today. Each says what
+       it means in a sentence, and the ones with nothing to do say why.
 
-   Four of these tables run long: every child holding a pack, every family on
-   the books, every child on a roll, every invoice raised. Each is ordered by
-   the column its headline claims something about — sessions left, tenure,
-   attendance — so the claim is checkable at the top of the table rather than
-   somewhere down the scroll. */
+   The long tables are each ordered by the column its headline claims something
+   about — the next invoice, tenure, attendance — so the claim is checkable at
+   the top of the table rather than somewhere down the scroll. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
 
   var FAMILY_STATUS = {
     'Active': 'ok',
@@ -113,6 +106,36 @@
     return D.FAMILIES.filter(function (f) { return f.name === student.family; })[0] || null;
   }
 
+  function monthIndex(name) {
+    var k = String(name).slice(0, 3);
+    for (var i = 0; i < MONTHS.length; i++) { if (MONTHS[i] === k) return i; }
+    return -1;
+  }
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+  /* Today comes from the data, so every date on this screen is measured from
+     it rather than typed in. */
+  function stamp() {
+    var parts = String(D.today).split(', ');
+    return parts[1] || parts[0];
+  }
+
+  function todayIso() {
+    var m = /(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/.exec(String(D.today));
+    if (!m) return '';
+    var mi = monthIndex(m[2]);
+    if (mi === -1) return '';
+    return m[3] + '-' + pad(mi + 1) + '-' + pad(parseInt(m[1], 10));
+  }
+
+  /* A dated class reads as "29 October", the way the owner writes it. */
+  function dayMonth(iso) {
+    var m = /(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+    if (!m) return String(iso || '—');
+    return parseInt(m[3], 10) + ' ' + (MONTHS_FULL[parseInt(m[2], 10) - 1] || '');
+  }
+
   /* Where a child is, read off the roster rather than off the line typed on
      the record. One class is named in full; several are counted and named by
      program, because three class names do not fit a cell. A child with no
@@ -137,13 +160,6 @@
     return s.length % 2 ? s[mid] : Math.round((s[mid - 1] + s[mid]) / 2);
   }
 
-  /* Today comes from the data, so every "since" on this screen is measured
-     from it rather than typed in. */
-  function stamp() {
-    var parts = String(D.today).split(', ');
-    return parts[1] || parts[0];
-  }
-
   function monthsSince(since) {
     var t = /([A-Za-z]{3})[a-z]*\s+(\d{4})/.exec(String(D.today));
     var s = /([A-Za-z]{3})[a-z]*\s+(\d{4})/.exec(String(since));
@@ -159,109 +175,143 @@
       '<span class="num strong">' + esc(value) + '</span>';
   }
 
-  /* ---- 1. Sessions bought and not yet used ----------------------------------
-     A pack belongs to one child, not to the family, and it renews when its
-     last session is used. So there is no monthly figure to report and no date
-     to report it against. What the studio is holding is the sessions families
-     have paid for and not yet taken, priced at the pack they were bought in.
-     A pack of 8 is $540, so a session in it is $67.50 — which is why the money
-     in this report carries cents. Rounding each row would leave the rows and
-     the total disagreeing, and that is the one thing this screen must not do. */
+  /* ---- 1. Plan hours and what a cycle is worth --------------------------------
+     A plan is hours a month, and only after-school has one. The month's hours
+     are consumed by dated classes the parent chose at registration, the
+     invoice is raised on the last class of the cycle and covers the next one,
+     and the plan runs to the end of the school year and ends there. So the
+     honest figures are: how many hours are committed, what a cycle of them is
+     worth, and whose cycle ends next. Not a monthly recurring anything —
+     nothing here recurs monthly. */
 
-  function packRows() {
+  function planRows() {
     var out = [];
     D.STUDENTS.forEach(function (s) {
-      var p = D.pack(s);
-      if (!p.isPack) return;
-      var price = D.PRICING.as.plans['p' + p.size] || 0;
+      var p = D.plan(s);
+      if (!p.isPlan) return;
       var fam = familyOf(s);
+      var booked = 0;
+      p.dates.forEach(function (x) { booked += x.hours; });
       out.push({
         s: s,
         fam: fam,
-        size: p.size,
-        used: p.used,
-        /* renewsIn and left are the same number — the pack renews on the last
-           session — so the table prints it once, under the heading that says
-           what it means. */
-        left: p.left,
-        price: price,
-        held: p.left * (p.size ? price / p.size : 0),
+        hours: p.hours,
+        price: p.price,
+        used: p.usedHours,
+        left: p.leftHours,
+        booked: booked,
+        unbooked: Math.max(0, p.hours - booked),
+        last: p.renewsOn ? p.renewsOn.date : '',
         renews: !(fam && /not renewing/i.test(fam.plan))
       });
     });
     return out;
   }
 
-  function packs() {
-    /* Fewest classes to renewal first: the reading below is about what renews
-       next, and that claim should be checkable in the first rows. */
-    var rows = packRows().sort(function (a, b) { return a.left - b.left; });
-    var noPack = D.STUDENTS.filter(function (s) { return !D.pack(s).isPack; });
-    var booked = noPack.filter(function (s) { return D.classesOf(s).length > 0; });
-    var idle = noPack.filter(function (s) { return D.classesOf(s).length === 0; });
-
-    var held = 0, sessions = 0, soon = 0, soonValue = 0, ending = [];
-    rows.forEach(function (r) {
-      held += r.held;
-      sessions += r.left;
-      if (!r.renews) { ending.push(r); return; }
-      if (r.left <= 2) { soon += 1; soonValue += r.price; }
+  function plans() {
+    /* Soonest last class of the cycle first: the reading below is about which
+       invoices go out next, and that claim should be checkable in the first
+       rows. The plan that does not renew has no next invoice, so it sits last. */
+    var rows = planRows().sort(function (a, b) {
+      var da = a.renews ? (a.last || '9999-99-99') : '9999-99-99z';
+      var db = b.renews ? (b.last || '9999-99-99') : '9999-99-99z';
+      return da === db ? 0 : (da < db ? -1 : 1);
     });
+    var noPlan = D.STUDENTS.filter(function (s) { return !D.plan(s).isPlan; });
+    var booked = noPlan.filter(function (s) { return D.classesOf(s).length > 0; });
+    var idle = noPlan.filter(function (s) { return D.classesOf(s).length === 0; });
+
+    var hours = 0, cycleValue = 0, unbooked = 0, unbookedKids = [], ending = [];
+    var used = 0, left = 0;
+    var iso = todayIso(), byDate = {}, dates = [], raised = 0;
+    rows.forEach(function (r) {
+      hours += r.hours;
+      cycleValue += r.price;
+      used += r.used;
+      left += r.left;
+      if (r.unbooked) { unbooked += r.unbooked; unbookedKids.push(r.s.name); }
+      if (!r.renews) { ending.push(r); return; }
+      if (!r.last) return;
+      if (r.last < iso) { raised += 1; return; }
+      if (!byDate[r.last]) { byDate[r.last] = { n: 0, v: 0 }; dates.push(r.last); }
+      byDate[r.last].n += 1;
+      byDate[r.last].v += r.price;
+    });
+    dates.sort();
+    var next = dates.length ? dates[0] : null;
 
     var table = ui.table(
-      ['Child', 'Pack', { label: 'Used', align: 'right' },
-        { label: 'Renews in', align: 'right' }, { label: 'Not yet used', align: 'right' }],
+      ['Child', 'Plan', { label: 'Hours used', align: 'right' },
+        { label: 'Hours left', align: 'right' }, { label: 'Next invoice', align: 'right' }],
       rows.map(function (r) {
         return {
           cells: [
             ui.two(r.s.name, r.s.family + ' family'),
-            ui.mute('Pack of ' + r.size + ' · ' + money0(r.price)),
-            num(r.used + ' of ' + r.size),
-            num(r.renews ? count(r.left, 'class', 'classes') : 'Not renewing'),
-            num(Grove.money(r.held))
+            ui.mute(count(r.hours, 'hour', 'hours') + ' a month · ' + money0(r.price)),
+            num(r.used + ' of ' + r.hours),
+            num(count(r.left, 'hour', 'hours')),
+            /* The invoice is raised ON the last class of the cycle, so a last
+               class already behind us is an invoice already raised. Saying
+               "next invoice · 27 July" of a date in the past would be a lie
+               the reading underneath has to apologise for. */
+            num(r.renews
+              ? (r.last
+                ? (r.last < iso ? 'Raised · ' + dayMonth(r.last) : dayMonth(r.last))
+                : '—')
+              : 'Not renewing')
           ]
         };
       })
     );
 
     return {
-      unit: 'Paid for, not yet used',
-      value: Grove.money(held),
-      delta: count(sessions, 'session', 'sessions') + ' held by ' + count(rows.length, 'child', 'children'),
-      find: 'Families have paid for ' + count(sessions, 'session', 'sessions') +
-        ' that have not been taken yet — ' + Grove.money(held) + ' at the pack price each was bought at.',
-      read: soon
-        ? soon + ' of the ' + rows.length + ' children are within two classes of the end of a pack, so ' +
-          money0(soonValue) + ' renews as those classes are taken. Nothing renews on a date: a pack charges ' +
-          'again the moment its last session is used.'
-        : 'No pack is within two classes of its end, so nothing is about to renew. A pack charges again ' +
-          'the moment its last session is used, never on a date.',
-      act: 'A pack is bought, resized or stopped on the family record, never here.',
+      unit: 'A cycle is worth',
+      value: money0(cycleValue),
+      delta: count(hours, 'hour', 'hours') + ' a month across ' + count(rows.length, 'child', 'children'),
+      find: count(rows.length, 'child is', 'children are') + ' on an after-school plan, ' +
+        count(hours, 'hour', 'hours') + ' a month between them. At the rate card a cycle of those hours ' +
+        'is worth ' + money0(cycleValue) + '.',
+      read: next
+        ? 'The next invoices go out on ' + dayMonth(next) + ' — ' + count(byDate[next].n, 'child', 'children') +
+          ' reaching the last class of the cycle that day, ' + money0(byDate[next].v) + ' between them, and each ' +
+          'one covers the cycle that follows.' +
+          (raised ? ' ' + count(raised, 'child has', 'children have') + ' already had the last class of this ' +
+            'cycle, so those invoices are raised.' : '')
+        : 'No plan has a class left in this cycle, so there is no invoice waiting to be raised.',
+      act: 'A plan is chosen, changed or stopped on the family record. Anything outside it is a sale in Billing.',
       todo: null,
       todoWhy: '',
-      steady: 'Nothing here carries a date. A pack is paid for, so the sessions in it stay the child’s ' +
-        'until they are taken. ' + (ending.length
+      steady: (unbooked
+        ? count(unbooked, 'hour is', 'hours are') + ' not booked into a class yet — ' + listOf(unbookedKids) + '. '
+        : 'Every hour in this cycle is booked into a dated class, so nothing is about to be lost. ') +
+        used + ' of the ' + hours + ' hours have been taken so far and ' + left + ' are still to come. ' +
+        D.RULES.unusedHours + ' ' +
+        (ending.length
           ? listOf(ending.map(function (r) { return r.s.name; })) +
-            (ending.length === 1 ? ' holds a pack that does not renew, so those sessions are the last the studio will bill for.'
-              : ' hold packs that do not renew, so those sessions are the last the studio will bill for.')
-          : 'Every pack here renews itself when its last session is used.'),
-      counts: 'The pack on each child record, priced from the after-school rate card. Fewest classes to ' +
-        'renewal first, so the packs about to charge are at the top.',
-      excludes: 'The ' + count(noPack.length, 'child', 'children') + ' who hold no pack: ' +
-        count(booked.length, 'child is', 'children are') + ' booked into camp and one-off classes only' +
+            (ending.length === 1 ? ' is on a plan that does not renew, so no invoice is raised on that last class. '
+              : ' are on plans that do not renew, so no invoice is raised on those last classes. ')
+          : '') +
+        'Every plan runs to ' + D.PLAN_YEAR.ends + ' and ends there.',
+      counts: 'The plan on each child record, priced from the after-school rate card, with the hours read off ' +
+        'their dated classes. The invoice is raised on the last class of the cycle and covers the next one, so ' +
+        'the soonest last class is at the top, and a last class already behind us reads as raised.',
+      excludes: 'The ' + count(noPlan.length, 'child', 'children') + ' with no plan. Camp, no-school days, ' +
+        'private classes and pop-ups are one-off bookings with no cycle and no renewal — ' +
+        count(booked.length, 'child is', 'children are') + ' here on those alone' +
         (idle.length
           ? ', and ' + listOf(idle.map(function (s) { return s.name + ' (' + lcFirst(classesLine(s)) + ')'; }))
           : '') + '.',
       table: table,
-      footLabel: count(rows.length, 'child', 'children') + ' holding ' + count(sessions, 'session', 'sessions'),
-      footValue: Grove.money(held)
+      footLabel: count(rows.length, 'child', 'children') + ' on a plan · ' + count(hours, 'hour', 'hours') + ' a month',
+      footValue: money0(cycleValue) + ' a cycle'
     };
   }
 
   /* ---- 2. Retention ---------------------------------------------------------
      A family leaving is only a job if it leaves owing something. Whether it
-     does is read from its invoices rather than assumed. Leaving means the pack
-     is not renewed: they take the sessions they have paid for and stop. */
+     does is read from its invoices rather than assumed. Leaving means notice
+     has been given: the plan finishes the cycle it is in and is not billed
+     again. */
 
   function retention() {
     var leaving = D.FAMILIES.filter(function (f) { return f.status === 'Cancelling'; });
@@ -279,21 +329,20 @@
       return m !== null && outMonths !== null && m < outMonths;
     }).length;
 
-    /* What a leaving family still holds, counted off the children's packs, so
-       the last class can be planned for rather than guessed at. */
+    /* What a leaving family still has in this cycle, counted off the
+       children's plans, so the last class can be planned for. */
     var outKids = [], outLeft = 0;
     if (out) {
       D.STUDENTS.forEach(function (s) {
-        if (s.family !== out.name) return;
-        var p = D.pack(s);
-        if (!p.isPack || !p.left) return;
+        var p = D.plan(s);
+        if (s.family !== out.name || !p.isPlan || !p.leftHours) return;
         outKids.push(s.name);
-        outLeft += p.left;
+        outLeft += p.leftHours;
       });
     }
     var tail = outKids.length
       ? ' ' + listOf(outKids) + (outKids.length === 1 ? ' has ' : ' have ') +
-        count(outLeft, 'session', 'sessions') + ' left to take, and the pack does not renew after that.'
+        count(outLeft, 'hour', 'hours') + ' left in this cycle, and the plan is not billed again.'
       : '';
 
     var owing = [], owed = 0;
@@ -334,18 +383,20 @@
       read: out
         ? 'The ' + out.name + ' family is the only one leaving, after ' + count(outMonths, 'month', 'months') +
           ' — longer than ' + shorter + ' of the ' + staying.length + ' staying. This is not a first-term drop-out.' + tail
-        : 'Nobody has asked to stop, so every family on the books is expected back.',
-      act: 'Whether a pack renews is set on the family record.',
+        : 'Nobody has given notice, so every family on the books is expected back.',
+      act: 'Notice, and the date a plan stops, is recorded on the family record.',
       todo: owing.length ? money0(owed) + ' to settle' : null,
       todoWhy: owing.length
         ? 'The ' + listOf(leaving.map(function (f) { return f.name; })) + ' family is going and ' +
           count(owing.length, 'invoice has', 'invoices have') + ' not been paid. Collect it before the last class.'
         : '',
       steady: out
-        ? 'The ' + out.name + ' family has asked not to renew, and its last invoice has settled, so there is nothing left to collect.'
-        : 'Nobody has asked to stop.',
+        ? 'The ' + out.name + ' family has given notice and its last invoice has settled, so there is nothing left to collect.'
+        : 'Nobody has given notice.',
       counts: 'The join date and the status on each family record, measured against ' + stamp() + '. Longest first.',
-      excludes: 'Nothing. All ' + count(D.FAMILIES.length, 'family', 'families') + ' on the books are counted.',
+      excludes: 'Nothing. All ' + count(D.FAMILIES.length, 'family', 'families') + ' on the books are counted. ' +
+        'Leaving is ' + lcFirst(D.RULES.cancelPlan) + ' Plans that simply run their course need no notice: they ' +
+        'end with the school year on ' + D.PLAN_YEAR.ends + '.',
       table: table,
       footLabel: 'Median tenure across ' + count(D.FAMILIES.length, 'family', 'families'),
       footValue: count(med, 'month', 'months')
@@ -354,11 +405,10 @@
 
   /* ---- 3. Attendance --------------------------------------------------------
      A low figure is worth a word with a family, but it has no date on it. Told
-     more than 24 hours ahead, an absence costs the family nothing — the
-     session stays in the child's pack and the pack simply lasts a week longer.
-     Inside that, the session is spent. Both counts are read off the absence
-     rows, which is why this report absorbed what the make-up report used to
-     say. This one is something to know, not something to do. */
+     more than the notice period ahead, an absence earns a make-up. Later than
+     that, or a no-show, the class counts as attended and no make-up is given.
+     Both counts are read off the absence rows, and the rules themselves come
+     from D.RULES so this screen never invents a version of them. */
 
   function attendance() {
     var withFigure = D.STUDENTS.filter(function (s) { return figure(s.att) !== null; });
@@ -372,10 +422,11 @@
     var kept = D.ABSENCES.filter(function (a) { return !a.spent; });
     var spent = D.ABSENCES.filter(function (a) { return !!a.spent; });
     var absLine = D.ABSENCES.length
-      ? count(D.ABSENCES.length, 'absence has', 'absences have') + ' been reported, and ' + kept.length +
-        ' of them kept the session in the child’s pack because the studio was told in time' +
+      ? count(D.ABSENCES.length, 'absence has', 'absences have') + ' been reported. ' + kept.length +
+        ' came in more than ' + D.RULES.cancelNotice + ' ahead, so a make-up can be booked' +
         (spent.length
-          ? '. In the other ' + count(spent.length, 'case', 'cases') + ' the session was spent, exactly as if the child had come'
+          ? ', and in ' + count(spent.length, 'case', 'cases') + ' it came later — the class counted as attended ' +
+            'and no make-up was given'
           : '') + '.'
       : 'No absence has been reported.';
 
@@ -415,11 +466,12 @@
       todo: null,
       todoWhy: '',
       steady: count(low.length, 'child sits', 'children sit') +
-        ' below 90%, which is worth a word with the family rather than a job for today. Nothing here carries ' +
-        'a date: an absence reported in time costs a family nothing, and a catch-up class booked afterwards ' +
-        'spends a session from the pack like any other class.',
+        ' below 90%, which is worth a word with the family rather than a job for today. Nothing here carries a ' +
+        'date of its own: cancel in the portal ' + D.RULES.cancelNotice + ' ahead and the family gets a make-up, ' +
+        'later than that the class is used. The make-up window is set to “' + D.RULES.makeupWindow +
+        '” under Settings → Policies, and a make-up spends hours from the plan like any other class.',
       counts: 'The attendance figure recorded against each enrolled child, lowest first. The absence column ' +
-        'counts what the studio has been told about that child, whether or not the session was spent.',
+        'counts what the studio has been told about that child, whether or not the class still counted as attended.',
       excludes: 'Children with nothing recorded yet — ' +
         listOf(without.map(function (s) { return s.name + ' (' + lcFirst(classesLine(s)) + ')'; })) + '.',
       table: table,
@@ -463,7 +515,10 @@
       unit: 'Places taken',
       value: pct(en, cap),
       delta: en + ' of ' + cap + ' places',
-      find: count(D.CLASSES.length, 'class holds', 'classes hold') + ' ' + en + ' children against ' + cap + ' places' +
+      /* `en` is places taken, not children — a child in three classes fills
+         three of them — so the sentence says enrollments, the way the
+         programs report does. */
+      find: count(D.CLASSES.length, 'class holds', 'classes hold') + ' ' + en + ' enrollments against ' + cap + ' places' +
         (over ? ', and the ' + over.day + ' ' + over.time + ' class is over at ' + over.en + ' in a room for ' + over.cap : '') + '.',
       read: count(waiting, 'child is', 'children are') + ' waiting for ' + count(queues, 'class', 'classes') +
         ' that are already full' + (idle ? ', while the ' + idle.name + ' has sold none of its ' + idle.cap : '') +
@@ -527,7 +582,8 @@
           (worst.note ? ', and the largest reads “' + worst.note + '”' : ', the largest ' + money0(worst.amt) + '.')
         : '',
       steady: 'Every invoice raised has settled.',
-      counts: 'Every invoice raised — a pack, a renewal, a camp week, a fee — and what has settled against it.',
+      counts: 'Every invoice raised — a cycle of plan hours, a camp week, a registration fee, a one-off booking — ' +
+        'and what has settled against it.',
       excludes: 'A charge posted to a family ledger that no invoice has picked up yet. Billing counts those in its own outstanding figure, so that number is the larger one.',
       table: table,
       footLabel: count(paid.length, 'invoice', 'invoices') + ' paid of ' + D.INVOICES.length,
@@ -535,7 +591,59 @@
     };
   }
 
-  /* ---- 6. Hours and pay --------------------------------------------------------
+  /* ---- 6. Charged outside a plan -----------------------------------------------
+     The owner's own "make sale / post sale". A child whose school finishes a
+     week after the program, a private class that comes up tomorrow, an event,
+     anything else: one action — pick the family, say what it is for, enter the
+     amount, charge the card on file. Because it is one action rather than a
+     rule per exception, it is also one report rather than three. */
+
+  function sales() {
+    var rows = D.SALES.slice().sort(function (a, b) { return b.amt - a.amt; });
+    var taken = 0;
+    rows.forEach(function (r) { taken += r.amt; });
+    var biggest = rows[0];
+    var families = [];
+    rows.forEach(function (r) { if (families.indexOf(r.fam) === -1) families.push(r.fam); });
+
+    var table = ui.table(
+      ['Family', 'What it was for', { label: 'Charged', align: 'right' }],
+      rows.map(function (r) {
+        return {
+          cells: [
+            ui.two(r.fam + ' family', r.when + ' · ' + r.by),
+            ui.mute(r.what),
+            num(money0(r.amt))
+          ]
+        };
+      })
+    );
+
+    return {
+      unit: 'Charged outside a plan',
+      value: money0(taken),
+      delta: count(rows.length, 'charge', 'charges') + ' to ' + count(families.length, 'family', 'families'),
+      find: count(rows.length, 'charge has', 'charges have') + ' been made outside a plan, ' + money0(taken) +
+        ' in all, to ' + count(families.length, 'family', 'families') + ' — ' + listOf(families) + '.',
+      read: biggest
+        ? 'The largest is ' + money0(biggest.amt) + ' to the ' + biggest.fam + ' family, “' + biggest.what +
+          '”. Every exception is charged this way rather than given a rule of its own: extra classes when a school ' +
+          'finishes later than the program, a private class, an event, anything else.'
+        : 'Nothing has been charged outside a plan yet.',
+      act: 'A sale is made from Billing, or from the family record, against the card already on file.',
+      todo: null,
+      todoWhy: '',
+      steady: 'Each of these was charged when it was made, to the card on file, so nothing here is waiting to be ' +
+        'collected. Sales do not renew and they do not change a plan: hours a month stay what the family signed up for.',
+      counts: 'Every manual charge on the books, with what it was for and who took it. Largest first.',
+      excludes: 'Plan invoices and booked programs. Those sit in Collection health.',
+      table: table,
+      footLabel: count(rows.length, 'charge', 'charges') + ' · ' + count(families.length, 'family', 'families'),
+      footValue: money0(taken)
+    };
+  }
+
+  /* ---- 7. Hours and pay --------------------------------------------------------
      Hours, classes and the hourly wage bill are what the staff records carry,
      so that is the headline. Cost per enrolled child was the old one, and the
      roster answers it — every child on a class roll is countable — so it is
@@ -622,7 +730,7 @@
     };
   }
 
-  /* ---- 7. Programs -------------------------------------------------------------
+  /* ---- 8. Programs -------------------------------------------------------------
      Revenue per studio hour was the old headline, and no field prices a studio
      hour. Enrollment against places is what the classes record, so that is what
      this reports. */
@@ -679,7 +787,8 @@
         ? count(unsold.length, 'class has', 'classes have') + ' sold nothing at all — ' +
           listOf(unsold.map(function (c) { return c.name + ' (' + c.cap + ' places)'; })) + '. '
         : 'Every class has sold something. ') +
-        'Nothing here carries a date, so this is selling to be done rather than a job for today.',
+        'Nothing here carries a date, so this is selling to be done rather than a job for today. ' +
+        'Only after-school is sold as a plan; the rest are one-off bookings.',
       counts: 'Every class grouped by the program it belongs to.',
       excludes: 'Nothing. All ' + count(D.CLASSES.length, 'class sits', 'classes sit') + ' under one of the ' +
         count(rows.length, 'program', 'programs') + '.',
@@ -689,13 +798,10 @@
     };
   }
 
-
-  /* ---- 8. Where families come from ---------------------------------------------
-     Restored. This was deleted during the rebuild because its headline figure
-     could not be checked and its rows rendered empty — the registration form
-     asks how a family heard about the studio, and Settings said the answers
-     were in Reports, but no field carried the answer. The field exists now
-     (FAMILIES.heardVia), so the report counts real rows. */
+  /* ---- 9. Where families come from ---------------------------------------------
+     The registration form asks how a family heard about the studio, and the
+     answer is carried on the family record (FAMILIES.heardVia), so the report
+     counts real rows. */
 
   function acquisition() {
     var tally = {};
@@ -707,7 +813,7 @@
       return { source: k, n: tally[k] };
     }).sort(function (a, b) { return b.n - a.n; });
 
-    var total = D.FAMILIES.length;
+    var families = D.FAMILIES.length;
     var top = rows[0];
     var paid = rows.filter(function (r) { return r.source === 'Instagram' || r.source === 'Google'; });
     var paidN = paid.reduce(function (n, r) { return n + r.n; }, 0);
@@ -718,19 +824,19 @@
         return { cells: [
           '<span class="cell-strong">' + esc(r.source) + '</span>',
           num(r.n),
-          num(pct(r.n, total))
+          num(pct(r.n, families))
         ] };
       })
     );
 
     return {
-      unit: 'families on the books',
-      value: String(total),
+      unit: 'Families on the books',
+      value: String(families),
       delta: top.source + ' brought ' + top.n,
-      find: top.source + ' is how ' + top.n + ' of ' + total + ' families found the studio (' +
-        pct(top.n, total) + '), which is more than any other route.',
+      find: top.source + ' is how ' + top.n + ' of ' + families + ' families found the studio (' +
+        pct(top.n, families) + '), which is more than any other route.',
       read: paidN
-        ? 'Instagram and Google together brought ' + paidN + ' of ' + total + ' — the only two routes ' +
+        ? 'Instagram and Google together brought ' + paidN + ' of ' + families + ' — the only two routes ' +
           'that cost money, so they are the two worth measuring against what is spent on them.'
         : 'Nothing here came from a paid route.',
       act: 'The question is asked at the end of the registration form. It can be switched off under Settings → Policies.',
@@ -739,10 +845,10 @@
       steady: 'Answers are collected once, at registration, so this grows only when a family joins. ' +
         'It says nothing about who stays — that is in Who is staying, and how long.',
       counts: 'Every family on the books, by the answer they gave at registration.',
-      excludes: 'Nobody. All ' + total + ' families answered.',
+      excludes: 'Nobody. All ' + families + ' families answered.',
       table: table,
       footLabel: count(rows.length, 'route', 'routes'),
-      footValue: total + ' families'
+      footValue: families + ' families'
     };
   }
 
@@ -751,14 +857,15 @@
      primary button on the report. It is not a menu of related pages. */
 
   var REPORTS = [
-    { id: 'packs',       cat: 'Revenue',    title: 'Sessions bought and not yet used', open: { label: 'Open Families', to: 'families' }, build: packs },
-    { id: 'retention',   cat: 'Retention',  title: 'Who is staying, and how long',     open: { label: 'Open Families', to: 'families' }, build: retention },
-    { id: 'absence',     cat: 'Attendance', title: 'Attendance by child',              open: { label: 'Open Families', to: 'families' }, build: attendance },
-    { id: 'fill',        cat: 'Capacity',   title: 'Fill rate by class',               open: { label: 'Open Requests', to: 'requests' }, build: fill },
-    { id: 'collection',  cat: 'Payments',   title: 'Collection health',                open: { label: 'Open Billing',  to: 'billing' },  build: collection },
-    { id: 'staffcost',   cat: 'Staff',      title: 'Hours and pay across the team',    open: { label: 'Open Staff',    to: 'staff' },    build: staffCost },
-    { id: 'programs',    cat: 'Programs',   title: 'Which programs fill',              open: { label: 'Open Programs', to: 'programs' }, build: programs },
-    { id: 'acquisition', cat: 'Marketing',  title: 'Where families come from',         open: { label: 'Open Families', to: 'families' }, build: acquisition }
+    { id: 'plans',       cat: 'Revenue',    title: 'Plan hours and what a cycle is worth', open: { label: 'Open Families', to: 'families' }, build: plans },
+    { id: 'retention',   cat: 'Retention',  title: 'Who is staying, and how long',         open: { label: 'Open Families', to: 'families' }, build: retention },
+    { id: 'absence',     cat: 'Attendance', title: 'Attendance by child',                  open: { label: 'Open Families', to: 'families' }, build: attendance },
+    { id: 'fill',        cat: 'Capacity',   title: 'Fill rate by class',                   open: { label: 'Open Requests', to: 'requests' }, build: fill },
+    { id: 'collection',  cat: 'Payments',   title: 'Collection health',                    open: { label: 'Open Billing',  to: 'billing' },  build: collection },
+    { id: 'sales',       cat: 'Payments',   title: 'Charged outside a plan',               open: { label: 'Open Billing',  to: 'billing' },  build: sales },
+    { id: 'staffcost',   cat: 'Staff',      title: 'Hours and pay across the team',        open: { label: 'Open Staff',    to: 'staff' },    build: staffCost },
+    { id: 'programs',    cat: 'Programs',   title: 'Which programs fill',                  open: { label: 'Open Programs', to: 'programs' }, build: programs },
+    { id: 'acquisition', cat: 'Marketing',  title: 'Where families come from',             open: { label: 'Open Families', to: 'families' }, build: acquisition }
   ];
 
   function rep(ctx) {
@@ -903,7 +1010,7 @@
       var made = ui.card({ title: 'How this figure is made', flush: true }, ui.rows([
         { title: 'Counts', sub: esc(b.counts) },
         { title: 'Excludes', sub: esc(b.excludes) },
-        { title: 'Period', sub: esc('The studio as it stands on ' + stamp() + '. This is today’s rows counted, not a trend.') }
+        { title: 'Period', sub: esc('The studio as it stands on ' + stamp() + '. This is today’s rows counted, not a trend. ' + D.PLAN_YEAR.note) }
       ]));
 
       return h`${raw(headline)}

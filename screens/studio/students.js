@@ -13,16 +13,29 @@
    roll and so is not on her screen: she meets a child in a room, and the
    office's own screens carry the ones she will not meet yet.
 
-   What this pass changed
-     - the make-up credit is gone, because the thing it counted never existed.
-       A family buys a pack of sessions for one child, and the pack renews when
-       the last session in it is used. Tell the studio more than 24 hours ahead
-       and the session simply stays in the pack. So there is no credit to hold,
-       none to book, none to approve and none to expire, and the card that
-       pilled four credit states has gone with them. What replaces it is the
-       two facts a teacher can act on: the classes a child has missed, and any
-       extra class booked on top of their weekly place — which is a child
-       arriving in an hour that is not theirs.
+   HOW THE STUDIO'S MODEL REACHES THIS SCREEN
+     - a plan is HOURS A MONTH — 4, 8, 12 or 16 — and the dated classes in
+       D.SESSIONS spend them an hour at a time, so a two-hour class takes two
+       and a child on sixteen hours may come eight times or sixteen. Only
+       After-School has a plan: camp, no-school days, private classes and
+       pop-ups are booked one at a time, and a child with no plan says so. The
+       plan appears once, as a line on the record, read from D.plan(), because
+       a teacher needs to know why a child comes twice a month rather than
+       four times and never needs the price.
+     - a missed class is not "just an absence". The rule families sign
+       is in D.RULES — cancelled at least 24 hours ahead it comes back as a
+       make-up, later than that or a no-show it counts as attended — so the
+       row says which, off the absence’s own “spent”, and the note quotes
+       D.RULES rather than restating it. The make-up window is a Settings
+       choice with two options and is rendered from whichever one is set,
+       never written down here.
+     - which is also what the extra-class card is for. A make-up and a class
+       bought on top of the weekly place arrive the same way — a child in an
+       hour that is not theirs — and that is the whole of what a teacher acts
+       on. The one consequence that is hers is the register: a booked make-up
+       the child does not attend is used, and D.RULES says so rather than this
+       file. Nothing on this screen books, issues, approves or expires
+       anything.
      - the roster is the join. Nothing here reads the free-text class sentence
        on a child any more. The list, the register button, the safety lines,
        the record and the note picker all go through D.roster and
@@ -37,7 +50,7 @@
      - "Not in a class yet" is gone with the children it held. It was a card
        that existed to explain why a name had no class.
 
-   Carried over from the earlier passes
+   Also true of this screen
      - safety is the first thing on the page, on both tabs. "Your children"
        opens with a clay band naming every child with a medical alert and the
        condition, and its button moves to the Safety tab.
@@ -86,12 +99,17 @@
   var SECOND_NOTES = [
     'Struggled with scoring — worth a second demo.',
     'Needed the coil join shown twice before it held.',
-    'Sat with a new child all session without being asked.',
+    'Sat with a new child for the whole class without being asked.',
     'Mixed a good secondary palette with no help at all.'
   ];
 
   function word(n) { return WORDS[n] === undefined ? String(n) : WORDS[n]; }
   function cap(s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
+  function lower(s) { return String(s).charAt(0).toLowerCase() + String(s).slice(1); }
+  function unstop(s) {
+    var t = String(s);
+    return t.charAt(t.length - 1) === '.' ? t.slice(0, -1) : t;
+  }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   function firstName(name) { return String(name).split(' ')[0]; }
   function byName(a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); }
@@ -199,13 +217,51 @@
   }
 
   /* What the child has missed, and any class booked on top of their weekly
-     place. Both are read off the rows this screen lists, never off STUDENTS.mk,
-     which still carries a count of a thing that no longer exists. */
+     place. Both are counted off the rows the card lists, never written down. */
   function missedBy(s) {
     return D.absencesFor(s.name);
   }
   function extrasFor(s) {
     return D.EXTRA_CLASSES.filter(function (x) { return x.child === s.name; });
+  }
+
+  /* ---- the plan, as context ----------------------------------------------------
+     A plan is hours a month, not classes: a child on 16 hours taking two-hour
+     classes comes eight times, a child on 16 hours taking one-hour classes
+     comes sixteen. That is the only part a teacher uses, so the price and the
+     cycle dates stay on the office's screens. Read from D.plan(). */
+
+  function planLine(s) {
+    var p = D.plan(s);
+    if (!p.isPlan) {
+      return { isPlan: false, v: 'No plan — booked one class at a time', tone: 'mute' };
+    }
+    return {
+      isPlan: true,
+      v: plural(p.hours, 'hour a month', 'hours a month') + ' · ' +
+         p.usedHours + ' of ' + p.hours + ' hours used this cycle',
+      tone: null
+    };
+  }
+
+  /* One of the "a make-up cannot" rules, found by a word inside it rather than
+     by its place in the list, so the list can grow without this breaking. */
+  function makeupNever(word) {
+    return D.RULES.makeupNever.filter(function (r) {
+      return String(r).toLowerCase().indexOf(word) !== -1;
+    })[0] || '';
+  }
+
+  /* The window a make-up has to be taken in is a studio setting with two
+     options, so it is rendered from whichever one is set rather than written
+     into a sentence here. */
+  function makeupWindowWords() {
+    var w = String(D.RULES.makeupWindow);
+    if (w === 'same cycle') return 'inside the same billing cycle';
+    if (w.indexOf('from the missed class') !== -1) {
+      return 'within ' + w.split('from the missed class').join('of the missed class');
+    }
+    return w;
   }
 
   /* The other instructor who teaches, for the second note on the record. */
@@ -466,6 +522,8 @@
               '. Emergency contact ' + f.guardian + ', ' + f.phone + '.'
           });
 
+      var plan = planLine(s);
+
       var kvRows = [
         ['Age', esc(s.age + ' · ages ' + s.band)],
         {
@@ -473,6 +531,7 @@
           v: esc(hours.length ? classTextFull(s) : 'No class yet'),
           tone: hours.length ? null : 'mute'
         },
+        { k: 'Plan', v: esc(plan.v), tone: plan.tone },
         ['Family', esc(f.guardian + ' · ' + s.family + ' family')],
         kin.length
           ? {
@@ -491,7 +550,14 @@
         });
       }
 
-      var about = ui.card({ title: 'About ' + firstName(s.name) }, ui.kv(kvRows));
+      var about = ui.card({
+        title: 'About ' + firstName(s.name),
+        note: plan.isPlan
+          ? 'A plan is hours a month, not classes, and a class takes its own length out of them. ' +
+            'It is here so the week makes sense — the hours and the invoice belong to the office.'
+          : 'Only After-School runs on a plan. Camp, no-school days, pop-ups and private classes ' +
+            'are booked and paid for one at a time.'
+      }, ui.kv(kvRows));
 
       var me = (ctx && ctx.persona && ctx.persona.name) || Grove.persona('studio').name;
       var other = otherInstructor(me);
@@ -515,21 +581,40 @@
         }
       ]));
 
-      /* Only where there is something to show. An absence is just an absence
-         now — nothing is issued and nothing is owed — so it is recorded and left
-         alone. An extra class is the one that changes her afternoon: a child
-         arriving in an hour that is not theirs. */
+      /* Only where there is something to show. A missed class either comes
+         back as a make-up or is counted as attended, and the row says which,
+         because that is what decides whether this child turns up somewhere
+         else. The class booked on top is the one that changes her afternoon:
+         a child arriving in an hour that is not theirs. */
       var missed = missedBy(s);
       var extras = extrasFor(s);
+      var owed = !plan.isPlan ? [] : missed.filter(function (a) { return !a.spent; });
+      var rebooking = makeupNever('rebooked');
 
       var missedCard = missed.length
         ? ui.card({
             title: 'Classes missed',
-            head: ui.pill(plural(missed.length, 'class', 'classes')),
+            head: '<span class="inline">' +
+              (owed.length ? ui.pill(plural(owed.length, 'make-up', 'make-ups'), 'ok') : '') +
+              '<span class="mute">' + esc(plural(missed.length, 'class', 'classes')) + '</span></span>',
             flush: true,
-            note: 'There is nothing to issue and nothing to book back. A family catching up books an extra class, and it shows beside this.'
+            note: plan.isPlan
+              ? 'Cancelled at least ' + D.RULES.cancelNotice + ' ahead, the class comes back as a ' +
+                'make-up in ' + lower(unstop(D.RULES.makeupWhere)) + ', ' + makeupWindowWords() +
+                '. Later than that, or a no-show: ' + lower(D.RULES.lateCancel) +
+                ' That is why a child can appear in an hour that is not their own.'
+              : 'Camp, no-school days, pop-ups and private classes are booked and paid for one ' +
+                'at a time, so a missed day is recorded here and the rest is the office’s.'
           }, ui.rows(missed.map(function (a) {
-            return { title: esc(a.date), sub: esc(a.reason) };
+            /* Whether a missed class comes back is a plan rule, so it is only
+               claimed on a child who is on a plan. */
+            return {
+              title: esc(a.date),
+              sub: esc(a.reason),
+              end: !plan.isPlan ? '' : (a.spent
+                ? ui.pill('Counted as attended', 'warn')
+                : ui.pill('Make-up offered', 'ok'))
+            };
           })))
         : '';
 
@@ -538,8 +623,12 @@
             title: 'Extra classes',
             head: ui.pill(plural(extras.length, 'class', 'classes')),
             flush: true,
-            note: 'Booked on top of the weekly place, so ' + firstName(s.name) +
-              ' turns up in a room that is not usually theirs.'
+            note: (plan.isPlan
+                ? 'A make-up, or an hour bought on top of the weekly place. Either way '
+                : 'Booked on top of the usual week, so ') +
+              firstName(s.name) + ' turns up in a room that is not usually theirs. ' +
+              'Take the register as you would for any other class' +
+              (plan.isPlan && rebooking ? ': a make-up cannot ' + lower(rebooking) + '.' : '.')
           }, ui.rows(extras.map(function (x) {
             return {
               title: esc(x.when),
@@ -549,12 +638,12 @@
           })))
         : '';
 
-      var sessions = [missedCard, extraCard].filter(Boolean);
+      var onTop = [missedCard, extraCard].filter(Boolean);
 
       return safety +
         '<div class="section">' + ui.grid(2, [about, notes]) + '</div>' +
-        (sessions.length
-          ? '<div class="section">' + ui.grid(sessions.length > 1 ? 2 : null, sessions) + '</div>'
+        (onTop.length
+          ? '<div class="section">' + ui.grid(onTop.length > 1 ? 2 : null, onTop) + '</div>'
           : '');
     }
   });
