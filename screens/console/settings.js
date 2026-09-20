@@ -335,7 +335,7 @@
       head: editHead('After-school plans'),
       note: 'The ' + PLAN_KEYS.length + ' tiers a family chooses from, priced a month at a time. One session is one hour, so the rate per hour falls from ' +
         rate(P.as.extraClassRate.p4) + ' to ' + rate(P.as.extraClassRate.p16) +
-        ' as the plan grows. A change applies to new enrolments immediately; existing families keep their agreed rate until you move them deliberately, and are given ' +
+        ' as the plan grows. A change applies to new enrollments immediately; existing families keep their agreed rate until you move them deliberately, and are given ' +
         NOTICE_DAYS + ' days’ notice.'
     }, ui.kv(PLAN_KEYS.map(planRow)));
 

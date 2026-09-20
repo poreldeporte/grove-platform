@@ -1,4 +1,4 @@
-/* Registration → the enrolment flow, for all six programmes.
+/* Registration → the enrollment flow, for all six programmes.
 
    FIVE STEPS BECAME THREE, for every programme.
      1. Who      the old step 1 (your family) and step 2 (children) merged.
@@ -698,7 +698,7 @@
       name: 'Photo permission',
       sum: 'Optional. You choose whether we may photograph your child, and can withdraw it at any time.',
       det: [
-        'Permission is optional and does not affect enrolment.',
+        'Permission is optional and does not affect enrollment.',
         'Photographs may be used on our website and Instagram.',
         'You can withdraw permission at any time in the portal, and we will stop using new images.'
       ]
@@ -1563,7 +1563,7 @@
 
   function subFor(p, s) {
     var whoSub = 'We ask once. Next time you book anything at the studio, this is already ' +
-      'filled in. Add every child you want to enrol — allergies and medical notes travel with ' +
+      'filled in. Add every child you want to enroll — allergies and medical notes travel with ' +
       'them onto every roster.';
     if (s === 0) {
       return p === 'bday'
@@ -1661,7 +1661,8 @@
 
   Grove.screen('rFlow', {
     surface: 'registration',
-    crumbTitle: 'Enrolment',
+    keepSurface: true,
+    crumbTitle: 'Enrollment',
     eyebrow: function (ctx) { return 'step ' + (stepNo() + 1) + ' of 3'; },
     title: function (ctx) { return TITLES[progId(ctx)][stepNo()]; },
     sub: function (ctx) { return subFor(progId(ctx), stepNo()); },

@@ -149,10 +149,10 @@
              'set number of classes.' },
         { h: 'The grace period and the late fee',
           p: 'Payment is due within a ' + GRACE_DAYS + '-day grace period. After that a ' +
-             money(LATE_FEE) + ' late fee is added to your account. Enrolment is confirmed by ' +
+             money(LATE_FEE) + ' late fee is added to your account. Enrollment is confirmed by ' +
              'payment, and a child is not admitted to class before it is made.' },
         { h: 'If a card fails',
-          p: 'We retry on day 1, day 3 and day 7. After the third failure the enrolment is ' +
+          p: 'We retry on day 1, day 3 and day 7. After the third failure the enrollment is ' +
              'flagged and someone rings you — it is never cancelled silently.' },
         { h: 'Refunds and credits',
           p: 'Payments are not refundable. They can be applied as credit towards the same kind ' +

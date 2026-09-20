@@ -11,7 +11,7 @@ Three portals and one public flow:
 | **Registration** | Anyone | Book after-school, camp, no-school day, private, birthday or pop-up |
 | **Family** | Parents | See the schedule, report an absence, book a make-up, pay, sign paperwork |
 | **Studio** | Teachers | Today's rooms, safety alerts, attendance, lesson plans, hours |
-| **Console** | The owner | Enrolment, families, billing, staff, inventory, messages, settings |
+| **Console** | The owner | Enrollment, families, billing, staff, inventory, messages, settings |
 
 Use the **Signed in as** switcher in the top right to move between an owner, an
 instructor and a parent. The **Desktop / Tablet / Phone** switcher previews the

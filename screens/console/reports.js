@@ -303,7 +303,7 @@
         ' that are already full' + (idle ? ', while the ' + idle.name + ' has sold none of its ' + idle.cap : '') +
         '. The places to add are where the queue already is.',
       act: 'Offers go out in position order from Requests.',
-      counts: 'The enrolment, the capacity and the waiting count carried on each class.',
+      counts: 'The enrollment, the capacity and the waiting count carried on each class.',
       excludes: 'Nothing. All ' + count(D.CLASSES.length, 'class is', 'classes are') +
         ' counted, the one-to-one and the birthday party included.',
       table: table,
@@ -413,7 +413,7 @@
 
   /* ---- 7. Hours and pay --------------------------------------------------------
      Cost per enrolled child was the old headline. It cannot be derived: the
-     dataset holds ten named children against 124 enrolments, so any per-child
+     dataset holds ten named children against 124 enrollments, so any per-child
      figure would be a guess. What the staff records do support is hours,
      classes and the hourly wage bill, and that is what this now reports. */
 
@@ -488,7 +488,7 @@
 
   /* ---- 8. Programs -------------------------------------------------------------
      Revenue per studio hour was the old headline, and nothing in the dataset
-     prices a studio hour. Enrolment against places is what the classes record,
+     prices a studio hour. Enrollment against places is what the classes record,
      so that is what this reports. */
 
   function programs() {
@@ -529,8 +529,8 @@
     return {
       unit: big.p.short + ' share',
       value: pct(big.en, en),
-      delta: big.en + ' of ' + en + ' enrolments',
-      find: big.p.name + ' is the biggest program — ' + big.en + ' of ' + en + ' enrolments across ' +
+      delta: big.en + ' of ' + en + ' enrollments',
+      find: big.p.name + ' is the biggest program — ' + big.en + ' of ' + en + ' enrollments across ' +
         big.classes + ' of the ' + count(D.CLASSES.length, 'class', 'classes') + '. ' +
         (next ? next.p.name + ' is ' + next.en + ' children in ' + count(next.classes, 'class', 'classes') + '.' : ''),
       read: count(free, 'place is', 'places are') + ' unsold across the ' +

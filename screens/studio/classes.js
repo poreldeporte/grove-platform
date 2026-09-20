@@ -51,7 +51,7 @@
      - the camp register listed all six of the week's children under a room
        whose own card calls it "Ages 5–7", and three of them were 8 or older.
        Camp runs two rooms at the same hour, so the room a child is in is now
-       settled by the band Grove.data puts on the room, and the same enrolment
+       settled by the band Grove.data puts on the room, and the same enrollment
        test the other rosters use is applied to camp as well — a child the
        dataset still reads as "Not yet enrolled" was standing in Studio 1. The
        card and the register can no longer disagree about who the class is for
@@ -96,7 +96,7 @@
 
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
-  /* "6 of 18" when the list is short of the enrolment, "18" when it is not. */
+  /* "6 of 18" when the list is short of the enrollment, "18" when it is not. */
   function countOf(shown, total) {
     return shown === total ? String(shown) : shown + ' of ' + total;
   }
@@ -177,7 +177,7 @@
   /* Camp runs Mon–Fri in two rooms at once, so a weekday proves nothing about
      which room a child is in — the age band does. A camp room takes the
      children of its own week who are enrolled and in the band the room
-     advertises. Enrolment is the same test every other roster here applies:
+     advertises. Enrollment is the same test every other roster here applies:
      a child the dataset has not enrolled yet is nobody's register. */
   function campRoster(c) {
     if (weekOf(c.name) !== CAMP_WEEK) return [];
@@ -390,7 +390,7 @@
             };
           }))
         : ui.empty('Nobody on this register yet',
-            'The office adds children to a class when they enrol.'));
+            'The office adds children to a class when they enroll.'));
 
       var top = safety + watching;
 

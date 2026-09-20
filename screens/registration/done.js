@@ -1,4 +1,4 @@
-/* Registration → Confirmation. The last screen of the enrolment flow.
+/* Registration → Confirmation. The last screen of the enrollment flow.
 
    Simplified against the old confirmation:
      - the filled hero card, the character SVG and the loose button row are
@@ -390,7 +390,7 @@
         ];
       }
       return [
-        step(color, 'Enrolment confirmation, by email',
+        step(color, 'Enrollment confirmation, by email',
           'Your plan, your weekly schedule, the first class date and the amount that follows.'),
         step(color, 'A secure payment link for ' + m(q.invoice), asBreakdown()),
         step(color, 'First class ' + FIRST_CLASS,
@@ -466,6 +466,7 @@
 
   Grove.screen('rDone', {
     surface: 'registration',
+    keepSurface: true,
     crumbTitle: 'Confirmation',
     eyebrow: function (ctx) {
       var p = progId(ctx);
@@ -506,7 +507,10 @@
       return h`${raw(ui.grid(2, [booked, next]))}
         ${raw(note ? '<div class="section">' + note + '</div>' : '')}
         ${raw(ui.formActions([
-          { label: 'Open the family portal', kind: 'primary', to: 'fHome' },
+          /* A parent who booked from inside the portal is already in it. */
+          Grove.state.surface === 'family'
+            ? { label: 'Back to home', kind: 'primary', to: 'fHome' }
+            : { label: 'Open the family portal', kind: 'primary', to: 'fHome' },
           { label: 'Book something else', to: 'rPick' }
         ]))}`;
     }

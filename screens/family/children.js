@@ -85,9 +85,9 @@
     return D.DOCUMENTS.filter(function (d) { return d.name.indexOf(name) !== -1; })[0];
   }
 
-  /* The class record behind a child's enrolment string, when there is one.
+  /* The class record behind a child's enrollment string, when there is one.
      Both Johnson children sit in a class CLASSES holds, so each gets a teacher
-     row. An enrolment string that is not a day-and-room pair — a waitlisted
+     row. An enrollment string that is not a day-and-room pair — a waitlisted
      place, or several days at once — comes back empty and the row is dropped. */
   function classFor(s) {
     var parts = String(s.cls).split(' · ');

@@ -74,6 +74,7 @@
    * @param {string} key
    * @param {{
    *   surface: 'console'|'family'|'studio'|'registration',
+   *   keepSurface?: boolean,    // render inside whatever portal you came from
    *   title: string,            // page title (rendered uppercase)
    *   crumbs?: Array,           // trail after the portal root: strings, or {label, to}
    *   eyebrow?: string,         // handwritten line above the title
@@ -118,7 +119,12 @@
     if (!def) { Grove.toast('No screen "' + screen + '" yet'); return; }
     state.screen = screen;
     state.params = params || {};
-    state.surface = def.surface;
+    /* The booking flow belongs to whichever portal you entered it from: a
+       parent booking a second child stays inside the family portal, rail and
+       breadcrumbs intact, while a visitor arriving from the public
+       Registration tab stays there. Screens marked keepSurface therefore
+       adopt the current surface rather than forcing their own. */
+    if (!def.keepSurface || !Grove.nav.surface(state.surface)) state.surface = def.surface;
     var sc = document.querySelector('.scroll');
     if (sc) sc.scrollTop = 0;
     Grove.draw();

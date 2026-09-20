@@ -15,7 +15,7 @@
        child on every row
      - the month grid is NOT rendered. It needs a 7-column cell grid, four
        pip colours and a legend, none of which exist in app.css. Its dated
-       content — the make-up Friday, the party, autumn enrolment — is the
+       content — the make-up Friday, the party, autumn enrollment — is the
        "After this week" card, so the three Family → Home tiles that link
        here still land on a page that names them
      - the two "Studio closed" rows are dropped: the only closure in the
@@ -251,7 +251,7 @@
       },
       {
         lead: '10 Aug',
-        title: 'Autumn enrolment opens',
+        title: 'Autumn enrollment opens',
         sub: esc(autumn.body),
         to: 'fNews',
         id: autumn.id

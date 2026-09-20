@@ -326,7 +326,10 @@ a:hover { color: var(--plum); }
   transition: color var(--speed);
 }
 .crumbs__link:hover { color: var(--grove); text-decoration: underline; }
-.crumbs__sep { color: var(--line); }
+/* Sized up from the 12.5px the trail inherits — at that size the chevron
+   read as a speck rather than a separator. Kept light so it still sits
+   behind the words. */
+.crumbs__sep { font-size: 20px; line-height: 1; color: var(--ink-45); opacity: 0.6; }
 .crumbs__current { color: var(--ink-70); font-weight: 600; }
 
 /* Page header — a two-column grid so title block and actions share a

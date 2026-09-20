@@ -218,14 +218,14 @@
 
   var FAMILY_TRANSCRIPT = [
     { d: '1 July',  m: 'studio', t: 'We are closed for the holiday on 4 July. Monday families, a make-up credit has already been added to your account.', s: '1 Jul' },
-    { d: '18 July', m: 'studio', t: 'Autumn enrolment opens 10 August. Returning families get first refusal on their current day and time for one week.', s: '18 Jul' },
+    { d: '18 July', m: 'studio', t: 'Autumn enrollment opens 10 August. Returning families get first refusal on their current day and time for one week.', s: '18 Jul' },
     { d: '21 July', m: 'studio', t: 'Camp week 4 — please send a water bottle, a snack, and clothes that can get properly messy. We are working with clay all week.', s: '21 Jul' },
     { d: '', m: 'us', t: 'Thank you! Emma is very excited about the clay.', s: '21 Jul' },
     { d: 'Today',   m: 'studio', t: 'We have opened two extra make-up hours this Friday, 10:00 and 11:00. Emma has two credits — grab one if it suits.', s: '2 hrs ago' }
   ];
 
   var ANNOUNCEMENTS = [
-    { id: 'an1', head: 'Autumn enrolment opens 10 August',         body: 'Returning families get first refusal on their current day and time for one week.', aud: 'All families',      when: '18 Jul 2026', by: 'Sabrina Yanguas', status: 'Pinned',    kind: 'info' },
+    { id: 'an1', head: 'Autumn enrollment opens 10 August',         body: 'Returning families get first refusal on their current day and time for one week.', aud: 'All families',      when: '18 Jul 2026', by: 'Sabrina Yanguas', status: 'Pinned',    kind: 'info' },
     { id: 'an2', head: 'Make-up slots added for Friday',           body: 'Two extra hours this Friday, 10:00 and 11:00. Emma has two credits.',              aud: 'After-School Art',  when: '27 Jul 2026', by: 'Dani Cruz',       status: 'Live',      kind: 'ok' },
     { id: 'an3', head: 'Camp week 4 — what to bring',              body: 'A water bottle, a snack, and clothes that can get properly messy.',                aud: 'Seasonal Camp',     when: '21 Jul 2026', by: 'Dani Cruz',       status: 'Live',      kind: 'ok' },
     { id: 'an4', head: 'Studio closed 7 September, Labor Day',     body: 'Monday families get an automatic make-up credit.',                                 aud: 'All families',      when: '15 Jul 2026', by: 'Sabrina Yanguas', status: 'Scheduled', kind: 'neutral' },

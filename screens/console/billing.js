@@ -329,7 +329,7 @@
       { label: 'Retry failed cards', kind: 'quiet', size: 'sm', msg: plural(bad.length, 'card') + ' retried · results land within the hour' }
     ]);
 
-    var note = 'Retry cadence is day 1, day 3, day 7. After the third failure the enrolment is flagged but never silently cancelled — a person decides.';
+    var note = 'Retry cadence is day 1, day 3, day 7. After the third failure the enrollment is flagged but never silently cancelled — a person decides.';
     if (desk.length) {
       note += ' A line marked unbilled is a desk charge already on the family ledger; it joins their next invoice.';
     }

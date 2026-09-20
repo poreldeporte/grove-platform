@@ -21,7 +21,7 @@
        the same way, and the placeholder can no longer be clipped mid-word
 
    Everything counted here is counted off the rows being shown. Where the
-   dataset holds fewer records than the class enrols, the card says so ("3 of
+   dataset holds fewer records than the class enrolls, the card says so ("3 of
    12 enrolled") rather than printing a total it cannot stand behind. */
 (function () {
   'use strict';
@@ -137,7 +137,7 @@
   }
 
   /* "3 of 12 enrolled" when the dataset holds fewer records than the class
-     enrols, plain "12 enrolled" when it holds them all. */
+     enrolls, plain "12 enrolled" when it holds them all. */
   function countOf(shown, total, word) {
     return shown === total ? total + ' ' + word : shown + ' of ' + total + ' ' + word;
   }
@@ -164,7 +164,7 @@
     sub: function () {
       if (Grove.tab('classes', 'List') !== 'Calendar') {
         return 'Every class across all ' + Object.keys(D.PROGRAMS).length +
-          ' programs. A class generates dated sessions; enrolments attach to the class, attendance to the session.';
+          ' programs. A class generates dated sessions; enrollments attach to the class, attendance to the session.';
       }
       var away = datedElsewhere();
       var base = 'Week of 27 July 2026. A session with nobody teaching it is flagged on its block.';
@@ -334,7 +334,7 @@
         ? ui.notice({
             kind: 'bad',
             title: 'Over capacity by ' + (c.en - c.cap),
-            text: 'A make-up booking landed here after the last enrolment. Rebalancing moves the make-up, not the enrolled child.',
+            text: 'A make-up booking landed here after the last enrollment. Rebalancing moves the make-up, not the enrolled child.',
             action: { label: 'Rebalance', msg: 'Prototype — nothing was moved' }
           })
         : '';
@@ -369,7 +369,7 @@
           'Safety notes are shown to every teacher on this roster and on the attendance sheet.'
       }, kids.length
         ? ui.rows(kids.map(kidRow))
-        : ui.empty('No children linked yet', 'Enrolment counts come from the class; children are linked as they register.')
+        : ui.empty('No children linked yet', 'Enrollment counts come from the class; children are linked as they register.')
       );
 
       var waitCard = ui.card({

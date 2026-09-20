@@ -1,7 +1,7 @@
 /* Registration → what would you like to book.
 
    The public entry point. Six programme cards, one per programme in
-   Grove.data.PROGRAMS, each dropping straight into the enrolment flow.
+   Grove.data.PROGRAMS, each dropping straight into the enrollment flow.
 
    Simplified against the spec:
      - the per-card tag ("Monthly", "One payment", "By appointment", "Quote")
@@ -81,7 +81,8 @@
 
   Grove.screen('rPick', {
     surface: 'registration',
-    crumbTitle: 'Book & enrol',
+    keepSurface: true,
+    crumbTitle: 'Book & enroll',
     eyebrow: 'let’s get you booked',
     title: 'What would you like to book?',
     sub: 'One form, five minutes. Everything we ask for is kept, so the next thing you book is quicker.',

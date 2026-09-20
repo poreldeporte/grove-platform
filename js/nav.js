@@ -79,9 +79,9 @@
       { k: 'fBilling', l: 'Billing' },
       { k: 'fDocuments', l: 'Documents' },
       GAP,
-      /* A parent could not book or enrol anything from inside the old portal —
+      /* A parent could not book or enroll anything from inside the old portal —
          no second child, no next term, no camp week. This is that route. */
-      { k: 'rPick', l: 'Book & enrol' }
+      { k: 'rPick', l: 'Book & enroll' }
     ],
     familyFoot: [],
 

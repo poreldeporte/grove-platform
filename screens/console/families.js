@@ -396,7 +396,7 @@
       var children = ui.card({
         title: 'Children',
         flush: true,
-        head: ui.btn({ label: 'Enrol a child', kind: 'quiet', size: 'sm', msg: 'Prototype — no form yet' }),
+        head: ui.btn({ label: 'Enroll a child', kind: 'quiet', size: 'sm', msg: 'Prototype — no form yet' }),
         foot: h`<span class="mute">Current plan</span><span class="strong">${plan || 'Not set yet'}</span>`,
         note: 'A child is enrolled against the family, so a second child joins this record rather than starting another one.'
       }, kids.length
@@ -531,8 +531,8 @@
         ? { k: 'Photo permission', v: docState(doc).v, tone: docState(doc).tone }
         : { k: 'Photo permission', v: 'No form on file', tone: 'mute' };
 
-      var enrolment = ui.card({
-        title: 'Enrolment',
+      var enrollment = ui.card({
+        title: 'Enrollment',
         head: ui.pill(started ? 'On the register' : 'Not started', started ? 'ok' : 'warn')
       }, ui.kv([
         ['Class', esc(s.cls)],
@@ -593,7 +593,7 @@
         { k: 'Balance', v: esc(Grove.money(f.balance)), tone: f.balance > 0 ? 'clay' : null }
       ]));
 
-      return ui.grid(2, [ui.col([enrolment, sessions]), ui.col([safety, family])]);
+      return ui.grid(2, [ui.col([enrollment, sessions]), ui.col([safety, family])]);
     }
   });
 

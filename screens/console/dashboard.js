@@ -8,7 +8,7 @@
      - every figure in the stat strip is read off Grove.data. "Sessions today
        11" stood above a list of five; "On waitlists 12" fought the six entries
        the Requests screen prints, its tab count and its "6 of 6"; revenue,
-       enrolments and outstanding were literals no other screen could back.
+       enrollments and outstanding were literals no other screen could back.
        Sessions is now the length of the list underneath it, the waitlist
        figure is the queue itself, outstanding is the same total across the
        same four families as Billing, and revenue is the invoices Billing
@@ -154,7 +154,7 @@
     crumbTitle: 'Dashboard',
     eyebrow: 'where things stand',
     title: String(D.today).replace(/\s+\d{4}$/, ''),
-    sub: 'Summer camp week 4 of 6 · after-school enrolment opens in 13 days.',
+    sub: 'Summer camp week 4 of 6 · after-school enrollment opens in 13 days.',
     actions: [
       { label: 'Take payment', msg: 'Payment recorded' },
       { label: 'Add family', to: 'families' },
@@ -199,7 +199,7 @@
           sub: paidInvoices().length + ' of ' + D.INVOICES.length + ' invoices settled'
         },
         {
-          label: 'Active enrolments',
+          label: 'Active enrollments',
           value: String(sum(D.CLASSES, function (c) { return c.en; })),
           sub: 'of ' + sum(D.CLASSES, function (c) { return c.cap; }) + ' places'
         },
