@@ -2,47 +2,44 @@
 
    Written for the parent this portal is actually for: someone in their sixties
    doing the school run, wary of getting money wrong online, who will ring the
-   studio rather than hunt for a control. Money is where that wariness is
-   sharpest, so the page answers three questions in order and stops:
-   how much, when, and off which card. Everything else is history.
+   studio rather than hunt for a control.
 
-   Every figure is still derived from this family's ledger in js/data.js, so
-   the headline, the breakdown and the history cannot disagree:
-     - classes         = the positive lines of the opening monthly run (820)
-     - sibling discount = the negative lines of that same run          (−140)
-     - not yet paid    = every line still flagged unpaid                (18)
-     - next payment    = classes + discount + not yet paid             (698)
+   Rewritten onto the corrected billing model. This screen used to say "Your
+   next payment is $698.00, on 1 Aug 2026", which was wrong twice over. There
+   is no billing date, and a family with two children does not have one
+   payment. A pack of sessions belongs to ONE CHILD. The child attends, each
+   class spends a session, and when the last session is used that pack renews
+   and charges for another the same size. So the page now leads with where each
+   child's pack stands and what renewing it costs, and the next charge is a
+   number of classes away rather than a day on the calendar.
 
-   What changed in this pass:
-     - the page opens with one sentence — "Your next payment is $698.00, on
-       1 Aug 2026" — above the fold, before any breakdown. That is the thing
-       a parent came for
-     - the Balance card is gone. "Owing now" is the $18 line inside the next
-       payment and a row in the history, so it was the same fact told three
-       times, and "Credits since 1 Jul 2026 · −$168.00" was the studio's
-       running tally, not anything a parent can act on
-     - the four-column history table (Date / What / Amount / Status) is one
-       sentence per line: what it was, where it stands, how much. A pill
-       reading "Credit" told a parent nothing; "Sibling discount — Lucas ·
-       You were not charged this" tells them everything
-     - negative amounts are never shown in the colour of money owed. Green is
-       money off or money back, red is the one charge still to pay, and the
-       card note says so in words in case the colour is missed
-     - "Update" was a quiet link in a card header. It is now a labelled
-       button, and the page says plainly that the studio never sees the whole
-       card number
-     - the card page drops "What this card has taken" ($848 settled, −$168
-       credits, $680 to date). That is the studio's bookkeeping, it repeats
-       the history on Billing, and none of it is needed to type in a new card
-     - both pages end in an invitation to ring a person. Changing a card is
-       exactly where a wary parent gives up, and the studio already offers to
-       take it over the phone (Messages, the Delgado thread)
+   Every figure is derived, nothing is written down here:
+     - pack size, used and left        D.pack(student)
+     - what a pack costs               D.PRICING.as.plans['p' + size]
+     - what came off it last time      the negative ledger line raised beside
+                                       the pack line on the same day (Lucas's
+                                       sibling discount, −$140)
+     - still to pay                    every ledger line still flagged unpaid
+                                       ($18 late pickup, 20 July — it is the
+                                       second notice on the page, not buried)
 
-   Jargon removed: credit, autopay, ePayment, posting, status, balance,
-   processor token, "charges settled", "carried over", "applied".
+   Machinery deleted rather than renamed:
+     - the monthly run. `cycle()`, `since()` and the tuition + discount +
+       arrears sum that produced one headline figure are gone, along with
+       NEXT = '1 Aug 2026' and every "on the 1st", "billing cycle" and
+       "thirty days notice to cancel"
+     - make-up credit. `inPlainWords()` existed to rewrite "Make-up credit
+       applied" into parent English; there is no credit to rewrite. A session
+       cancelled more than 24 hours ahead is simply not spent, so the pack
+       lasts a week longer, and a catch-up class spends a session like any
+       other class
+     - expiry. Nothing on this page carries an expiry date or warning, because
+       a paid-for session is the family's until it is used
+     - "membership" and "cancellation". A family holds sessions; they stop by
+       letting a pack not renew, keeping what they have already paid for
 
-   The desk number matches the one on Schedule → Book a make-up, so a parent
-   is never given two numbers for the same studio. */
+   The desk number is the studio's own, so a parent is never given two numbers
+   for the same studio. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -50,31 +47,12 @@
   /* The portal is signed in as the Johnson family. */
   function fam() { return D.family('johnson'); }
 
-  /* The studio's run posts on the 1st; today is 28 July, so the next one is
-     1 August — the same date Console → Billing gives for the next run. */
-  var NEXT = '1 Aug 2026';
   var DESK = D.STUDIO.phone;
 
-  /* The ledger opens on the day of the monthly run. Totals are counted from
-     there and labelled with that date, rather than implying a lifetime figure. */
-  function since() { return D.LEDGER[0].d; }
-
-  /* The monthly run posts on a single date — the opening lines of the ledger.
-     Those lines are what recurs, so the breakdown and the history below it
-     are reading the same numbers. */
-  function cycle() {
-    var first = since();
-    return D.LEDGER.filter(function (l) { return l.d === first; });
-  }
+  /* --- the ledger ----------------------------------------------------------- */
 
   function sum(list) {
     return list.reduce(function (n, l) { return n + l.amt; }, 0);
-  }
-  function credits(list) {
-    return list.filter(function (l) { return l.amt < 0; });
-  }
-  function charges(list) {
-    return list.filter(function (l) { return l.amt > 0; });
   }
   function unpaid() {
     return D.LEDGER.filter(function (l) { return !l.paid; });
@@ -86,24 +64,81 @@
   /* The most recent line that actually went to the card. Money coming off is
      not a payment taken, so those lines are not candidates. */
   function lastCharge() {
-    var taken = charges(settled());
+    var taken = settled().filter(function (l) { return l.amt > 0; });
     return taken[taken.length - 1];
   }
 
-  /* The children the ledger is for, read from the roster rather than named in
-     this file. */
-  function kidNames(f) {
-    var names = D.STUDENTS.filter(function (s) { return s.family === f.name; })
-      .map(function (s) { return s.name.split(' ')[0]; });
+  /* --- the packs -------------------------------------------------------------
+     A pack belongs to one child, so this family has as many renewals as it has
+     children with a pack, and they fall due at different classes. */
+
+  function kids(f) {
+    return D.STUDENTS.filter(function (s) { return s.family === f.name; });
+  }
+  function firstName(s) { return String(s.name).split(' ')[0]; }
+
+  /* What the studio charges for a pack that size. */
+  function listPrice(size) {
+    var p = D.PRICING.as.plans['p' + size];
+    return typeof p === 'number' ? p : 0;
+  }
+  /* The pack the studio last raised for this child. */
+  function packLine(name) {
+    var found = null;
+    D.LEDGER.forEach(function (l) {
+      if (l.amt > 0 && String(l.what).indexOf('Pack of ') === 0 &&
+          String(l.what).indexOf('— ' + name) !== -1) found = l;
+    });
+    return found;
+  }
+  /* Anything taken off that pack on the day it was raised — on this family,
+     the sibling discount. It comes off the renewal the same way. */
+  function reliefOn(line, name) {
+    if (!line) return 0;
+    return sum(D.LEDGER.filter(function (l) {
+      return l.d === line.d && l.amt < 0 && String(l.what).indexOf('— ' + name) !== -1;
+    }));
+  }
+
+  /* Everything this screen knows about one child's pack. Nothing here is a
+     date, and nothing here expires. */
+  function packOf(s) {
+    var p = D.pack(s);
+    var name = firstName(s);
+    var line = packLine(name);
+    var price = listPrice(p.size) || (line ? line.amt : 0);
+    var off = reliefOn(line, name);
+    return {
+      child: s, name: name, size: p.size, used: p.used, left: p.left,
+      isPack: p.isPack, price: price, off: off, due: price + off
+    };
+  }
+  /* Soonest to renew first, then any child who holds no pack at all. */
+  function packsFor(f) {
+    return kids(f).map(packOf).sort(function (a, b) {
+      return (a.isPack ? a.left : 999) - (b.isPack ? b.left : 999);
+    });
+  }
+
+  function classCount(n) { return n + (n === 1 ? ' class' : ' classes'); }
+  function whenRenews(left) {
+    return left <= 1 ? 'at the next class' : 'in ' + left + ' classes';
+  }
+  function ordinal(n) {
+    var t = n % 100;
+    if (t > 3 && t < 21) return n + 'th';
+    return n + (['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+  }
+
+  /* The children a sentence is about, read from the roster rather than named
+     in this file. */
+  function nameList(list) {
+    var names = list.map(function (p) { return p.name; });
     if (!names.length) return 'your children';
     if (names.length === 1) return names[0];
     return names.slice(0, names.length - 1).join(', ') + ' and ' + names[names.length - 1];
   }
 
-  /* 'Visa ···1183 · exp 04/29' → 'Visa ···1183', for use inside a sentence. */
-  function cardName(f) {
-    return String(f.card).split(' · ')[0];
-  }
   /* '1 Jul 2026' → '1 Jul'. Every line is this year and the card says so. */
   function shortDate(d) {
     var p = String(d).split(' ');
@@ -111,8 +146,8 @@
   }
   function howTaken(f) {
     return f.autopay
-      ? 'Automatically, on the 1st'
-      : 'By you, each time — we email you when it is due';
+      ? 'Automatically, the moment a pack renews'
+      : 'By you — we email you when a pack is ready to renew';
   }
 
   function total(n) {
@@ -122,20 +157,12 @@
     return h`<span class="${raw(tone || '')}">${Grove.money(n)}</span>`;
   }
 
-  /* The ledger is written in the studio's words. A parent is charged for
-     classes, not for tuition, and nothing on their side of the product is
-     called a credit. */
-  function inPlainWords(what) {
-    return String(what)
-      .replace('tuition', 'classes')
-      .replace('Make-up credit applied', 'Money back for a missed class');
-  }
-  /* One line saying where each row stands. A line that is money off or money
-     back says so in words, so the green is never carrying that meaning on its
-     own — the title says which of the two it is. */
+  /* One line saying where each ledger row stands. A line that is money off or
+     money back says so in words, so the green is never carrying that meaning
+     on its own. */
   function standing(l) {
     if (l.amt < 0) return 'You were not charged this';
-    if (!l.paid) return 'Not paid yet — it joins your ' + NEXT + ' payment';
+    if (!l.paid) return 'Not paid yet — it goes on the next pack that renews';
     return 'Paid';
   }
   function tone(l) {
@@ -143,62 +170,131 @@
     return l.paid ? 'strong' : 'clay strong';
   }
 
+  /* --- one child's pack ------------------------------------------------------ */
+
+  function packCard(p) {
+    if (!p.isPack) {
+      return ui.card({
+        title: p.name,
+        note: 'Nothing renews for ' + p.name + '. Camp weeks and one-off classes are paid ' +
+          'for when you book them.'
+      }, ui.kv([
+        ['What they come to', esc(p.child.cls || 'Camp and one-off bookings')],
+        { k: 'Sessions held', v: 'None', tone: 'mute' }
+      ]));
+    }
+
+    var rows = [];
+    if (p.child.cls) rows.push(['Their class', esc(p.child.cls)]);
+    rows.push(['Sessions used', p.used + ' of ' + p.size]);
+    rows.push(['Left before it renews', classCount(p.left)]);
+    rows.push(['Renews on', 'the ' + ordinal(p.size) + ' class']);
+    rows.push(['A pack of ' + p.size, Grove.money(p.price)]);
+    if (p.off) rows.push({ k: 'Sibling discount', v: Grove.money(p.off), tone: 'grove' });
+    rows.push({ k: 'To pay when it renews', v: total(p.due) });
+
+    return ui.card({
+      title: p.name,
+      head: ui.pill('Pack of ' + p.size),
+      note: 'Sessions never expire. Tell us 24 hours ahead and the session stays in ' +
+        p.name + "'s pack — the pack just lasts a week longer."
+    }, h`<div class="stack">
+      ${raw(ui.meter(p.used, p.size))}
+      ${raw(ui.kv(rows))}
+    </div>`);
+  }
+
   /* ---- billing --------------------------------------------------------------- */
 
   Grove.screen('fBilling', {
     surface: 'family',
     crumbTitle: 'Billing',
-    eyebrow: 'what you pay, and when',
+    eyebrow: 'when your packs renew',
     title: 'Billing',
-    sub: 'Your next payment, what it is for, and everything you have paid so far.',
+    sub: 'Where each pack stands, what it costs when it renews, and everything you have paid.',
     actions: [
-      { label: 'Request cancellation', kind: 'danger', msg: 'Request sent · the studio will confirm by email' },
+      { label: 'Stop a pack renewing', kind: 'danger', msg: 'Request sent · you keep the sessions you have already paid for' },
       { label: 'Message the studio', kind: 'primary', to: 'fMessages' }
     ],
 
     body: function () {
       var f = fam();
-      var run = cycle();
-      var tuition = sum(charges(run));   /* the two class lines of the run */
-      var relief = sum(credits(run));    /* the sibling discount on that run */
+      var all = packsFor(f);
+      var held = all.filter(function (p) { return p.isPack; });
       var open = unpaid();
       var owing = sum(open);
-      var nextTotal = tuition + relief + owing;
 
-      /* The answer, in one sentence, before anything has to be scrolled or
-         added up. Everything under it is the working. */
-      var headline = ui.notice({
-        title: 'Your next payment is ' + Grove.money(nextTotal) + ', on ' + NEXT,
-        text: f.autopay
-          ? 'It will be taken from your ' + cardName(f) +
-            ' on the day. There is nothing you need to do.'
-          : 'You will need to pay it yourself. We will email you when it is due.'
-      });
+      /* The answer first: which pack is closest to renewing, how many classes
+         away that is, and what it costs. No date, because there is none. */
+      var soonest = held[0];
+      var headline = soonest
+        ? ui.notice({
+            title: soonest.name + "'s pack renews " + whenRenews(soonest.left) +
+              ' — ' + Grove.money(soonest.due),
+            text: held.length > 1
+              ? 'Nothing is charged on a date. Each pack belongs to one child and renews on ' +
+                'its own, so ' + nameList(held) + ' are charged separately.'
+              : 'Nothing is charged on a date. The pack renews the moment its last session ' +
+                'is used, and we charge for another the same size.'
+          })
+        : ui.notice({
+            title: 'Nothing is set to renew',
+            text: 'You hold no packs at the moment. Camp weeks and one-off classes are paid ' +
+              'for when you book them.'
+          });
 
-      var covers = [
-        ['Classes for ' + kidNames(f), Grove.money(tuition)],
-        { k: 'Sibling discount', v: Grove.money(relief), tone: 'grove' }
-      ];
-      if (owing) {
-        covers.push({
-          k: open.length === 1
-            ? inPlainWords(open[0].what) + ', not yet paid'
-            : open.length + ' earlier charges, not yet paid',
-          v: Grove.money(owing),
-          tone: 'clay'
-        });
-      }
-      covers.push({ k: 'Taken on ' + NEXT, v: total(nextTotal) });
+      /* Still owed, and not folded into a headline figure: it is its own
+         charge, and it is the one thing on this page to act on. */
+      var owed = owing
+        ? ui.notice({
+            kind: 'bad',
+            title: Grove.money(owing) + ' is still to pay',
+            text: (open.length === 1
+              ? open[0].what + ', from ' + open[0].d + '.'
+              : Grove.money(owing) + ' across ' + open.length + ' charges.') +
+              ' It goes on the next pack that renews, or you can pay it now.',
+            action: { label: 'Pay it now', kind: 'primary', msg: Grove.money(owing) + ' paid · thank you' }
+          })
+        : '';
 
-      var what = ui.card({
-        title: 'What that payment is for',
-        note: kidNames(f) + ' have ' + f.plan + ' between them. If you ever want to stop, ' +
-          'we ask for thirty days notice.'
-      }, ui.kv(covers));
+      var packCards = all.length
+        ? ui.grid(2, all.map(packCard))
+        : ui.card({ title: 'Your children' },
+            ui.empty('No children on the account yet', 'Add a child and their pack appears here.'));
 
-      /* Changing a card was a quiet link the size of a footnote. It is the one
-         thing a parent comes to this page to change, so it is a labelled
-         button, and the reassurance sits directly under the card number. */
+      /* The model itself, in five plain lines. A parent billed monthly
+         everywhere else needs to be told this once. */
+      var works = ui.card({
+        title: 'How a pack works',
+        flush: true
+      }, ui.rows([
+        {
+          title: 'A pack belongs to one child',
+          sub: esc(held.length > 1
+            ? nameList(held) + ' each hold their own pack, and they renew at different times.'
+            : 'Each child holds their own pack.')
+        },
+        {
+          title: 'Every class spends one session',
+          sub: 'Including a catch-up class booked on top of the weekly one.'
+        },
+        {
+          title: 'The pack renews when the last session is used',
+          sub: 'We charge for another pack the same size. There is no billing date.'
+        },
+        {
+          title: 'Tell us 24 hours ahead and nothing is spent',
+          sub: 'The session stays in the pack. Inside 24 hours it is spent, exactly as if they had come.'
+        },
+        {
+          title: 'Sessions never expire',
+          sub: 'You have paid for them, so they are yours until they are used.'
+        }
+      ]));
+
+      /* Changing a card is the one thing a parent comes to this page to
+         change, so it is a labelled button rather than a quiet link, and the
+         reassurance sits directly under the card number. */
       var how = ui.card({
         title: 'How you pay',
         head: ui.btn({ label: 'Change the card', kind: 'primary', size: 'sm', to: 'fPaymentMethod' }),
@@ -207,17 +303,15 @@
       }, ui.kv([
         ['Your card', esc(f.card)],
         ['Payments are taken', howTaken(f)],
+        ['What you hold', esc(f.plan)],
         ['Receipts go to', esc(f.email)]
       ]));
 
-      /* One line per charge, in a sentence, newest first. The old version was
-         a Date / What / Amount / Status table whose pills read "Credit",
-         "Paid" and "Unpaid" — three words that all mean something different
-         to the studio than they do to a parent. */
+      /* One line per charge, in a sentence, newest first. */
       var lines = D.LEDGER.slice().reverse().map(function (l) {
         return {
           lead: esc(shortDate(l.d)),
-          title: esc(inPlainWords(l.what)),
+          title: esc(l.what),
           sub: esc(standing(l)),
           end: amount(l.amt, tone(l))
         };
@@ -227,11 +321,13 @@
         title: 'Everything so far',
         head: ui.btn({ label: 'Download statement', kind: 'quiet', size: 'sm', msg: 'Statement downloaded' }),
         flush: true,
-        note: 'Every charge since ' + since() + ', newest first. A figure in green is money ' +
-          'off or money back — you were not charged it.'
+        note: lines.length
+          ? 'Every charge since ' + D.LEDGER[0].d + ', newest first. A figure in green is ' +
+            'money off or money back — you were not charged it.'
+          : 'Every charge appears here, newest first.'
       }, lines.length
         ? ui.rows(lines)
-        : ui.empty('Nothing charged yet', 'Your first payment appears here the day it is raised.'));
+        : ui.empty('Nothing charged yet', 'Your first pack appears here the day you buy it.'));
 
       /* Money is where somebody who is unsure stops and rings instead. Saying
          that ringing is fine, on the page, is cheaper than the call being a
@@ -246,7 +342,9 @@
 
       return h`
         ${raw(headline)}
-        <div class="section">${raw(ui.grid(2, [what, how]))}</div>
+        ${raw(owed)}
+        <div class="section">${raw(packCards)}</div>
+        <div class="section">${raw(ui.grid(2, [works, how]))}</div>
         <div class="section">${raw(history)}</div>
         <div class="section">${raw(help)}</div>
       `;
@@ -276,22 +374,30 @@
       var last = lastCharge();
       var open = unpaid();
       var owing = sum(open);
+      var held = packsFor(f).filter(function (p) { return p.isPack; });
+      var soonest = held[0];
       var openNote;
 
       if (!open.length) {
         openNote = 'Nothing is waiting to be paid on this card.';
       } else if (open.length === 1) {
-        openNote = Grove.money(owing) + ' from ' + open[0].d + ' (' + inPlainWords(open[0].what) +
-          ') has not been paid yet. It joins your ' + NEXT + ' payment, on whichever card is here then.';
+        openNote = Grove.money(owing) + ' from ' + open[0].d + ' (' + open[0].what +
+          ') has not been paid yet. It goes on the next pack that renews, on whichever ' +
+          'card is here then.';
       } else {
         openNote = Grove.money(owing) + ' across ' + open.length +
-          ' charges has not been paid yet. It joins your ' + NEXT +
-          ' payment, on whichever card is here then.';
+          ' charges has not been paid yet. It goes on the next pack that renews, on ' +
+          'whichever card is here then.';
       }
+
+      var nextNote = soonest
+        ? 'Nothing is charged today. This card is used when ' + soonest.name +
+          "'s pack renews, " + whenRenews(soonest.left) + '.'
+        : 'Nothing is charged today. This card is used the next time you buy a pack.';
 
       var form = ui.card({
         title: 'Your new card',
-        note: 'Nothing is charged today. This card is used from your ' + NEXT + ' payment onwards.'
+        note: nextNote
       }, ui.fields(2, [
         ui.field({
           label: 'Card number',
@@ -324,6 +430,10 @@
         ['Your card', esc(f.card)],
         ['Payments are taken', howTaken(f)],
         ['Receipts go to', esc(f.email)],
+        soonest
+          ? ['Next pack to renew', esc(soonest.name) + ' · ' + Grove.money(soonest.due) +
+             ' · ' + classCount(soonest.left) + ' away']
+          : { k: 'Next pack to renew', v: 'None held', tone: 'mute' },
         last
           ? ['Last payment taken', esc(last.d) + ' · ' + Grove.money(last.amt)]
           : { k: 'Last payment taken', v: 'Nothing yet', tone: 'mute' }
@@ -341,7 +451,7 @@
       return h`
         ${raw(ui.grid('sidebar', [form, ui.col([onFile, help])]))}
         ${raw(ui.formActions([
-          { label: 'Save this card', kind: 'primary', msg: 'Card saved · your ' + NEXT + ' payment will use it' },
+          { label: 'Save this card', kind: 'primary', msg: 'Card saved · the next pack to renew will use it' },
           { label: 'Cancel', to: 'fBilling' }
         ], { sticky: true, hint: 'Nothing is charged today' }))}
       `;

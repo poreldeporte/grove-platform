@@ -15,10 +15,10 @@
      - Home phone, work phone, confirm email and confirm password are gone.
        One number and one address per person is enough to reach someone.
      - After-school asked for a plan, an age group, how to split the hours,
-       and then a day-and-time chip builder. It now asks for a plan, an age
+       and then a day-and-time chip builder. It now asks for a pack, an age
        group and the actual class, so the places shown are the real ones.
      - "Add individual classes" left registration — extras are bought from
-       the portal once a child is enrolled, and they are not part of the plan.
+       the portal once a child is enrolled, and they spend a session.
      - Camp asked for a week, then full week or days, then the days. Choosing
        the days is the same decision: five days is the week.
      - Camp extra hours are chosen once for the booking, not day by day.
@@ -28,19 +28,37 @@
      - The three right-hand aside boxes became notes on the cards they explain.
      - "Cell" on the main contact asked for the household number a second
        time. One number per family, asked once.
-     - All four after-school packages ended "· assigned by age group". The
+     - All four after-school packs ended "· assigned by age group". The
        age-group card says it once.
 
-   Every amount is computed from Grove.data.PRICING; policy wording is verbatim.
+   Every amount is computed from Grove.data.PRICING.
 
-   An after-school package is hours a week, not a loose number: 4 classes a
-   month is one hour a week, 8 is two, and the timetable is what those hours
-   are spent on. So step 2 ticks one class per weekly hour, defaults to the
-   classes that add up to the package exactly, offers only the packages the
-   age group can actually be made to add up to, and will not hand step 3 a
-   booking whose classes and package describe different things. Ages 12+ take
-   their two hours as a single 2-hour class, which is why the arithmetic is
-   done in hours rather than in sittings.
+   AFTER-SCHOOL IS A PACK OF SESSIONS, NOT A MONTH. This file used to bill it
+   as a subscription: a package was hours a week, four weeks made a month, the
+   classes ticked had to add up to the package exactly, and the running total
+   ended "then $1,080.00 a month from 1 Sep 2026". None of that was true. A
+   family buys a pack of sessions for a child; the child attends; when the last
+   session is used the pack charges again and grants the same number. There is
+   no billing date, so the next charge is a number of classes away.
+
+   What that deleted, rather than renamed:
+     - the month. WEEKS, planHours(), hoursWord() placement, NEXT_MONTH, and
+       every "a month" / "billed on the 1st" / "30 days notice to cancel" line.
+     - the arithmetic that made the classes ticked equal the package. A pack of
+       8 taken one class a week is eight weeks of classes and taken two a week
+       is four; neither is wrong, so there is nothing to reconcile and step 2
+       only has to ask for at least one weekly place. That took classHours(),
+       minutesAt(), asBandSums(), asPlanKeys() and asGap() with it, and a
+       2-hour class now spends one session like any other class.
+     - the make-up credit. Telling us 24 hours ahead does not issue anything —
+       the session simply stays in the pack, which then lasts a week longer.
+       To catch up, a family books an extra class and it spends a session.
+     - expiry. Sessions are paid for, so they are the child's until used.
+     - "membership". A family holds sessions; stopping is the pack not renewing.
+
+   A pack belongs to one child, so two children hold two packs that renew
+   independently, and the review step says so rather than quoting one figure
+   for the household.
 
    A waitlisted place is charged nothing. When the class you chose is full the
    running total itemises the invoice that would follow a place being offered
@@ -62,10 +80,10 @@
   var DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   var GRADES = ['1st grade', '2nd grade', '3rd grade', '4th grade', '5th grade', '6th grade'];
 
-  /* The two dates the confirmation screen also prints, kept word for word so
-     the review step and registration/done.js cannot drift apart. */
+  /* The one date the confirmation screen also prints, kept word for word so
+     the review step and registration/done.js cannot drift apart. There is no
+     second date: a pack renews on a class, not on a day. */
   var FIRST_CLASS = 'Monday 17 Aug 2026';
-  var NEXT_MONTH = '1 Sep 2026';
 
   /* ---- small helpers ------------------------------------------------------ */
 
@@ -87,28 +105,14 @@
   }
   var WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
   function word(n) { return WORDS[n] === undefined ? String(n) : WORDS[n]; }
-  function hoursWord(n) { return word(n) + plural(n, ' hour', ' hours'); }
-
-  /* Class lengths are read off the timetable rather than stored: "3:15–4:15pm"
-     is one hour, "4:30–6:30pm" is two. The meridiem is often only on the end
-     of the range, so the start borrows it. */
-  function minutesAt(text, fallbackMer) {
-    var pm = /pm/i.test(text), am = /am/i.test(text);
-    var bits = String(text).replace(/[^0-9:]/g, '').split(':');
-    var hh = parseInt(bits[0], 10) || 0;
-    var mm = parseInt(bits[1], 10) || 0;
-    if (!am && !pm) { pm = fallbackMer === 'pm'; am = !pm; }
-    if (pm && hh < 12) hh += 12;
-    if (am && hh === 12) hh = 0;
-    return hh * 60 + mm;
-  }
-  function classHours(c) {
-    if (!c) return 0;
-    var ends = String(c.time).split('–');
-    if (ends.length < 2) return 0;
-    var mer = /pm/i.test(ends[1]) ? 'pm' : 'am';
-    return (minutesAt(ends[1], mer) - minutesAt(ends[0], mer)) / 60;
-  }
+  function classesWord(n) { return word(n) + plural(n, ' class', ' classes'); }
+  /* A pack renews on a class, so the page has to be able to name which one. */
+  var ORDS = {
+    1: 'first', 2: 'second', 3: 'third', 4: 'fourth', 5: 'fifth', 6: 'sixth',
+    7: 'seventh', 8: 'eighth', 9: 'ninth', 10: 'tenth', 11: 'eleventh',
+    12: 'twelfth', 16: 'sixteenth'
+  };
+  function ordinal(n) { return ORDS[n] || (n + 'th'); }
 
   /* ---- flow state ---------------------------------------------------------- */
 
@@ -184,18 +188,22 @@
     return null;
   }
 
-  /* A month is billed as four weeks, which is what the package names count:
-     4 classes a month is one hour a week, 8 is two, and so on. The 12+ group
-     takes its two hours as one 2-hour class, which is why the packages are
-     measured in hours here rather than in sittings. */
-  var WEEKS = 4;
-  var PLAN_KEYS = ['p4', 'p8', 'p12', 'p16'];
-  function planClasses(k) { return Number(k.slice(1)); }
-  function planHours(k) { return planClasses(k) / WEEKS; }
+  /* A pack is a number of sessions for one child, and nothing else: a session
+     is one class, whatever that class's length, so the 12+ two-hour class
+     spends one like every other. The price per class falls as the pack grows,
+     and that figure is divided out of the pack price rather than written down
+     a second time. */
+  var PACK_KEYS = ['p4', 'p8', 'p12', 'p16'];
+  function packSize(k) { return Number(k.slice(1)); }
+  function packPrice(k) { return P.as.plans[k]; }
+  function packPerClass(k) { return packPrice(k) / packSize(k); }
   /* The "assigned by age group" line used to end all four of these. It is said
      once, on the age-group card, instead of four times here. */
-  function planSub(k) { return cap(hoursWord(planHours(k))) + ' a week'; }
-  function planLabel(key) { return key.slice(1) + ' Classes / Month'; }
+  function packSub(k) { return m(packPerClass(k)) + ' a class'; }
+  function packLabel(k) { return 'Pack of ' + packSize(k); }
+  function renewsText(k) {
+    return 'when the ' + ordinal(packSize(k)) + ' class is used';
+  }
 
   function asBands() {
     var out = [];
@@ -214,45 +222,23 @@
     var b = asBand();
     return classesFor('as').filter(function (c) { return c.band === b; });
   }
-  /* Hours a week the age group actually runs, and every total those classes
-     can be combined into. A package is only offered when the age group can be
-     made to add up to it exactly — ages 12+ run one 2-hour class, so there is
-     no way to buy one hour a week in that group. */
-  function asBandHours() {
-    return asClassList().reduce(function (t, c) { return t + classHours(c); }, 0);
-  }
-  function asBandSums() {
-    var sums = [0];
-    asClassList().forEach(function (c) {
-      var hrs = classHours(c), grown = sums.slice();
-      sums.forEach(function (s) { grown.push(s + hrs); });
-      sums = uniq(grown);
-    });
-    return sums;
-  }
-  function asPlanKeys() {
-    var sums = asBandSums();
-    var fits = PLAN_KEYS.filter(function (k) { return sums.indexOf(planHours(k)) !== -1; });
-    return fits.length ? fits : PLAN_KEYS;
-  }
-  function planKey() {
-    var fits = asPlanKeys();
-    var fallback = fits.indexOf('p8') === -1 ? fits[fits.length - 1] : 'p8';
-    var cur = pick('rPlan', fallback);
-    return fits.indexOf(cur) === -1 ? fallback : cur;
+  /* Every pack is offered to every age group. Pack size and weekly places are
+     two separate facts now: a pack of 8 taken one class a week lasts eight
+     weeks and taken two a week lasts four, and both are correct. */
+  function packKey() {
+    var cur = pick('rPack', 'p8');
+    return PACK_KEYS.indexOf(cur) === -1 ? 'p8' : cur;
   }
 
-  /* One weekly place per class ticked. The package says how many hours a week
-     it buys, so the classes ticked by default are the first ones in the age
-     group that add up to exactly that. */
+  /* One weekly place per class ticked. The first class in the age group is
+     ticked to start with, so a family that changes nothing buys one class a
+     week. */
   function classKey(c) { return 'rClass-' + c.id; }
   function asDefaultIds() {
-    var want = planHours(planKey()), used = 0, out = [];
-    asClassList().forEach(function (c) {
-      var hrs = classHours(c);
-      if (used + hrs <= want) { out.push(c.id); used += hrs; }
-    });
-    return out;
+    var list = asClassList();
+    if (!list.length) return [];
+    var open = list.filter(function (c) { return places(c); });
+    return [(open[0] || list[0]).id];
   }
   function asClasses() {
     var def = asDefaultIds();
@@ -260,14 +246,15 @@
       return Grove.toggle(classKey(c), def.indexOf(c.id) !== -1);
     });
   }
-  function asHours() {
-    return asClasses().reduce(function (t, c) { return t + classHours(c); }, 0);
+  function asPerWeek() { return asClasses().length; }
+  /* How long the pack lasts, in weeks, when it divides evenly into the weekly
+     places. Zero means there is nothing honest to say, so nothing is said. */
+  function asWeeks() {
+    var w = asPerWeek();
+    if (!w) return 0;
+    var n = packSize(packKey()) / w;
+    return n === Math.floor(n) ? n : 0;
   }
-  /* Positive when the package still has hours left to place, negative when
-     more has been ticked than it covers. Zero is the only state the review
-     step can describe without contradicting itself. */
-  function asGap() { return planHours(planKey()) - asHours(); }
-
   function classLabel(c) { return c ? c.day + ' ' + c.time + ' · ' + c.room : 'No place chosen'; }
   function classesLabel() {
     var list = asClasses();
@@ -364,22 +351,27 @@
     var relief, fee, base, extra, c, ev, q, hrs, days, full, due = null;
 
     if (p === 'as') {
-      base = P.as.plans[planKey()] * n;
+      var key = packKey();
+      base = packPrice(key) * n;
       fee = P.as.regFee * n;
       relief = P.as.regFee * 0.5 * (n - 1);
       total = base + fee - relief;
-      var asList = asClasses(), gap = asGap();
-      rows.push(row('Plan', planLabel(planKey()) + ' · ' + hoursWord(planHours(planKey())) + ' a week'));
+      var asList = asClasses(), weeks = asWeeks();
+      rows.push(row('Pack', packLabel(key) + (n > 1 ? ' for each child' : '')));
       rows.push(row('Age group', 'Ages ' + asBand()));
       rows.push(asList.length
         ? row(plural(asList.length, 'Class', 'Classes'), classesLabel())
-        : row('Class', 'Not chosen', 'mute'));
-      /* The package and the classes ticked are two ways of saying the same
-         thing, so when they do not match the card says which way. */
-      if (gap > 0) rows.push(row('Still to place', hoursWord(gap) + ' a week', 'clay'));
-      if (gap < 0) rows.push(row('More than the package covers', hoursWord(-gap) + ' a week', 'clay'));
+        : row('Class', 'Not chosen', 'clay'));
+      /* The pack renews on a class, never on a date, so this row counts
+         classes. The weeks beside it are only the same fact divided by the
+         weekly places — left out when the division is not exact, and left out
+         on the waitlist, where the first class is not scheduled yet. */
+      rows.push(row('Renews', cap(renewsText(key)) +
+        (weeks && !asWaiting() ? ' · about ' + word(weeks) + ' weeks away' : '')));
       rows.push(row('Children', String(n)));
-      rows.push(row('Tuition', m(base) + ' a month'));
+      /* Named for the goods, like "Tickets" on a pop-up, so it does not repeat
+         the "Pack" row above it. */
+      rows.push(row('Sessions', m(base)));
       rows.push(row('Registration fee', m(fee)));
       if (relief) rows.push(row('Sibling discount', '−' + m(relief), 'grove'));
       /* A waitlisted place is not billed. The itemised lines still add up to
@@ -392,9 +384,11 @@
         note = 'Nothing is charged while you are on the waitlist. If a place is offered you ' +
           'have 24 hours to accept, and the invoice above is emailed as a secure payment link.';
       } else {
-        label = 'First invoice';
-        note = 'Emailed as a secure payment link. Then ' + m(base) +
-          ' a month from ' + NEXT_MONTH + ', until you cancel.';
+        label = 'First charge';
+        note = 'Emailed as a secure payment link. ' + m0(packPrice(key)) + ' buys ' +
+          packSize(key) + ' sessions for ' + (n > 1 ? 'each child' : 'them') +
+          ', and the pack renews ' + renewsText(key) + ' — not on a date.' +
+          (n > 1 ? ' Each child holds their own pack, so the two renew separately.' : '');
       }
 
     } else if (p === 'camp') {
@@ -495,18 +489,22 @@
     }, ui.kv(rows));
   }
 
-  /* ---- policies — wording is verbatim, the fee is read from PRICING ---------------- */
+  /* ---- policies — the fee is read from PRICING ------------------------------------
+     The studio's own wording was kept word for word here, but it described a
+     monthly membership with make-up credits that expired, which is not how the
+     studio works. Every clause that said so has been rewritten to the pack;
+     the clauses that never mentioned money are untouched. */
 
   var POL = {
     asFacts: {
       name: 'Important Facts to Take Into Consideration',
-      sum: 'The program follows the school-year calendar, membership is month to month, and payment comes before class.',
+      sum: 'The program follows the school-year calendar, sessions are bought as a pack, and payment comes before class.',
       det: [
         'Our program follows the school-year calendar, operating from the date of enrollment through the end of the academic school year.',
-        'Membership is on a month-to-month basis.',
+        'You buy a pack of sessions for each child. When the last session in the pack is used, the pack renews: it charges again and grants the same number of sessions.',
         'Payment must be completed before your child attends class. Students will not be allowed to enter class without payment.',
         'Please be on time for drop-off and pick-up, as other classes may be scheduled before or after your child’s session. We appreciate your punctuality and cooperation.',
-        'Children with runny noses, coughs, or signs of illness may not participate in class. Please use your available make-up classes for days when your child is not feeling well.',
+        'Children with runny noses, coughs, or signs of illness may not participate in class. Tell us more than 24 hours ahead and the session stays in your child’s pack.',
         'The Grove Art Studio maintains a clean and safe environment. All surfaces and materials are disinfected before, during, between, and after each class.',
         'All art materials are provided during our sessions. Please dress children in comfortable clothing that can get messy, as paint and other art materials may stain.',
         'Please label personal items such as water bottles or belongings brought to the studio.',
@@ -516,33 +514,28 @@
     },
     asSched: {
       name: 'Class Scheduling',
-      sum: 'Mondays are often affected by holidays, and parents schedule every class and make-up themselves.',
+      sum: 'Mondays are often affected by holidays, and parents book every class themselves.',
       det: [
         'When selecting your weekly class day, please note that Mondays are often affected by holidays.',
-        'If you choose a Monday class, you are responsible for scheduling a makeup session before the end of the same month.',
-        'All makeup classes must be scheduled by parents in advance.',
-        'During school-year holiday breaks (such as Spring Break/Easter and Christmas Break), makeup classes must be arranged through the parent portal based on your child’s specific school calendar.',
-        'Monthly plans are not paused or prorated for holidays.',
-        'Parents are responsible for scheduling all classes and makeup sessions.',
+        'A week we are closed does not spend a session. Your pack simply lasts a week longer.',
+        'All classes are booked by parents in advance, through the portal.',
+        'During school-year holiday breaks (such as Spring Break/Easter and Christmas Break), classes are booked through the parent portal based on your child’s specific school calendar.',
+        'There is nothing to pause: a pack is only spent by a class your child attends.',
         'The Grove Art Studio is not responsible for booking or managing schedules.'
       ]
     },
-    asMakeup: {
-      name: 'Make-Up & Cancellations Policy',
-      sum: 'Cancel 24 hours ahead or the class counts as attended. Make-ups expire with the billing cycle.',
+    asCancel: {
+      name: 'Cancellations',
+      sum: 'Tell us 24 hours ahead and the session stays in your child’s pack. Inside 24 hours it is spent.',
       det: [
         'Cancellations must be made at least 24 hours prior to class due to illness, trips, or other reasons in the portal.',
-        'Failure to cancel within this timeframe will result in the class being counted as attended, and no makeup will be granted.',
-        'Makeups must be used within the same monthly billing cycle — no exceptions.',
-        'Makeups are allowed in any age-appropriate class, subject to space availability (through the portal).',
-        'Makeup classes cannot:',
-        '— Be rolled over into future months, sessions, camps, or pop-ups.',
-        '— Be transferred to siblings or other members.',
-        '— Be guaranteed if all classes are at capacity.',
-        '— Be rescheduled if missed (a scheduled makeup class that is not attended will be marked as used).',
-        'Monthly plans are not frozen for any reason.',
-        'If you wish to cancel your membership, a 30-day written notice is required to contact@thegroveartstudio.com or via the portal.',
-        'Without proper notice, you will be billed through the end of the school year.'
+        'Tell us in time and the session is not spent — it stays in your child’s pack and the pack lasts a week longer.',
+        'Failure to cancel within this timeframe will result in the class being counted as attended, and the session is spent.',
+        'There is nothing to claim, approve or use up. Sessions do not expire, so a session left in the pack is simply still there.',
+        'To catch up a class your child missed, book an extra class in the portal. It spends a session from the pack like any other class.',
+        'An extra class can be taken in any age-appropriate class, subject to space, and cannot be guaranteed if every class is at capacity.',
+        'A pack belongs to one child. Sessions cannot be transferred to a sibling.',
+        'If you do not want the pack to renew, tell us before the last session is used, at contact@thegroveartstudio.com or in the portal. You keep every session you have already paid for.'
       ]
     },
     asPickup: {
@@ -559,9 +552,9 @@
     },
     asHealth: {
       name: 'Health & Safety Guidelines',
-      sum: 'Unwell children stay home and use a make-up day. The studio is cleaned between every class.',
+      sum: 'Unwell children stay home, and 24 hours notice keeps the session. The studio is cleaned between every class.',
       det: [
-        'Children with runny noses, coughs, or other illness symptoms will not be permitted in class. Please use your makeup days in these situations.',
+        'Children with runny noses, coughs, or other illness symptoms will not be permitted in class. Tell us as soon as you can — more than 24 hours ahead and the session is not spent.',
         'The studio is cleaned and disinfected before, during, and after each class.',
         'Children should be dressed appropriately; art can get messy!'
       ]
@@ -581,23 +574,22 @@
     asPayment: {
       name: 'Payment Terms',
       /* Our own summary line says "registration fee", the name the running
-         total and the package footnote use. The studio's verbatim text below
-         calls the same charge an initiation fee, and is left as written. */
-      sum: 'Non-refundable, billed on the 1st of the month, with a 7-day grace period and a one-time registration fee.',
+         total and the pack footnote use. The studio's text below calls the
+         same charge an initiation fee, and is left as written. */
+      sum: 'Non-refundable, charged again when the pack renews, with a 7-day grace period and a one-time registration fee.',
       det: [
         'Enrollment is confirmed only after payment is received.',
         'Students will not be admitted to class without prior payment.',
-        'All payments are non-refundable; however, they may be applied as credit toward the same type of class within an approved timeframe.',
+        'All payments are non-refundable. Sessions you have paid for are yours until you use them.',
         'All payments must be made through the parent portal. Please note that our software includes specific payment policies that will apply once payment is submitted.',
         'A one-time initiation fee (covering materials and software) is required. Second and third children receive 50% off this fee.',
-        'Monthly payments are due each month and must be completed within a 7-day grace period.',
+        'A renewal is due when the last session in the pack is used, and must be completed within a 7-day grace period.',
         'If payment is not received within this timeframe, an automatic late fee will be applied to your account.',
         'Additional Payment Policy',
-        '— Monthly tuition is billed automatically on the 1st day of each month, regardless of your original enrollment date.',
-        '— Tuition reserves your child’s place in the program and is charged monthly throughout the school year.',
-        '— Because our program follows the academic school-year calendar, the final month of the school year may not contain the same number of scheduled classes as a standard month.',
-        '— If your final paid month includes fewer scheduled classes due to the end of the school year, any remaining classes owed for that billing cycle will be issued as make-up credits. These credits must be scheduled and completed according to the studio’s Make-Up Policy.',
-        '— Tuition is based on monthly enrollment rather than the number of classes attended in a particular calendar month.'
+        '— A pack renews automatically on the class that uses its last session, whatever date that falls on. There is no billing date.',
+        '— A pack belongs to one child. Two children hold two packs, each renewing on its own last class, so a family with two children receives two charges.',
+        '— Sessions never expire. A pack you have paid for is yours until it is used, however long that takes.',
+        '— To stop, tell us before the last session is used and the pack does not renew. You use what you have paid for and nothing further is charged.'
       ]
     },
     asLiability: {
@@ -618,7 +610,7 @@
       det: [
         'I have read and agree to the terms outlined above for The Grove Art Studio’s After-School Art Program.',
         'I understand that the registration fee is non-refundable.',
-        'I accept the studio’s policies regarding membership, payment, cancellations, makeups, and safety.'
+        'I accept the studio’s policies regarding sessions, payment, cancellations, and safety.'
       ]
     },
 
@@ -633,15 +625,15 @@
         'Tell us about every allergy on this form, even a mild one.'
       ]
     },
-    nomakeup: {
-      name: 'No make-ups, refunds or credit',
-      sum: 'A booked day is a held place. Missing it does not create a make-up, a refund or a credit.',
+    norefund: {
+      name: 'A booked day is not refundable',
+      sum: 'A booked day is a held place. Missing it does not give the day back.',
       det: [
         'Camp days, no-school days and pop-up events are booked as a place, not as attendance.',
-        'Missing a booked day does not create a make-up class.',
+        'Missing a booked day does not entitle you to another one.',
         'Payments for these programs are not refundable.',
-        'No credit is issued for unused days.',
-        'This is different from after-school, where 24 hours notice does create a make-up credit.'
+        'Nothing is returned for an unused day.',
+        'This is different from after-school, where telling us 24 hours ahead leaves the session in your child’s pack.'
       ]
     },
     regfee: {
@@ -666,9 +658,9 @@
     },
     health: {
       name: 'Health & safety',
-      sum: 'Unwell children stay home — use a make-up. Surfaces disinfected between every class.',
+      sum: 'Unwell children stay home. Surfaces disinfected between every class.',
       det: [
-        'Children with runny noses, coughs or other symptoms may not attend. Please use a make-up credit.',
+        'Children with runny noses, coughs or other symptoms may not attend. Please tell us as early as you can.',
         'The studio is cleaned and disinfected before, during and after each class.',
         'Art gets messy — please dress children accordingly. All materials are provided.',
         'No food during after-school classes.'
@@ -734,9 +726,9 @@
     }
   };
 
-  var SHORT_SET = ['food', 'nomakeup', 'regfee', 'pickup', 'health', 'medical', 'liability', 'photo'];
+  var SHORT_SET = ['food', 'norefund', 'regfee', 'pickup', 'health', 'medical', 'liability', 'photo'];
   var SETS = {
-    as: ['asFacts', 'asSched', 'asMakeup', 'asPickup', 'asHealth', 'asMedical', 'asPayment', 'asLiability', 'asAgreement'],
+    as: ['asFacts', 'asSched', 'asCancel', 'asPickup', 'asHealth', 'asMedical', 'asPayment', 'asLiability', 'asAgreement'],
     camp: SHORT_SET,
     nsd: SHORT_SET,
     pop: SHORT_SET,
@@ -988,23 +980,18 @@
   /* ---- step 2 — what ------------------------------------------------------------- */
 
   function stepAs() {
-    var cur = planKey();
-    var offered = asPlanKeys();
-    var withheld = PLAN_KEYS.length - offered.length;
-    var planCard = ui.card({
-      title: 'Choose a package',
-      note: 'One-time registration fee: ' + m0(P.as.regFee) + ' a child · ' + P.as.siblingRelief +
-        ' · applies to every package here. Tuition reserves the place rather than being priced ' +
-        'per class attended.' +
-        (withheld
-          ? ' Ages ' + asBand() + ' are scheduled ' + hoursWord(asBandHours()) +
-            ' a week, so the only packages offered are the ones those classes add up to.'
-          : '')
-    }, ui.choices(null, offered.map(function (k) {
-      return tile('rPlan', k, cur, {
-        title: planLabel(k),
-        sub: planSub(k),
-        price: m0(P.as.plans[k])
+    var cur = packKey();
+    var packCard = ui.card({
+      title: 'Choose a pack',
+      note: 'A pack is sessions for one child, not a month. It renews when the last session in ' +
+        'it is used — the next charge is a number of classes away, never a date. The bigger the ' +
+        'pack the less a class costs. One-time registration fee: ' + m0(P.as.regFee) + ' a child · ' +
+        P.as.siblingRelief + ' · applies to every pack here.'
+    }, ui.choices(null, PACK_KEYS.map(function (k) {
+      return tile('rPack', k, cur, {
+        title: packLabel(k),
+        sub: packSub(k),
+        price: m0(packPrice(k))
       });
     })));
 
@@ -1022,18 +1009,22 @@
       });
     })));
 
-    /* One tick per weekly place. The package is the hours; these are where the
-       hours go, so the card counts them off against the package rather than
-       letting the two drift apart. */
+    /* One tick per weekly place. Pack size and weekly places are independent,
+       so there is nothing to reconcile — the card only says how fast the pack
+       will be spent. */
     var list = asClassList();
     var def = asDefaultIds();
-    var want = planHours(cur);
-    var got = asHours();
+    var per = asPerWeek();
+    var weeks = asWeeks();
     var classCard = ui.card({
-      title: plural(def.length, 'Choose your class', 'Choose your classes'),
-      head: '<span class="mute">' +
-        esc((got ? word(got) : 'none') + ' of ' + hoursWord(want) + ' placed') + '</span>',
-      note: 'These become your child’s fixed places for the program year. Places update live.'
+      title: 'Choose your classes',
+      head: '<span class="mute">' + esc(per ? classesWord(per) + ' a week' : 'none chosen') + '</span>',
+      note: 'These become your child’s weekly places. ' +
+        (weeks
+          ? packLabel(cur) + ' at ' + classesWord(per) + ' a week is about ' + word(weeks) +
+            ' weeks of classes, and then it renews.'
+          : 'Tick at least one, and the pack is spent a session at a time.') +
+        ' Places update live.'
     }, list.length
       ? ui.choices(null, list.map(function (c) {
         return check(classKey(c), c.day + ' ' + c.time,
@@ -1045,10 +1036,10 @@
     /* The waitlist banner sits above the money rather than under it: it is the
        reason the running total says nothing is due today.
        Two stacked columns rather than two rows of one card: the running total
-       carries more rows than the package list, and stacking lets each card end
+       carries more rows than the pack list, and stacking lets each card end
        where its content ends instead of leaving a hollow band above the note. */
     var main = ui.grid(2, [
-      ui.col([planCard, bandCard]),
+      ui.col([packCard, bandCard]),
       ui.col([priceCard('as'), classCard])
     ]);
 
@@ -1333,13 +1324,23 @@
     var rows = [], names = kidNames(), c, ev, hrs;
     if (p === 'as') {
       var asList = asClasses();
+      var key = packKey();
       /* The room and the instructor are named once, on their own rows, rather
-         than repeated after every child's days and times. */
+         than repeated after every child's days and times. The pack, though, is
+         named per child: a pack belongs to one child and renews on that child's
+         own last class, so two children here are two packs and two charges. */
       var days = asList.map(function (x) { return x.day + ' ' + x.time; }).join(' and ');
       names.forEach(function (nm) {
-        rows.push(asList.length ? row(nm, days) : row(nm, 'No place chosen', 'clay'));
+        rows.push(asList.length
+          ? row(nm, days + ' · ' + packLabel(key).toLowerCase())
+          : row(nm, 'No place chosen', 'clay'));
       });
-      rows.push(row('Plan', planLabel(planKey()) + ' · ' + hoursWord(planHours(planKey())) + ' a week'));
+      /* Said once, and sized to the case: the money card beside this one
+         carries the figure, so this row only carries the arrangement. */
+      rows.push(names.length > 1
+        ? row('Separate packs', names.join(' and ') +
+          ' each hold their own, and each renews on their own last class')
+        : row('Pack', packLabel(key) + ', renewing ' + renewsText(key)));
       rows.push(row('Age group', 'Ages ' + asBand()));
       if (asList.length) {
         var rooms = uniq(asList.map(function (x) { return x.room; }));
@@ -1507,21 +1508,23 @@
     out += policySection(p);
 
     if (p === 'as') {
-      var monthly = m(P.as.plans[planKey()] * kidCount());
+      var pk = packKey();
+      /* Neither list ends on a date. The pack renews on a class, and stopping
+         is the pack not renewing rather than a notice period. */
       var nextRows = asWaiting()
         ? [
           row('Today', 'Nothing is charged', 'grove'),
           row('If a place opens', 'We email you, and you have 24 hours to accept'),
           row('Then', 'A secure payment link for ' + m(quote('as').total)),
-          row('And after that', monthly + ' a month, billed on the 1st'),
-          row('Cancelling', '30 days written notice')
+          row('After that', cap(renewsText(pk)) + ', at ' + m0(packPrice(pk)) + ' a child'),
+          row('Stopping', 'Tell us before the last session and the pack does not renew')
         ]
         : [
           row('Payment', 'By secure link, emailed to you', 'grove'),
           row('Confirmation', 'Once payment is received'),
           row('First class', FIRST_CLASS),
-          row('Then', monthly + ' a month from ' + NEXT_MONTH + ', billed on the 1st'),
-          row('Cancelling', '30 days written notice')
+          row('Renews', cap(renewsText(pk)) + ', at ' + m0(packPrice(pk)) + ' a child'),
+          row('Stopping', 'Tell us before the last session and the pack does not renew')
         ];
       out += sec(ui.grid(2, [
         ui.card({
@@ -1544,7 +1547,7 @@
 
   /* The stepper says "and", like every page title it leads to. */
   var STEP_LABELS = {
-    as: ['Family and children', 'Plan and place', 'Review and submit'],
+    as: ['Family and children', 'Pack and place', 'Review and submit'],
     camp: ['Family and children', 'Which week', 'Review and pay'],
     nsd: ['Family and children', 'Date and hours', 'Review and pay'],
     priv: ['Family and children', 'Hours and when', 'Review and send'],
@@ -1553,7 +1556,7 @@
   };
 
   var TITLES = {
-    as: ['Who is enrolling?', 'Choose a plan and a place', 'Review and submit'],
+    as: ['Who is enrolling?', 'Choose a pack and a place', 'Review and submit'],
     camp: ['Who is enrolling?', 'Pick a week', 'Review and pay'],
     nsd: ['Who is enrolling?', 'Pick a date and how long', 'Review and pay'],
     priv: ['Who is enrolling?', 'How many hours, and when', 'Review and send'],
@@ -1571,7 +1574,8 @@
         : whoSub;
     }
     if (s === 1) {
-      if (p === 'as') return 'A package is hours a week, and each class you tick is one of them. ' +
+      if (p === 'as') return 'A pack is sessions for one child, and it renews when the last one ' +
+        'is used rather than on a date. Tick the class or classes they come to each week. ' +
         'Places update live — if a class you want is full you can join the waitlist, and we do not turn families away.';
       if (p === 'camp') return 'Camp runs ' + campHours() + ' every day. Add extra hours on any day if you need a longer one.';
       if (p === 'nsd') return 'For teacher workdays and county holidays. Three hours is standard; extend by the hour if you need to.';
@@ -1600,16 +1604,10 @@
     }
     if (s === 1) {
       if (p === 'as') {
-        /* The review step can only describe a booking whose classes add up to
-           the package, so step 2 does not hand it one that does not. */
-        var gap = asGap();
-        if (gap > 0) {
-          return { label: (asHours() ? 'Place ' + hoursWord(gap) + ' more' : 'Choose ' + hoursWord(gap)) + ' a week',
-            msg: 'Your package covers ' + hoursWord(planHours(planKey())) + ' a week' };
-        }
-        if (gap < 0) {
-          return { label: 'Take off ' + hoursWord(-gap) + ' a week',
-            msg: 'Your package covers ' + hoursWord(planHours(planKey())) + ' a week' };
+        /* Pack size and weekly places no longer have to agree, so the only
+           thing left to insist on is a place to go to. */
+        if (!asPerWeek()) {
+          return { label: 'Choose a class', msg: 'Choose at least one class a week' };
         }
         if (asWaiting()) {
           return { label: 'Join the waitlist', kind: 'primary', act: 'rStep', n: 2 };

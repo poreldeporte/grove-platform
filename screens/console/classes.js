@@ -5,45 +5,47 @@
    tables, and she comes here for two things: who is in a room, and whether a
    room is over its capacity. Density is right on this screen. Ceremony is not.
 
-   What this pass cut:
+   Billing was corrected on this pass. A family buys a pack of sessions for one
+   child; the child attends; when the last session in the pack is used the pack
+   renews and charges again. There is no billing date and no month, so the next
+   charge is a number of classes away. Told more than 24 hours ahead, a missed
+   session is simply not spent — it stays in the pack. That leaves nothing to
+   credit, approve, place or expire, so the make-up machinery is gone:
+
+     - the "Make-ups from this class" card, its four-state credit vocabulary and
+       its colour map, and every link into the credit queue. What replaced it is
+       the fact underneath: Absences, read off D.ABSENCES, saying for each one
+       whether the session was spent or stayed in the child's pack
+     - the roster's "To make up" column, which counted credits. The column now
+       reads the child's pack — used of size, and how many classes until it
+       renews — because that is what a class costs the family
+     - the over-capacity explanation, on all three screens, which blamed a
+       make-up booking landing after the last enrollment and offered to move it.
+       The thirteenth place is an ordinary enrollment; the notice now says so
+       and names whether another class in the band could take it
+     - "a class to make up", "a make-up credit is counted in classes" and the
+       credit-issuing toast on the cancel screen. Cancelling a date spends
+       nobody's session, which is the whole of what a family needs told
+
+   What earlier passes cut, and this one keeps cut:
      - the seven programme chips. Twelve classes fit on one screen without
        scrolling, so the answer was always "All programs". The programme is
-       already named in full under every class name, which is what the chips
-       were being read for
-     - "The class" card on the record. Programme, When, Room, Ages, Teacher and
-       Places were a third printing of the eyebrow, the sub and the flag pills
-       sitting directly above them
-     - "What a place costs" on the record — five rows of prices she cannot
-       change here and that are identical for every class in the programme. The
-       record states once, in the sub, that it follows the programme price
-     - the header's "Lesson plan" button. It opened the same plan the Lesson
-       plans card already lists: two controls, one decision
-     - the over-capacity line that sat as a note UNDER the twelve-row table.
-       It is now a notice above the table, naming the room, with the way in
+       already named in full under every class name
+     - "The class" card on the record — a third printing of the eyebrow, the sub
+       and the flag pills sitting directly above it
+     - "What a place costs" on the record: four pack prices she cannot change
+       here and that are identical for every class in the programme. The record
+       states once, in the sub, how a place is paid for and where prices live
+     - the header's "Lesson plan" button, which opened the plan the Lesson plans
+       card already lists: two controls, one decision
      - "64 of 80 places" under each calendar day, which adds up five unrelated
-       rooms. The day foot now reads "15 places left" — the part she can sell —
-       and a day holding an over-capacity class is flagged in its own head
-
-   What this pass added:
-     - over capacity is unmistakable in every view: a clay notice above the
-       table and above the week, a pill on the day card that holds it, a clay
-       line on the row itself, and the count in the toolbar
-     - "Cancel a session" was a small red button that fired a toast. It is now
-       a screen that asks which date and says plainly what cancelling does —
-       how many children get a class to make up, who is told, that no money
-       moves, whose shift disappears — with the action in a sticky bar
-     - the week is no longer a literal list of dates. Monday, the six day
-       columns, "Today" and every session date are worked out from
-       Grove.data.today, so moving the dataset's today moves the calendar
-     - the roster is a table, not a list of rows. A class carries eight to
-       eighteen children, and at that size age, attendance, classes to make up
-       and the safety note read straight down their own columns instead of
-       being crushed onto one detail line
+       rooms. The day foot reads "15 places left" — the part she can sell
 
    Everything counted here is counted off the rows being shown. The roster is
    the class — D.roster(id) returns the children on the roll — so "12 enrolled"
-   is the length of the list printed underneath it, and the waitlist pill
-   counts the rows in its own card. */
+   is the length of the list printed underneath it, the renewal pill counts the
+   packs in that same list, and the waitlist pill counts the rows in its own
+   card. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -53,15 +55,6 @@
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June',
                      'July', 'August', 'September', 'October', 'November', 'December'];
-
-  /* The mapping the Requests screen uses, so a credit reads the same colour on
-     both screens. */
-  var MAKEUP_PILL = {
-    'Awaiting approval': 'warn',
-    'Available': 'ok',
-    'Booked': null,
-    'Expiring': 'bad'
-  };
 
   Grove.on('pickSession', function (d) { Grove.setFilter('cancelSession', d.id); });
 
@@ -225,6 +218,31 @@
     return c.band === 'All' ? 'All ages' : 'Ages ' + c.band;
   }
 
+  /* Somewhere else in the same programme that takes the same ages and still has
+     a place free. Read off the class rows, so the answer changes when they do. */
+  function elsewhereFor(c) {
+    return D.CLASSES.filter(function (o) {
+      return o.id !== c.id && o.prog === c.prog && o.band === c.band && placesLeft(o) > 0;
+    });
+  }
+
+  /* What an over-capacity room leaves her to decide, written off the rows. The
+     thirteenth child is an ordinary enrollment, so the choice is the room or the
+     roll — and whether another class in the band could take the place. */
+  function overOptions(c) {
+    var alt = elsewhereFor(c);
+    if (!alt.length) {
+      var band = bandLine(c);
+      return 'No other ' + prog(c).name + ' class takes ' +
+        (band ? band.charAt(0).toLowerCase() + band.slice(1) : 'these ages') +
+        ', so the place has nowhere to move. Either the room takes ' + c.en +
+        ' or the roll comes down.';
+    }
+    return 'A place could move to ' + alt.map(function (o) {
+      return o.day + ' ' + startTime(o) + ' · ' + o.room + ', ' + plural(placesLeft(o), 'place free', 'places free');
+    }).join('; ') + '.';
+  }
+
   /* The one thing she must act on, written off the rows on screen: it names
      the room, and it goes away when the class it is talking about does. */
   function overNotice(list) {
@@ -234,9 +252,8 @@
       return ui.notice({
         kind: 'bad',
         title: 'Over capacity · ' + c.room + ' · ' + c.day + ' ' + c.time,
-        text: c.en + ' children booked into a room set for ' + c.cap +
-          '. A make-up booking landed after the last enrollment, so moving the make-up ' +
-          'clears the room and no enrolled child loses their place.',
+        text: c.en + ' children hold a place in a room set for ' + c.cap + '. ' + overOptions(c) +
+          ' The roster names every child holding one.',
         action: { label: 'Open the class', to: 'classRecord', id: c.id }
       });
     }
@@ -245,7 +262,7 @@
       title: plural(list.length, 'class is over capacity', 'classes are over capacity'),
       text: list.map(function (c) {
         return c.room + ' · ' + c.day + ' ' + startTime(c) + ' · ' + c.en + ' of ' + c.cap;
-      }).join('; ') + '. Moving the make-up booking clears each one without touching an enrolled child.'
+      }).join('; ') + '. Open each one to see the roll and where a place could go.'
     });
   }
 
@@ -389,9 +406,22 @@
   /* ---- class record --------------------------------------------------------
      What she came for is the roster, so the roster is the first and widest
      card. The old "The class" card under it repeated the eyebrow, the sub and
-     the three flag pills; the old price card listed four monthly rates she
-     cannot change from here, so the record states in one line that it follows
-     the programme's prices. */
+     the three flag pills; the old price card listed four pack prices she cannot
+     change from here, so the record states in one line how a place is paid for
+     and where the prices live. */
+
+  /* How a place here is paid for. After-School Art runs on packs, so a class
+     spends a session; a camp week, a no-school day, a pop-up and a private
+     class are paid for when they are booked. */
+  function priceLine(c) {
+    if (c.prog === 'as') {
+      return 'A class here spends one session from the child’s pack, and a pack renews ' +
+        'when its last session is used. Pack prices are set under Programs.';
+    }
+    return 'A place here is priced on ' + prog(c).name +
+      ' — the same for every class in the programme, paid for when it is booked — ' +
+      'and the prices are set under Programs.';
+  }
 
   var recordDef = {
     surface: 'console',
@@ -400,8 +430,7 @@
     title: function (ctx) { return cls(ctx).name; },
     sub: function (ctx) {
       var c = cls(ctx);
-      return c.day + ' · ' + c.time + ' · ' + c.room + '. A place here is priced on ' +
-        prog(c).name + ' — the same for every class in the programme — and the prices are set under Programs.';
+      return c.day + ' · ' + c.time + ' · ' + c.room + '. ' + priceLine(c);
     },
 
     /* The class already has an instructor on almost every record, so asking
@@ -421,7 +450,7 @@
       var kids = roster(c);
       var waiting = waitlist(c);
       var plans = lessonsFor(c);
-      var credits = makeupsFor(c);
+      var missed = absencesIn(c);
 
       var flags = h`<div class="flags">
         ${raw(ui.pill(placesLine(c), fillKind(c)))}
@@ -435,18 +464,43 @@
         ? ui.notice({
             kind: 'bad',
             title: 'Over capacity by ' + overBy(c),
-            text: c.en + ' children are booked into ' + c.room + ', which is set for ' + c.cap +
-              '. A make-up booking landed here after the last enrollment. Moving the make-up clears ' +
-              'the room; no enrolled child loses their place and no money moves.',
-            action: { label: 'Move the make-up', msg: 'Make-up moved · the room is back inside its capacity' }
+            text: c.en + ' children hold a place in ' + c.room + ', which is set for ' + c.cap +
+              '. ' + overOptions(c) + ' Nobody has been turned away and no money moves either way.',
+            action: {
+              label: 'Set the room to ' + c.en,
+              msg: 'Saved · ' + c.room + ' is set for ' + c.en + (c.en === 1 ? ' place' : ' places')
+            }
           })
         : '';
 
       /* Eight to eighteen children, so the roll is a table: one line each, and
-         age, attendance, credits and the safety note read down their columns
-         rather than being folded into a sentence under the name. */
+         age, attendance, the child's pack and the safety note read down their
+         columns rather than being folded into a sentence under the name. */
       var flagged = kids.filter(function (k) { return !!k.flag; });
       var urgent = flagged.some(function (k) { return k.flagKind === 'bad'; });
+
+      /* A pack pays for an After-School place. On a camp or a pop-up roll the
+         column would say nothing about what that class cost, so it is left off. */
+      var packCol = c.prog === 'as' && kids.some(function (k) { return D.pack(k).isPack; });
+      var renewing = !packCol ? [] : kids.filter(function (k) {
+        var p = D.pack(k);
+        return p.isPack && p.renewsIn <= 1 && renews(k);
+      });
+
+      var cols = ['Child',
+                  { label: 'Age', align: 'right', shrink: true },
+                  { label: 'Attendance', align: 'right', shrink: true }];
+      if (packCol) cols.push('Pack');
+      cols.push('Safety note');
+
+      var rosterNote = [];
+      if (flagged.length) {
+        rosterNote.push('Safety notes here are the ones every teacher sees on this roster and on the attendance sheet.');
+      }
+      if (packCol) {
+        rosterNote.push('A pack belongs to one child, not to the family. It renews when its last session is ' +
+          'used, so a child with one class left renews at their next class.');
+      }
 
       var rosterCard = ui.card({
         title: 'Roster',
@@ -454,20 +508,14 @@
           (flagged.length
             ? ui.pill(plural(flagged.length, 'safety note', 'safety notes'), urgent ? 'bad' : 'warn')
             : '') +
+          (renewing.length
+            ? ui.pill(plural(renewing.length, 'pack renews next class', 'packs renew next class'))
+            : '') +
           '<span class="mute">' + esc(kids.length + ' enrolled') + '</span></span>',
         flush: true,
-        note: flagged.length
-          ? 'Safety notes here are the ones every teacher sees on this roster and on the attendance sheet.'
-          : ''
+        note: rosterNote.join(' ')
       }, kids.length
-        ? ui.table(
-            ['Child',
-             { label: 'Age', align: 'right', shrink: true },
-             { label: 'Attendance', align: 'right', shrink: true },
-             { label: 'To make up', align: 'right', shrink: true },
-             'Safety note'],
-            kids.map(kidRow)
-          )
+        ? ui.table(cols, kids.map(function (k) { return kidRow(k, packCol); }))
         : ui.empty('Nobody enrolled yet', 'The first child to register for this class appears here.')
       );
 
@@ -492,26 +540,25 @@
         };
       })));
 
-      /* Of the four credit states, two are waiting on her — one to approve,
-         one with nowhere left to place it. That pair is the head of the card;
-         the rest of the vocabulary stays on the rows, coloured the way
-         Requests colours it, because Requests is where a credit is settled. */
-      var needs = credits.filter(function (m) {
-        return m.status === 'Awaiting approval' || m.status === 'Expiring';
-      });
-      var makeups = ui.card({
-        title: 'Make-ups from this class',
+      /* There is nothing to settle here any more, so this card is a record, not
+         a queue. The only thing worth reading on a row is whether the session
+         was spent, which is the one thing 24 hours of notice decides. */
+      var spent = missed.filter(function (a) { return !!a.spent; });
+      var absences = ui.card({
+        title: 'Absences',
         head: '<span class="inline">' +
-          (needs.length ? ui.pill(needs.length + ' need you', 'warn') : '') +
-          '<span class="mute">' + esc(plural(credits.length, 'credit', 'credits')) + '</span></span>',
+          (spent.length ? ui.pill(plural(spent.length, 'session spent', 'sessions spent'), 'warn') : '') +
+          '<span class="mute">' + esc(plural(missed.length, 'absence', 'absences')) + '</span></span>',
         flush: true,
-        note: 'A missed session becomes a credit counted in classes, never in money. Credits are placed from Requests.'
-      }, ui.rows(credits.map(function (m) {
+        note: 'Told more than 24 hours ahead, the session stays in the child’s pack and the pack ' +
+          'lasts a week longer. Inside 24 hours it is spent, the same as coming.'
+      }, ui.rows(missed.map(function (a) {
         return {
-          title: esc(m.child),
-          sub: esc(m.missed + ' · ' + m.reason),
-          end: ui.pill(m.status, MAKEUP_PILL[m.status]),
-          to: 'makeupRequest', id: m.id
+          title: esc(a.child),
+          sub: esc(a.date + ' · ' + a.reason),
+          end: a.spent
+            ? ui.pill('Session spent', 'warn')
+            : ui.pill('Stayed in the pack', 'ok')
         };
       })));
 
@@ -523,7 +570,7 @@
       var extra = [];
       if (waiting.length) extra.push(waitCard);
       if (plans.length) extra.push(lessons);
-      if (credits.length) extra.push(makeups);
+      if (missed.length) extra.push(absences);
 
       var body = ui.grid(null, [rosterCard]) +
         (extra.length
@@ -545,19 +592,43 @@
 
   Grove.screen('classRecord', recordDef);
 
+  /* A family that has told us to stop still holds the pack it paid for — it
+     simply does not renew. The dataset says so on the family's plan, so a child
+     of that family is never counted as a renewal that is about to arrive. */
+  function renews(k) {
+    var fam = D.FAMILIES.filter(function (f) { return f.name === k.family; })[0];
+    return !fam || String(fam.plan).indexOf('not renewing') === -1;
+  }
+
+  /* Where one child's pack stands. Nothing here is a date: the next charge is a
+     number of classes away, and the sessions do not expire. */
+  function packCell(k) {
+    var p = D.pack(k);
+    if (!p.isPack) return ui.mute('—');
+    var when;
+    if (!renews(k)) {
+      when = p.renewsIn === 1
+        ? 'last class in the pack, then it ends'
+        : plural(p.renewsIn, 'class', 'classes') + ' left, then it ends';
+    } else if (p.renewsIn === 0) {
+      when = 'the pack is used up';
+    } else {
+      when = p.renewsIn === 1 ? 'renews at the next class' : p.renewsIn + ' classes to renewal';
+    }
+    return ui.two(p.used + ' of ' + p.size + ' used', when);
+  }
+
   /* One line of the roll. The family is under the name because two children
      on the same roster can share a first name. */
-  function kidRow(k) {
-    return {
-      to: 'studentRecord', id: k.id,
-      cells: [
-        ui.two(k.name, k.family + ' family'),
-        ui.mute(String(k.age)),
-        ui.mute(k.att),
-        k.mk ? ui.pill(String(k.mk), 'warn') : '<span class="mute">—</span>',
-        k.flag ? ui.pill(k.flag, k.flagKind) : '<span class="mute">—</span>'
-      ]
-    };
+  function kidRow(k, packCol) {
+    var cells = [
+      ui.two(k.name, k.family + ' family'),
+      ui.mute(String(k.age)),
+      ui.mute(k.att)
+    ];
+    if (packCol) cells.push(packCell(k));
+    cells.push(k.flag ? ui.pill(k.flag, k.flagKind) : '<span class="mute">—</span>');
+    return { to: 'studentRecord', id: k.id, cells: cells };
   }
 
   /* The queue itself is managed on Requests, so every entry goes there. */
@@ -571,12 +642,12 @@
   }
 
   /* ---- cancel one session ---------------------------------------------------
-     This was a small red button in a card header that fired a toast. It
-     cancels an hour for a room full of children, issues every one of them a
-     class to make up and messages every family, and Sabrina has nobody to undo
-     it for her — so it asks which date and states, before she commits, exactly
-     what will happen. The button sits in a bar pinned to the bottom of the
-     viewport, never below the explanation. */
+     This was a small red button in a card header that fired a toast. It calls
+     off an hour for a room full of children and messages every family, and
+     Sabrina has nobody to undo it for her — so it asks which date and states,
+     before she commits, exactly what will happen. The studio called it off, so
+     nobody spends a session for it. The button sits in a bar pinned to the
+     bottom of the viewport, never below the explanation. */
 
   Grove.screen('classCancel', {
     surface: 'console',
@@ -622,27 +693,29 @@
       var lines = [];
       if (c.en) {
         lines.push({
-          title: esc(plural(c.en, 'child gets a class to make up', 'children get a class to make up')),
-          sub: esc(whoLine(c))
+          title: 'No session is spent',
+          sub: esc('The session stays in each child’s pack, so the pack simply lasts a week longer. ' +
+            whoLine(c) + '.')
         });
         lines.push({
           title: c.en === 1 ? 'Their family is told' : 'Their families are told',
           sub: esc('A message goes out naming ' + (when ? longLabel(when) : 'the date') +
-            ', with how to book the make-up.')
+            '. There is nothing for them to do.')
         });
         lines.push({
           title: 'No money moves',
-          sub: 'A make-up credit is counted in classes, never in money. Nothing is refunded and nothing is charged.'
+          sub: 'Nothing is refunded and nothing is charged. A pack renews on the class that uses ' +
+            'its last session, and this date no longer uses one.'
         });
       } else {
         lines.push({
           title: 'Nobody is enrolled yet',
-          sub: 'No message goes out, no credit is issued and no money moves either way.'
+          sub: 'No message goes out and no money moves either way.'
         });
       }
       lines.push({
         title: esc(c.room + ' frees up'),
-        sub: esc(c.time + ' on that date opens for a private class or a make-up hour.')
+        sub: esc(c.time + ' on that date opens for a private class or an extra class.')
       });
       if (c.staff !== 'Unassigned') {
         lines.push({
@@ -658,13 +731,11 @@
       }, ui.rows(lines));
 
       var hint = c.en
-        ? plural(c.en, 'child', 'children') + ' · ' +
-          plural(c.en, 'class to make up', 'classes to make up') + ' · no money moves'
+        ? plural(c.en, 'child', 'children') + ' · no session spent · no money moves'
         : 'Nobody is enrolled, so nothing is sent';
 
       var done = c.en
-        ? 'Cancelled · ' + plural(c.en, 'family told', 'families told') + ' and ' +
-          plural(c.en, 'class to make up issued', 'classes to make up issued')
+        ? 'Cancelled · ' + plural(c.en, 'family told', 'families told') + ' and no session spent'
         : 'Cancelled · nobody was enrolled, so nothing was sent';
 
       var buttons = when
@@ -744,11 +815,11 @@
     });
   }
 
-  /* A make-up credit names the session it was missed against ("Mon 20 Jul ·
-     3:15pm"), which is this class when the day and the start time both match. */
-  function makeupsFor(c) {
-    return D.MAKEUPS.filter(function (m) {
-      var text = String(m.missed).toLowerCase();
+  /* An absence names the session it was missed against ("Mon 20 Jul · 3:15pm"),
+     which is this class when the day and the start time both match. */
+  function absencesIn(c) {
+    return D.ABSENCES.filter(function (a) {
+      var text = String(a.date).toLowerCase();
       var dayHit = dayTokens(c).some(function (d) { return text.indexOf(d.toLowerCase()) !== -1; });
       return dayHit && text.indexOf(startTime(c)) !== -1;
     });

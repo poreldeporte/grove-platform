@@ -1,13 +1,39 @@
 /* Console → Billing: the money screens for the owner.
 
-   Four screens in one file, because they are one subject: the invoice run
-   (Billing), the family ledger behind it, the one form that reduces what a
-   family owes (Adjust a balance), and the page that posts next month's run.
+   Four screens in one file, because they are one subject: every charge the
+   studio has raised (Billing), the family ledger behind it, the one form that
+   reduces what a family owes (Adjust a balance), and the renewals that are
+   coming (Renewals ahead).
 
-   Sabrina reconciles invoices at a desk with a keyboard. The tables stay
-   dense and stay tables. What has been cut is ceremony, and what has been
-   added is the sentence that says what a button is about to do with her
-   money before she presses it.
+   THE BILLING MODEL, CORRECTED
+     A family buys a pack of sessions for a child. The child attends. When the
+     last session in the pack is used, the pack renews — it charges again and
+     grants another pack the same size. There is no billing date and no cycle,
+     so the next charge is a number of classes away, never a day.
+     A pack belongs to one child, not to the family. Emma's pack of 8 and
+     Lucas's pack of 4 renew at different times, so a household with two
+     children gets two separate charges.
+     Sessions do not expire — a pack is paid for, so it is theirs until it is
+     used. A session cancelled more than 24 hours ahead is simply not spent;
+     the pack lasts a week longer. Nothing is issued, so there is no make-up
+     credit anywhere on these screens.
+
+   WHAT WENT OUT WITH THE MONTHLY MODEL
+     - monthly(f), which priced a family from a "sessions / month" plan string,
+       and with it the whole idea of a family-level monthly amount. A pack is
+       priced per child from Settings → Pricing and renews per child.
+     - "Post the tuition run" — a page that raised one invoice per family on
+       the 1st. Nothing is posted on a date now, so it is "Renewals ahead":
+       which child's pack renews next and for how much, with nothing to press,
+       because the charge happens by itself on the last session of the pack.
+     - NEXT_RUN, the "1 August" literal, and lastRun(), which read a raised-and-
+       due date pair off the invoices so August could claim the same terms as
+       July. There are no terms of that shape left to describe.
+     - the clause on the Adjustments tab that distinguished these records from
+       "make-up credits, counted in classes". There are no make-up credits.
+     - "membership". A family is not a member, they hold sessions, and
+       cancelling is simply not renewing: they use what they have paid for and
+       the pack does not renew.
 
    THE CONSOLIDATION THE AUDIT ASKED FOR
      There were six ways to reduce what a family owes — adjustment, refund,
@@ -17,48 +43,42 @@
      ledger header. Both now open one screen, Adjust a balance, which asks
      three questions (who, how much, why) and carries one switch: does the
      money go back to their card, or does it sit as credit against their next
-     invoice. Nothing else about it is a choice — the date is today, the
-     author is whoever is signed in, the card is the one on file, and the
-     screen says so rather than asking.
+     charge. Nothing else about it is a choice — the date is today, the author
+     is whoever is signed in, the card is the one on file, and the screen says
+     so rather than asking.
      The register those adjustments land in is one tab, "Adjustments", where
      three record types (Account credit / Refund / Refund request) and four
      statuses (Available / Applied to INV-… / Refunded to Amex / Pending
-     approval) are now one destination column and three states. Three,
-     because those are the three she treats differently: one is waiting on
-     her, one is money still to come off a future invoice, and one is done.
+     approval) are now one destination column and three states. Three, because
+     those are the three she treats differently: one is waiting on her, one is
+     money still to come off a future charge, and one is done.
 
    OTHER CEREMONY CUT
-     - "Statements" emailed all eight families at once from the header. A
-       statement is per family and the ledger already sends one, to a named
-       address. The mass button is gone.
+     - "Statements" emailed every family at once from the header. A statement
+       is per family and the ledger already sends one, to a named address. The
+       mass button is gone.
      - "Take a payment" took money with no family, no amount and no card, and
        reported it in the past tense. Money moves are recorded against a
-       family — the screen's own subtitle says so — so the control that can
-       name the family, the ledger's "Record a payment", is the one kept.
+       family, so the control that can name the family, the ledger's "Record a
+       payment", is the one kept.
      - the desk-charge reconciliation. Billing used to add ledger lines no
        invoice had picked up to its outstanding figure, guarding against
-       double-counting by matching family, date and amount. It produced no
-       rows against this dataset and it gave the screen two definitions of
+       double-counting by matching family, date and amount. It produced no rows
+       against this dataset and it gave the screen two definitions of
        "outstanding" on two tabs. Outstanding is now the unpaid invoices, and
        that comes to the same $803 across the same four families as the
-       balances on the family records — the note says so, and only says so
-       while it is true.
-     - the conditional card title and the sentence that appeared under the
-       table only when a desk charge was showing. A table whose heading moves
-       under you is not denser, it is harder to read.
+       balances on the family records — the note says so, and only while it is
+       true.
 
    WHAT IS NOW OBVIOUS
      - Needs attention exists to get money in, so the thing she came to do is
        pinned to the bottom of the viewport: retry the cards that can be
-       retried, and it names them and their total before she does it. The one
-       family with no card saved is named too, because they need a message,
-       not a retry.
-     - "Post the tuition run" was a header button whose toast told her
-       afterwards that six invoices had posted and two were skipped. It is a
-       page. It lists every family the run would bill, priced from their plan,
-       with what they already owe beside it, and every family it would leave
-       alone with the reason. The button at the bottom carries the count and
-       the total.
+       retried, and it names them and their total first. The one family with no
+       card saved is named too, because they need a message, not a retry.
+     - Renewals ahead is a forecast, not an action. It lists every child
+       holding a pack, soonest first, with how far through it they are and what
+       the renewal will charge; it names the packs that renew on the very next
+       class; and it names the one child whose family has asked not to renew.
      - Approving a refund is the only thing on the Adjustments tab that is
        waiting on her, so it is a notice at the top that names the amount, the
        family, the card it goes back to and the fact that it cannot be pulled
@@ -67,17 +87,17 @@
    EVERY FIGURE IS DERIVED
      Raised, collected and outstanding partition the invoice table; cards to
      retry and no-card-on-file partition what is outstanding; charged, adjusted
-     and paid partition the ledger. The tuition run prices each family's plan
-     from Settings → Pricing (PRICING.as.plans), which reproduces the July
-     invoices for Johnson, Okafor, Rivera and Martinez to the dollar. Nothing
-     on these four screens is typed in.
+     and paid partition the ledger. Every renewal is its child's pack priced
+     from Settings → Pricing (PRICING.as.plans), and the forecast counts the
+     children whose next class is the last session of their pack. Nothing on
+     these four screens is typed in.
 
    THE ONE LIST WITH NO ENTRY IN js/data.js
      ADJUSTMENTS, below. Its five records are the content spec's. Each family
-     name and card is read back out of Grove.data, and each amount is one the
-     studio's own pricing produces: a cancelled camp day ($100), an extra class
-     at the twelve-session rate ($65), a four-session plan refunded before term
-     (−$280) and Brennan's July invoice refunded in full (−$540). */
+     name and card is read back out of Grove.data, and every amount is now
+     produced by the studio's own pricing rather than written down: a pop-up
+     class, a cancelled camp day, an extra class at the twelve-session rate, a
+     pack of 8 refunded in full and a pack of 4 that was never started. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -90,9 +110,6 @@
   /* js/data.js carries one worked-through family ledger, the Johnson family's,
      and Adjust a balance opens on that family for the same reason. */
   var LEDGER_FAMILY = 'johnson';
-
-  /* The studio bills on the first. There is no schedule record behind this. */
-  var NEXT_RUN = '1 August';
 
   var INVOICE_COLS = [
     'Invoice',
@@ -114,14 +131,15 @@
 
   /* Money owed back to a family, in the one shape the Adjust screen writes.
      `dest` is the single switch: 'card' sends it back and it leaves the
-     studio, 'credit' leaves it on the account until an invoice spends it.
-     A refund is therefore negative and a credit positive. */
+     studio, 'credit' leaves it on the account until a charge spends it. A
+     refund is therefore negative and a credit positive. Every amount is the
+     studio's own price for the thing that went wrong. */
   var ADJUSTMENTS = [
-    { fam: 'johnson',  dest: 'credit', reason: 'Overpaid June tuition',      date: '12 Jun 2026', amt: 45,   spent: 'INV-2838', by: 'Dani Cruz' },
-    { fam: 'chen',     dest: 'credit', reason: 'Camp day cancelled by studio', date: '8 Jul 2026', amt: 100,  spent: null,       by: 'Sabrina Yanguas' },
-    { fam: 'brennan',  dest: 'card',   reason: 'Duplicate charge',           date: '3 Jul 2026',  amt: -540, spent: null,       by: 'Sabrina Yanguas' },
-    { fam: 'martinez', dest: 'credit', reason: 'Extra class charged twice',  date: '28 Jun 2026', amt: 65,   spent: null,       by: 'Dani Cruz' },
-    { fam: 'smith',    dest: 'card',   reason: 'Withdrew before term start', date: '26 Jul 2026', amt: -280, spent: null,       by: 'Rey Molina', waiting: true }
+    { fam: 'johnson',  dest: 'credit', reason: 'Pop-up class charged twice',          date: '12 Jun 2026', amt: D.PRICING.pop.events[0].amount,  spent: 'INV-2838', by: 'Dani Cruz' },
+    { fam: 'chen',     dest: 'credit', reason: 'Camp day cancelled by the studio',    date: '8 Jul 2026',  amt: D.PRICING.camp.day,              spent: null,       by: 'Sabrina Yanguas' },
+    { fam: 'brennan',  dest: 'card',   reason: 'Duplicate charge',                    date: '3 Jul 2026',  amt: -D.PRICING.as.plans.p8,          spent: null,       by: 'Sabrina Yanguas' },
+    { fam: 'martinez', dest: 'credit', reason: 'Extra class charged twice',           date: '28 Jun 2026', amt: D.PRICING.as.extraClassRate.p12, spent: null,       by: 'Dani Cruz' },
+    { fam: 'smith',    dest: 'card',   reason: 'Paid for a pack they never started',  date: '26 Jul 2026', amt: -D.PRICING.as.plans.p4,          spent: null,       by: 'Rey Molina', waiting: true }
   ];
 
   /* ---- small helpers -------------------------------------------------------- */
@@ -134,13 +152,17 @@
 
   function count(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
-  function familyCount(list) {
+  function uniq(list, key) {
     var seen = {}, n = 0;
     list.forEach(function (r) {
-      var key = r.fam;
-      if (!seen[key]) { seen[key] = true; n += 1; }
+      var k = key(r);
+      if (!seen[k]) { seen[k] = true; n += 1; }
     });
     return n;
+  }
+
+  function familyCount(list) {
+    return uniq(list, function (r) { return r.fam; });
   }
 
   function listOf(items) {
@@ -159,6 +181,66 @@
 
   function amount(n, tone) {
     return h`<span class="${raw(tone || '')}">${Grove.money(n)}</span>`;
+  }
+
+  function foot(label, value) {
+    return '<span class="cell-mute">' + esc(label) + '</span>' +
+      '<span class="num strong">' + esc(value) + '</span>';
+  }
+
+  /* ---- packs ------------------------------------------------------------------
+     A pack belongs to one child. It renews when its last session is used, so
+     the only "when" a pack has is a number of classes. */
+
+  function packPrice(size) { return D.PRICING.as.plans['p' + size] || 0; }
+
+  function familyOf(s) {
+    return D.FAMILIES.filter(function (f) { return f.name === s.family; })[0];
+  }
+
+  function childrenOf(f) {
+    return D.STUDENTS.filter(function (s) { return s.family === f.name; });
+  }
+
+  /* Cancelling is not a status of its own any more: it is a family that has
+     said the pack should not renew. */
+  function stopping(f) {
+    return !!f && (f.status === 'Cancelling' || String(f.plan).indexOf('not renewing') !== -1);
+  }
+
+  function packHolders() {
+    return D.STUDENTS.filter(function (s) { return D.pack(s).isPack; });
+  }
+  function packsHeld(f) {
+    return childrenOf(f).filter(function (s) { return D.pack(s).isPack; });
+  }
+  function renewing() {
+    return packHolders().filter(function (s) { return !stopping(familyOf(s)); });
+  }
+  function lastPack() {
+    return packHolders().filter(function (s) { return stopping(familyOf(s)); });
+  }
+  function noPack() {
+    return D.STUDENTS.filter(function (s) { return !D.pack(s).isPack; });
+  }
+  function renewsNext() {
+    return renewing().filter(function (s) { return D.pack(s).renewsIn <= 1; });
+  }
+  function packValue(list) {
+    return list.reduce(function (n, s) { return n + packPrice(s.pack); }, 0);
+  }
+  function packFamilies(list) {
+    return uniq(list, function (s) { return s.family; });
+  }
+
+  function whenText(s) {
+    var n = D.pack(s).renewsIn;
+    return n <= 1 ? 'On the next class' : 'In ' + n + ' classes';
+  }
+  function progressText(s) {
+    var p = D.pack(s);
+    return p.used + ' of ' + p.size + ' used · ' +
+      (p.renewsIn <= 1 ? 'renews on the next class' : p.renewsIn + ' classes before it renews');
   }
 
   /* ---- invoices -------------------------------------------------------------- */
@@ -221,6 +303,10 @@
     return D.FAMILIES.reduce(function (n, f) { return n + f.balance; }, 0);
   }
 
+  function openInvoice(f) {
+    return owedInvoices().filter(function (i) { return i.fam === f.name; })[0] || null;
+  }
+
   /* ---- adjustments ------------------------------------------------------------ */
 
   function adjFamily(a) { return D.family(a.fam); }
@@ -237,8 +323,8 @@
   }
 
   /* Three states, because three is the number she treats differently: one is
-     waiting on her, one is money still to come off a future invoice, and one
-     is finished with. */
+     waiting on her, one is money still to come off a future charge, and one is
+     finished with. */
   function adjState(a) {
     if (a.waiting) return { label: 'Waiting on you', kind: 'warn' };
     if (a.amt > 0 && !a.spent) return { label: 'Unspent', kind: 'ok' };
@@ -250,72 +336,7 @@
     if (a.waiting) return 'Nothing has moved yet';
     if (a.dest === 'card') return 'Paid back to ' + cardOf(f);
     if (a.spent) return 'Came off ' + a.spent;
-    return 'Not yet applied to an invoice';
-  }
-
-  /* ---- the tuition run ---------------------------------------------------------
-     A family's monthly tuition is their plan priced from Settings → Pricing.
-     "8 + 4 sessions / month" is the eight-session plan plus the four-session
-     plan, which is how the studio quotes a two-child household, and it
-     reproduces the July invoices for Johnson, Okafor, Rivera and Martinez to
-     the dollar. A plan with no session count in it — a camp week, a family
-     mid-registration, a membership ending — cannot be priced this way, and
-     that is exactly the set the run should leave alone. */
-
-  function monthly(f) {
-    var plan = String(f.plan);
-    if (plan.indexOf('sessions / month') === -1) return null;
-    var parts = plan.split(' sessions')[0].split('+');
-    var sum = 0;
-    for (var i = 0; i < parts.length; i++) {
-      var price = D.PRICING.as.plans['p' + parts[i].replace(/\s/g, '')];
-      if (!price) return null;
-      sum += price;
-    }
-    return sum;
-  }
-
-  function isBillable(f) {
-    return f.status !== 'Cancelling' && f.status !== 'Pending payment' && monthly(f) !== null;
-  }
-  function billable() { return D.FAMILIES.filter(isBillable); }
-  function heldBack() {
-    return D.FAMILIES.filter(function (f) { return !isBillable(f); });
-  }
-  function runTotal() {
-    return billable().reduce(function (n, f) { return n + monthly(f); }, 0);
-  }
-
-  function openInvoice(f) {
-    return owedInvoices().filter(function (i) { return i.fam === f.name; })[0] || null;
-  }
-
-  function holdReason(f) {
-    if (f.status === 'Pending payment') {
-      var open = openInvoice(f);
-      return open
-        ? 'Registered but not yet paid — ' + open.id + ' is still awaiting payment'
-        : 'Registered but not yet paid';
-    }
-    if (f.status === 'Cancelling') {
-      return 'Membership ' + (String(f.plan).split(' · ')[1] || 'is ending');
-    }
-    return 'No monthly plan on their record — ' + f.plan;
-  }
-
-  /* The July run, read off the invoices it raised — the raise-and-due pair
-     that more than one invoice shares — so August can say it is following the
-     same terms without anybody typing a date. */
-  function lastRun() {
-    var tally = {}, best = null;
-    D.INVOICES.forEach(function (i) {
-      var key = i.date + '|' + i.due;
-      tally[key] = (tally[key] || 0) + 1;
-      if (!best || tally[key] > tally[best]) best = key;
-    });
-    if (!best || tally[best] < 2) return null;
-    var parts = best.split('|');
-    return { date: parts[0], due: parts[1], n: tally[best] };
+    return 'Not yet applied to a charge';
   }
 
   /* ---- Billing ----------------------------------------------------------------- */
@@ -340,12 +361,12 @@
     sub: function () {
       var tab = currentTab();
       if (tab === T_ATTENTION) return 'Everything the studio is still owed. Some of it is a card to charge again; the rest is somebody to ask.';
-      if (tab === T_ADJUST) return 'Every time the studio has reduced what a family owes, whether the money went back to a card or stayed as credit. Distinct from make-up credits, which are counted in classes and never convert to cash.';
-      return 'Every charge the studio has raised. Money moves are always recorded against a family, never against a child.';
+      if (tab === T_ADJUST) return 'Every time the studio has reduced what a family owes, whether the money went back to a card or stayed as credit on the account.';
+      return 'Every charge the studio has raised. A pack belongs to one child, but the money is always owed by the family.';
     },
     actions: [
       { label: 'Adjust a balance', to: 'adjust' },
-      { label: 'Post the tuition run', kind: 'primary', to: 'postRun' }
+      { label: 'Renewals ahead', kind: 'primary', to: 'renewals' }
     ],
 
     body: function () {
@@ -367,10 +388,11 @@
     var list = all.filter(function (it) { return matches(q, it); });
     var paid = paidInvoices();
     var owed = owedInvoices();
+    var soon = renewsNext();
 
     var stats = ui.statbar([
       {
-        label: 'Raised in July',
+        label: 'Charges raised',
         value: money0(total(D.INVOICES)),
         sub: count(D.INVOICES.length, 'invoice', 'invoices')
       },
@@ -390,7 +412,7 @@
 
     var table = ui.table(INVOICE_COLS, itemRows(list), {
       emptyTitle: 'No invoices match',
-      emptyText: 'Clear the search and the whole run comes back.'
+      emptyText: 'Clear the search and every charge comes back.'
     });
 
     return ui.toolbar({
@@ -398,9 +420,10 @@
       search: { key: 'invoices', placeholder: 'Search invoice, family, card…' },
       count: list.length + ' of ' + all.length + ' invoices'
     }) + stats + ui.card({
-      title: 'Invoices raised',
+      title: 'Every charge raised',
       flush: true,
-      note: 'The monthly run posted on 1 July. Anything raised since is a desk charge, dated the day it was taken. The next run is ' + NEXT_RUN + '.'
+      note: 'A charge is raised the day it happens: a pack the moment it renews, a camp week when it is booked, a late pickup the afternoon it happens. Nothing is raised on a date. ' +
+        count(soon.length, 'pack renews', 'packs renew') + ' on the next class.'
     }, table);
   }
 
@@ -438,7 +461,7 @@
       }
     ]);
 
-    var note = 'Retry cadence is day 1, day 3 and day 7. After the third failure the enrollment is flagged but never silently cancelled — a person decides.';
+    var note = 'Retry cadence is day 1, day 3 and day 7. After the third failure the child keeps every session still in their pack and the place is flagged, never silently cancelled — a person decides.';
     /* Only claimed while the arithmetic holds. */
     if (total(owedInvoices()) === familyBalances()) {
       note += ' The ' + Grove.money(total(owedInvoices())) + ' here is the same money carried on those ' +
@@ -447,7 +470,7 @@
 
     var table = ui.table(INVOICE_COLS, itemRows(list), {
       emptyTitle: 'Nothing outstanding',
-      emptyText: 'Every invoice is settled. The next automatic run is ' + NEXT_RUN + '.'
+      emptyText: 'Every charge is settled. Nothing new is raised until a pack renews.'
     });
 
     var cards = retry.map(function (i) { return i.method; });
@@ -508,7 +531,7 @@
       {
         label: 'Unspent credit',
         value: money0(total(held)),
-        sub: held.length + ' of ' + count(credits().length, 'credit', 'credits') + ' still to come off an invoice',
+        sub: held.length + ' of ' + count(credits().length, 'credit', 'credits') + ' still to come off a charge',
         tone: 'grove'
       },
       {
@@ -610,7 +633,7 @@
     crumbTitle: 'Adjust a balance',
     eyebrow: 'one form, one decision',
     title: 'Adjust a balance',
-    sub: 'The one way the studio reduces what a family owes. The only decision beyond who, how much and why is whether the money goes back to their card or sits as credit against their next invoice.',
+    sub: 'The one way the studio reduces what a family owes. The only decision beyond who, how much and why is whether the money goes back to their card or sits as credit against their next charge.',
 
     body: function () {
       var f = pickedFamily();
@@ -631,20 +654,21 @@
         ? ui.toggleRow({
             id: TO_CARD,
             title: 'Send it back to their card',
-            sub: 'Off, it sits as credit on the account and comes off their next invoice. On, it goes back to ' +
+            sub: 'Off, it sits as credit on the account and comes off their next charge. On, it goes back to ' +
               cardOf(f) + ' and leaves the studio.',
             on: false
           })
         : h`<p class="label">Where the money goes</p>
             <p class="hint">The ${f.name} family have no card saved, so this can only sit as
-            credit against their next invoice.</p>`;
+            credit against their next charge.</p>`;
 
       var form = ui.card({
         title: 'What is being adjusted',
         note: 'Refunds are credit by default. Sending money back to a card is the exception, and it is the owner who signs it off.'
       }, h`
         <p class="label">Which family</p>
-        <p class="hint">Eight families on the books. Their balance and card are shown so you are not adjusting the wrong one.</p>
+        <p class="hint">${count(D.FAMILIES.length, 'family', 'families')} on the books. Their balance
+        and card are shown so you are not adjusting the wrong one.</p>
         <div class="card-split">${raw(who)}</div>
         <div class="card-split">
           ${raw(ui.fields(2, [
@@ -656,7 +680,7 @@
             ui.field({
               label: 'Why',
               hint: 'It goes on the ledger and on their statement, in these words',
-              control: ui.input({ placeholder: 'Overpaid June tuition' })
+              control: ui.input({ placeholder: 'Camp day cancelled by the studio' })
             })
           ]))}
         </div>
@@ -665,19 +689,26 @@
 
       var last = latestInvoice(f);
       var theirs = creditsFor(f.id);
+      var held = packsHeld(f);
 
       var stands = ui.card({ title: 'Where the ' + f.name + ' family stands' }, ui.kv([
         f.balance > 0
           ? { k: 'Owes now', v: Grove.money(f.balance), tone: 'clay' }
           : { k: 'Owes now', v: 'Nothing', tone: 'mute' },
+        held.length
+          ? ['Packs held', esc(held.map(function (s) {
+              var p = D.pack(s);
+              return s.name.split(' ')[0] + ' ' + p.used + ' of ' + p.size;
+            }).join(' · '))]
+          : { k: 'Packs held', v: 'None — camp and one-off bookings', tone: 'mute' },
         ['Card on file', canCard ? esc(cardOf(f)) : '<span class="mute">None saved</span>'],
         ['Payments are taken', f.autopay ? 'Automatically, on the card above' : 'By hand, at the desk'],
         theirs.length
           ? { k: 'Credit they already hold', v: Grove.money(total(theirs)), tone: 'grove' }
           : { k: 'Credit they already hold', v: 'None', tone: 'mute' },
         last
-          ? ['Last invoice', esc(last.id + ' · ' + Grove.money(last.amt) + ' · ' + last.status)]
-          : { k: 'Last invoice', v: 'None raised yet', tone: 'mute' }
+          ? ['Last charge', esc(last.id + ' · ' + Grove.money(last.amt) + ' · ' + last.status)]
+          : { k: 'Last charge', v: 'None raised yet', tone: 'mute' }
       ]));
 
       /* Four things the old forms asked that only ever had one answer. */
@@ -688,17 +719,17 @@
         ['Date', esc(D.today)],
         ['Recorded by', esc(Grove.persona('console').name)],
         ['Posted against', esc(f.name + ' family')],
-        ['Posted as', toCard ? 'A refund, dated today' : 'A credit against their next invoice'],
+        ['Posted as', toCard ? 'A refund, dated today' : 'A credit against their next charge'],
         ['The family sees it', 'On their next statement and in the portal']
       ]));
 
       var label = toCard ? 'Refund to ' + cardOf(f) : 'Add credit to the ' + f.name + ' account';
       var hint = toCard
         ? 'Money leaves the studio today, back to ' + cardOf(f) + '. You cannot pull it back from here.'
-        : 'Nothing leaves the studio. The credit comes off the ' + f.name + ' family’s next invoice.';
+        : 'Nothing leaves the studio. The credit comes off the ' + f.name + ' family’s next charge, whenever that lands.';
       var done = toCard
         ? 'Refunded to ' + cardOf(f) + ' · ' + f.name + ' family'
-        : 'Credit added to the ' + f.name + ' family account · it comes off their next invoice';
+        : 'Credit added to the ' + f.name + ' family account · it comes off their next charge';
 
       return h`
         ${raw(ui.grid('sidebar', [form, ui.col([stands, assumed])]))}
@@ -710,127 +741,164 @@
     }
   });
 
-  /* ---- Post the tuition run -----------------------------------------------------
-     This was a header button that told her afterwards what it had done. It is
-     the largest single money event in the month, so it is a page that shows
-     her the whole run first: who is charged and for how much, what they
-     already owe, and who is left alone with the reason. */
+  /* ---- Renewals ahead -------------------------------------------------------------
+     What used to be "Post the tuition run". There is no run and no date: a
+     pack renews the moment its last session is used, so this page forecasts
+     rather than posts. Soonest first, one row per child, because a pack
+     belongs to a child and a household with two children is two charges.
 
-  Grove.screen('postRun', {
+     There is no pinned bar, and that is the point — nothing here is waiting
+     on her. The charge happens by itself on the last session of the pack. */
+
+  function renewalRows(list) {
+    return list.map(function (s) {
+      var f = familyOf(s);
+      var p = D.pack(s);
+      return {
+        to: 'studentRecord',
+        id: s.id,
+        cells: [
+          ui.two(s.name, 'Age ' + s.age + ' · pack of ' + p.size),
+          ui.two(f.name + ' family', cardOf(f)),
+          h`<div class="stack stack--sm">
+            <div>${raw(ui.pill(p.used + ' of ' + p.size, p.renewsIn <= 1 ? 'amber' : null))}</div>
+            ${raw(ui.meter(p.used, p.size))}
+          </div>`,
+          p.renewsIn <= 1
+            ? h`<span class="strong">${whenText(s)}</span>`
+            : ui.mute(whenText(s)),
+          h`<span class="strong">${Grove.money(packPrice(p.size))}</span>`
+        ]
+      };
+    });
+  }
+
+  Grove.screen('renewals', {
     surface: 'console',
     crumbs: [{ label: 'Billing', to: 'billing' }],
-    crumbTitle: 'Tuition run',
-    eyebrow: 'nothing is charged yet',
-    title: 'Post the tuition run',
-    sub: function () {
-      return 'Exactly who the ' + NEXT_RUN + ' run would bill, and who it would leave alone. Nothing is raised and no card is charged until you post it.';
-    },
+    crumbTitle: 'Renewals',
+    eyebrow: 'nothing to post',
+    title: 'Renewals ahead',
+    sub: 'Whose pack renews next, and for how much. A pack renews when its last session is used, so a renewal is a number of classes away rather than a day on the calendar, and it charges itself when the child takes that class.',
 
     body: function () {
-      var list = billability();
-      var held = heldBack();
-      var owing = list.filter(function (r) { return r.owes > 0; });
-      var run = lastRun();
+      var list = renewing().slice().sort(function (a, b) {
+        var d = D.pack(a).renewsIn - D.pack(b).renewsIn;
+        if (d) return d;
+        if (a.family !== b.family) return a.family < b.family ? -1 : 1;
+        return a.name < b.name ? -1 : 1;
+      });
+      var soon = renewsNext();
+      var stop = lastPack();
+      var onCard = list.filter(function (s) { return familyOf(s).autopay; });
+      var byHand = list.length - onCard.length;
 
-      var warn = owing.length
+      var stats = ui.statbar([
+        {
+          label: 'Renews on the next class',
+          value: money0(packValue(soon)),
+          sub: count(soon.length, 'pack', 'packs') + ' · ' + count(packFamilies(soon), 'family', 'families'),
+          tone: 'clay'
+        },
+        {
+          label: 'Packs on the books',
+          value: String(list.length),
+          sub: 'held by ' + count(packFamilies(list), 'family', 'families')
+        },
+        {
+          label: 'If every pack renews',
+          value: money0(packValue(list)),
+          sub: 'no date attached — each charge lands on a child’s last session',
+          tone: 'grove'
+        }
+      ]);
+
+      var owingSoon = soon.filter(function (s) { return familyOf(s).balance > 0; });
+      var warn = owingSoon.length
         ? ui.notice({
             kind: 'warn',
-            title: owing.length === 1
-              ? 'One family on this run already owes money'
-              : owing.length + ' of these families already owe money',
-            text: listOf(owing.map(function (r) {
-              return r.f.name + ' ' + Grove.money(r.owes) + (r.open ? ' (' + r.open.status.toLowerCase() + ')' : '');
-            })) + ' — ' + Grove.money(owing.reduce(function (n, r) { return n + r.owes; }, 0)) +
-              ' in all. Posting adds August to what is already out; it does not collect it.'
+            title: owingSoon.length === 1
+              ? 'One pack renews while that family still owes money'
+              : owingSoon.length + ' packs renew while those families still owe money',
+            text: listOf(owingSoon.map(function (s) {
+              var f = familyOf(s);
+              var open = openInvoice(f);
+              return s.name + ' — the ' + f.name + ' family owes ' + Grove.money(f.balance) +
+                (open ? ' (' + open.status.toLowerCase() + ')' : '');
+            })) + '. Renewing charges the card again on top of what is already out; it does not collect it.'
           })
         : '';
 
       var table = ui.table(
-        ['Family', 'Plan', 'Card', { label: 'Owes now', align: 'right' }, { label: 'To charge', align: 'right' }],
-        list.map(function (r) {
-          return {
-            to: 'familyRecord',
-            id: r.f.id,
-            cells: [
-              ui.two(r.f.name + ' family', r.f.guardian),
-              ui.mute(r.f.plan),
-              ui.mute(cardOf(r.f)),
-              r.owes > 0 ? amount(r.owes, 'clay strong') : ui.mute('—'),
-              h`<span class="strong">${Grove.money(r.amt)}</span>`
-            ]
-          };
-        }),
+        ['Child', 'Family', 'Pack', 'Renews', { label: 'Then charges', align: 'right' }],
+        renewalRows(list),
         {
-          emptyTitle: 'Nothing to post',
-          emptyText: 'No family on the books is on a monthly plan this month.'
+          emptyTitle: 'No packs on the books',
+          emptyText: 'Every child here is on camp weeks and one-off bookings, which are paid for as they are booked.'
         }
       );
 
-      var autopay = list.filter(function (r) { return r.f.autopay; });
-      var byHand = list.filter(function (r) { return !r.f.autopay; });
-      var runNote = 'Each amount is that family’s plan priced from Settings → Pricing, not a figure typed in here. ';
-      runNote += autopay.length === list.length
-        ? 'All ' + list.length + ' are on autopay, so the card is charged the day the invoice is raised.'
-        : count(autopay.length, 'family is', 'families are') + ' on autopay and charged the same day; ' +
-          listOf(byHand.map(function (r) { return r.f.name; })) + ' will be invoiced by hand.';
+      var tableNote = 'Each price is that child’s pack priced from Settings → Pricing, not a figure typed in here. A renewal is charged the moment the last session in the pack is used. ';
+      tableNote += byHand
+        ? onCard.length + ' of ' + list.length + ' are on autopay and charged there and then; the other ' +
+          byHand + ' are invoiced by hand.'
+        : 'Every one of them is on autopay, so the card is charged there and then.';
 
-      var charge = ui.card({
-        title: 'Will be billed on ' + NEXT_RUN,
+      var renew = ui.card({
+        title: 'Packs and when they renew',
         flush: true,
-        note: runNote
+        note: tableNote,
+        foot: foot(count(list.length, 'pack', 'packs') + ' on the books',
+                   money0(packValue(list)) + ' if every one renews')
       }, table);
 
-      var holds = ui.card({
-        title: 'Held back',
-        flush: true,
-        note: 'Held back means nothing is raised and nothing is charged. Each of these is invoiced by hand when the time comes.'
-      }, held.length
-        ? ui.rows(held.map(function (f) {
-            return {
-              title: esc(f.name + ' family'),
-              sub: esc(holdReason(f)),
-              to: 'familyRecord',
-              id: f.id
-            };
-          }))
-        : ui.empty('Nobody is held back', 'Every family on the books is on a monthly plan.'));
-
-      var terms = ui.card({ title: 'What posting does' }, ui.kv([
-        ['Raises', count(list.length, 'invoice', 'invoices') + ', one per family'],
-        ['Charges', count(autopay.length, 'card', 'cards') + ' the same day'],
-        run ? ['Terms', esc('The last run was raised ' + run.date + ' and fell due ' + run.due)]
-            : { k: 'Terms', v: 'The same terms as the last run', tone: 'mute' },
+      var how = ui.card({ title: 'How a renewal works' }, ui.kv([
+        ['A pack renews', 'When the last session in it is used'],
+        ['It charges', 'Another pack the same size, at the same price'],
+        ['There is no date', 'The next charge is a number of classes away'],
+        ['Sessions do not expire', 'A pack is paid for, so it is theirs until it is used'],
+        ['Told us 24 hours ahead', 'The session is not spent and the pack lasts a week longer'],
+        ['Inside 24 hours', 'The session is spent, exactly as if they had come'],
         ['If a card fails', 'Retried on day 1, day 3 and day 7']
       ]));
 
+      var stopped = ui.card({
+        title: 'Not renewing',
+        flush: true,
+        note: 'Not renewing is the whole of cancelling. The family takes the sessions they have already paid for and the pack does not renew after the last one.'
+      }, stop.length
+        ? ui.rows(stop.map(function (s) {
+            var f = familyOf(s);
+            var p = D.pack(s);
+            return {
+              title: esc(s.name),
+              sub: esc(f.name + ' family · ' + p.used + ' of ' + p.size + ' used · ' +
+                count(p.left, 'session', 'sessions') + ' still to take'),
+              end: ui.pill('Last pack'),
+              to: 'studentRecord',
+              id: s.id
+            };
+          }))
+        : ui.empty('Every pack renews', 'No family has asked us to stop.'));
+
+      var booked = noPack().filter(function (s) { return (s.classIds || []).length; });
+      var waitingOn = noPack().filter(function (s) { return !(s.classIds || []).length; });
+
+      var none = ui.card({
+        title: 'Nothing renews for these',
+        note: 'A camp week, a pop-up class and a birthday party are paid for when they are booked, so there is nothing to renew. A child with no place yet is on the waitlist or part-way through registering.'
+      }, ui.kv([
+        ['Camp and one-off bookings', count(booked.length, 'child', 'children')],
+        ['No place yet', count(waitingOn.length, 'child', 'children')]
+      ]));
+
       return h`
+        ${raw(stats)}
         ${raw(warn)}
-        ${raw(ui.grid('sidebar', [charge, ui.col([holds, terms])]))}
-        ${raw(ui.formActions([
-          {
-            label: 'Post ' + count(list.length, 'invoice', 'invoices') + ' · ' + Grove.money(runTotal()),
-            kind: 'primary',
-            msg: count(list.length, 'invoice', 'invoices') + ' posted · ' + Grove.money(runTotal()) +
-              ' charged to ' + count(autopay.length, 'card', 'cards') + ' on ' + NEXT_RUN
-          },
-          { label: 'Cancel', to: 'billing' }
-        ], {
-          sticky: true,
-          hint: 'Charges ' + count(autopay.length, 'card', 'cards') + ' on ' + NEXT_RUN + '. ' +
-            count(held.length, 'family is', 'families are') + ' held back and nothing is charged to them.'
-        }))}
+        ${raw(ui.grid('sidebar', [renew, ui.col([how, stopped, none])]))}
       `;
     }
   });
-
-  /* The run, with each family's price and what they already owe, worked out
-     once so the table, the notice and the pinned bar cannot disagree. */
-  function billability() {
-    return billable().map(function (f) {
-      var open = openInvoice(f);
-      return { f: f, amt: monthly(f), owes: f.balance, open: open };
-    });
-  }
 
   /* ---- the family ledger ---------------------------------------------------------- */
 
@@ -860,6 +928,7 @@
     },
 
     body: function () {
+      var f = ledgerFamily();
       var lines = D.LEDGER.slice().reverse();
 
       var charged = 0, adjusted = 0, settled = 0, owing = 0;
@@ -908,11 +977,31 @@
         { k: 'Outstanding', v: Grove.money(owing), tone: owing > 0 ? 'clay' : 'mute' }
       ]));
 
+      /* One pack per child, so the next two charges on this account are two
+         different children finishing two different packs. */
+      var held = packsHeld(f);
+      var packs = ui.card({
+        title: 'Packs on this account',
+        flush: true,
+        note: 'A pack belongs to one child, so these renew separately and arrive as separate charges. A session cancelled more than 24 hours ahead is not spent — the pack simply lasts a week longer.'
+      }, held.length
+        ? ui.rows(held.map(function (s) {
+            var p = D.pack(s);
+            return {
+              title: esc(s.name),
+              sub: esc(progressText(s) + ' · then ' + Grove.money(packPrice(p.size))),
+              end: ui.pill(p.left + ' left', p.renewsIn <= 1 ? 'amber' : null),
+              to: 'studentRecord',
+              id: s.id
+            };
+          }))
+        : ui.empty('No pack on this account', 'Camp weeks and one-off bookings are paid for when they are booked.'));
+
       var theirs = ADJUSTMENTS.filter(function (a) { return a.fam === LEDGER_FAMILY; });
       var adjCard = ui.card({
         title: 'Balance adjustments',
         flush: true,
-        note: 'An adjustment is applied against an invoice rather than posted here as a ledger line, so it changes what the family was charged, not what is listed above.'
+        note: 'An adjustment is applied against a charge rather than posted here as a ledger line, so it changes what the family was charged, not what is listed above.'
       }, theirs.length
         ? ui.rows(theirs.map(function (a) {
             var st = adjState(a);
@@ -928,7 +1017,7 @@
       /* No pinned bar here. The ledger is a record to read, not a form to
          finish, and its three header buttons are already the three things
          that can be done to it. */
-      return ui.grid('sidebar', [ledgerCard, ui.col([totals, adjCard])]);
+      return ui.grid('sidebar', [ledgerCard, ui.col([totals, packs, adjCard])]);
     }
   });
 })();

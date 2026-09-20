@@ -131,9 +131,7 @@
 
   var PLAIN = [
     [/\bmake-up slots\b/gi, 'make-up hours'],
-    [/\bmake-up credits\b/gi, 'classes to make up'],
-    [/\bmake-up credit\b/gi, 'class to make up'],
-    [/\bcredits\b/gi, 'classes to make up'],
+            [/\bcredits\b/gi, 'classes to make up'],
     [/\bcredit\b/gi, 'class to make up'],
     [/\badded to your account\b/gi, 'added for you']
   ];
@@ -167,16 +165,11 @@
       : 'Sent — the studio usually replies the same day';
   }
 
-  /* Classes this family still has to make up. The booking action appears only
-     while there is one, so the header never offers a parent something they
-     have nothing to use it for. */
-  function toMakeUp() {
-    var names = D.STUDENTS.filter(function (s) {
-      return s.family === D.family(FAMILY).name;
-    }).map(function (s) { return s.name; });
-
-    return D.MAKEUPS.filter(function (m) {
-      return names.indexOf(m.child) !== -1 && m.status === 'Available';
+  /* Children in this family holding a pack. An extra class spends a session
+     out of it, so the booking action is offered whenever one of them does. */
+  function onAPack() {
+    return D.STUDENTS.filter(function (s) {
+      return s.family === D.family(FAMILY).name && D.pack(s).isPack;
     });
   }
 
@@ -251,7 +244,7 @@
 
     actions: function () {
       var list = [{ label: 'Report an absence', to: 'fSchedule' }];
-      if (toMakeUp().length) list.push({ label: 'Book a make-up class', to: 'fBookMakeup' });
+      if (onAPack().length) list.push({ label: 'Book a make-up class', to: 'fBookMakeup' });
       return list;
     },
 

@@ -42,6 +42,22 @@
        days and pop-ups.
      - the two cards are balanced by content, so neither ends in dead space.
 
+   Rebuilt for the corrected billing model:
+     - a family buys a pack of sessions for a child, and the pack renews when
+       the last session in it is used. The confirmation no longer promises
+       “$540 a month from 1 September, billed on the 1st”. It names the next
+       charge and says how many classes away it is, both computed from the
+       pack the family chose.
+     - a pack belongs to one child. A booking for two children buys two packs,
+       which renew independently, so there is no one monthly bill to quote.
+     - “30 days written notice to cancel” and the word membership are gone. A
+       family stops by not renewing: they use what they have paid for.
+     - the make-up credit is gone. A class cancelled more than 24 hours ahead
+       is simply not spent — the session stays in the child’s pack — so there
+       is nothing to issue and nothing to expire. The camp, no-school and
+       pop-up footnote no longer mentions a credit either.
+     - no session expires, so no expiry date is shown anywhere here.
+
    The selections are read back from the same keys the flow writes, so the
    figures here and on the review step agree. */
 (function () {
@@ -51,7 +67,6 @@
 
   var DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   var FIRST_CLASS = 'Monday 17 Aug 2026';   /* the program year opens then */
-  var NEXT_MONTH = '1 Sep 2026';
   var BDAY_DATE = 'Sat 12 Sep 2026';        /* the date step 2 asks for */
   var REF = 'GRV-8841';
 
@@ -61,6 +76,10 @@
   function m(n) { return Grove.money(n); }
   function m0(n) { return Grove.money(n, { cents: false }); }
   function plural(n, one, many) { return n === 1 ? one : many; }
+  function ordinal(n) {
+    var ends = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (ends[(v - 20) % 10] || ends[v] || ends[0]);
+  }
   function row(k, v, tone) { return { k: k, v: esc(v), tone: tone || null }; }
   function strongRow(k, v) {
     return { k: k, v: h`<span class="strong">${v}</span>`, tone: 'grove' };
@@ -118,7 +137,29 @@
     var cur = pick('rPlan', 'p8');
     return PLAN_KEYS.indexOf(cur) === -1 ? 'p8' : cur;
   }
-  function planLabel(key) { return key.slice(1) + ' Classes / Month'; }
+  /* A pack is a number of sessions bought for one child. There is no date in
+     it: when the last session is used the pack renews and charges again. */
+  function packSize() { return Number(planKey().slice(1)); }
+  function packPrice() { return P.as.plans[planKey()]; }
+  function renewLine() { return 'When the ' + ordinal(packSize()) + ' class is used'; }
+  /* Whose pack a session goes back into when a class is cancelled in time. */
+  function packOwner(names) {
+    return names.length === 1 ? names[0] + '’s pack' : 'that child’s pack';
+  }
+  function renewTitle() {
+    return kidCount() > 1
+      ? 'Then ' + m(packPrice()) + ' each time a pack renews'
+      : 'Then ' + m(packPrice()) + ' on the ' + ordinal(packSize()) + ' class';
+  }
+  function renewSub() {
+    if (kidCount() > 1) {
+      return 'Each child holds their own pack. It renews when that child’s ' +
+        ordinal(packSize()) + ' class is used and buys another ' + packSize() +
+        ' sessions, so the packs renew at different times. There is no billing date.';
+    }
+    return 'The pack renews when the ' + ordinal(packSize()) + ' class is used and buys ' +
+      'another ' + packSize() + ' sessions. There is no billing date.';
+  }
   function asBands() {
     var out = [];
     classesFor('as').forEach(function (c) { if (out.indexOf(c.band) === -1) out.push(c.band); });
@@ -210,8 +251,10 @@
   }
   function asBreakdown() {
     var q = asMoney();
-    return q.n + plural(q.n, ' child', ' children') + ' on the ' + planLabel(planKey()) +
-      ' plan, ' + m(q.base) + ', plus ' + m(q.fee) + ' registration' +
+    var packs = q.n === 1
+      ? 'A pack of ' + packSize() + ', ' + m(q.base)
+      : q.n + ' packs of ' + packSize() + ' at ' + m(packPrice()) + ' each, ' + m(q.base);
+    return packs + ', plus ' + m(q.fee) + ' registration' +
       (q.relief ? ' less ' + m(q.relief) + ' sibling discount' : '') + ' — ' + m(q.invoice) + '.';
   }
 
@@ -314,7 +357,9 @@
 
     if (p === 'as') {
       c = asClass();
-      rows.push(row('Plan', planLabel(planKey())));
+      rows.push(row('Pack', packSize() + ' sessions, ' + m0(packPrice()) + ' a pack' +
+        (kidCount() > 1 ? ', per child' : '')));
+      if (!asWaiting()) rows.push(row('Renews', renewLine()));
       rows.push(row('Age group', 'Ages ' + asBand()));
       rows.push(c ? row('Class', when(c)) : row('Class', 'Not chosen', 'mute'));
       if (asWaiting()) {
@@ -385,20 +430,25 @@
           step(color, 'If a place opens you have 24 hours',
             'We email you the moment one does. Accept, and a secure payment link follows.'),
           step(color, 'What that first invoice covers', asBreakdown()),
-          step(color, 'Then ' + m(q.base) + ' a month, billed on the 1st',
-            'The full plan price, from the month after you start. 30 days notice to cancel.')
+          step(color, 'Then ' + m(packPrice()) + ' when the pack runs out',
+            'A pack renews on the ' + ordinal(packSize()) + ' class, not on a date. ' +
+            'Nothing renews while you wait, and no session expires.')
         ];
       }
       return [
         step(color, 'Enrollment confirmation, by email',
-          'Your plan, your weekly schedule, the first class date and the amount that follows.'),
+          'Your pack, your weekly schedule, the first class date and what renews when.'),
         step(color, 'A secure payment link for ' + m(q.invoice), asBreakdown()),
         step(color, 'First class ' + FIRST_CLASS,
           'The program year opens then. All materials are provided — dress for mess.'),
-        step(color, 'Then ' + m(q.base) + ' a month from ' + NEXT_MONTH,
-          'Billed on the 1st, at the full plan price. 30 days written notice to cancel.'),
-        step(color, 'Cancel a class 24 hours ahead',
-          'Do it in the portal and the class becomes a make-up credit for that month.')
+        step(color, renewTitle(), renewSub()),
+        step(color, 'Tell us 24 hours ahead and the session is not spent',
+          'Cancel in the portal more than 24 hours before a class and it stays in ' +
+          packOwner(bookedNames('as')) + ', so the pack lasts a week longer. Inside 24 hours ' +
+          'it is spent, exactly as if they had come.'),
+        step(color, 'Stop by not renewing',
+          'There is no notice to give and nothing expires. Use the sessions you have paid ' +
+          'for, tell us not to renew, and the pack does not charge again.')
       ];
     }
 
@@ -434,7 +484,7 @@
       step(color, 'Nothing further to pay',
         'A single payment. Camps, day camps and pop-ups are non-refundable.'),
       step(color, 'A booked day is a held place',
-        'Missing it does not create a make-up class, a refund or a credit.')
+        'Missing it does not move the day. This is bought on its own, not out of a session pack.')
     ];
   }
 

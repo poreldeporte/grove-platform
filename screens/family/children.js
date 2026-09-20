@@ -3,99 +3,97 @@
    Written for the parent this portal is actually for: someone in their
    sixties doing the school run, wary of getting something wrong online, who
    will ring the studio rather than hunt for a control. Three things are true
-   of all three screens after this pass — the thing they came to do is on
-   screen before they scroll, they are asked one question at a time, and
-   asking a person is an option they can see.
+   of all three screens — the thing they came to do is on screen before they
+   scroll, they are asked one question at a time, and asking a person is an
+   option they can see.
 
-   Where a child's day comes from: a placement is now read from the class the
-   child is enrolled in — D.classesOf(s) — rather than by parsing the
-   free-text line on their record for a day and a room. The day, the room and
-   the teacher on both screens are the ones the class itself carries, a child
-   who holds more than one place gets a line for each rather than "Mon, Wed,
-   Thu", and a child with no place is either named on the waitlist or has no
-   day chosen yet. Nothing on these screens counts children by hand either:
-   the family is whoever STUDENTS holds against the household, so the page
-   reads the same for a family of one as for a family of four.
+   WHAT CHANGED IN THIS PASS: THE BILLING MODEL WAS WRONG
 
-   What changed in the pass before:
-     - a child's card was seven rows of the studio's record: Age, Age band,
-       Class, Attendance, Make-up credits, Safety, In an emergency we call.
-       It is now two lines — when they are in, and what a teacher must not get
-       wrong — with anything that needs the parent on a footer bar of its own:
-       "One class to make up · Book a make-up", "Photo permission still to
-       sign · Read and sign". The button sits on the child it belongs to
-     - "In an emergency we call" was printed on both children's cards, the
-       same sentence twice. It is one card at the foot of the page, because
+   A family buys a pack of sessions for one child. The child attends. When the
+   last session in the pack is used, the pack renews — it charges again and
+   grants another pack the same size. There is no date in any of it: the next
+   charge is a number of classes away, not a day on the calendar. Two children
+   hold two packs, of whatever sizes they hold, and they renew at different
+   times for two separate charges.
+
+   Three things follow, and all three delete machinery rather than rename it:
+
+     - a session cancelled in time is simply not spent. Tell us more than 24
+       hours ahead and it stays in the child's pack, so the pack lasts a week
+       longer; inside 24 hours it is spent exactly as if they had come. So
+       there is no make-up credit to issue, book, chase or approve. The whole
+       make-up apparatus is gone from this file — MAKEUPS, the Available /
+       Booked / Expiring vocabulary, stillToBook, useBy, the "Classes to make
+       up" card, the "Book a make-up" button on the card and in the pinned bar.
+       A family who wants to catch up books an extra class, and that spends a
+       session like any other class
+     - sessions never expire. The pack is paid for, so it is theirs until used.
+       Every expiry date, expiry rule and expiry warning is deleted — including
+       "Book before 31 Jul", "none of them can be carried into the autumn term",
+       and the one line under the list that used to carry the date
+     - a child's pack is now one of the two most useful facts on their card, so
+       it sits on the card beside where they are on a Monday, and it has a card
+       of its own on the child's page
+
+   Nothing on these screens is a month, a monthly rate, a billing date, a
+   billing cycle or a membership. A family is not a member — they hold
+   sessions. The price shown is the pack price PRICING.as.plans holds, read by
+   pack size, so "another pack of 8, $540" is the studio's own figure.
+
+   Where a child's day comes from: a placement is read from the class the child
+   is enrolled in — D.classesOf(s) — rather than by parsing the free-text line
+   on their record. The day, the room and the teacher are the ones the class
+   itself carries, a child who holds more than one place gets a line for each,
+   and a child with no place is either named on the waitlist or has no day
+   chosen yet. Nothing here counts children by hand either: the family is
+   whoever STUDENTS holds against the household, so the page reads the same for
+   a family of one as for a family of four.
+
+   What earlier passes settled, and this one keeps:
+     - a child's card is two or three lines — when they are in, how many
+       classes are left in their pack, and what a teacher must not get wrong —
+       with anything that needs the parent on a footer bar of its own. The
+       button sits on the child it belongs to
+     - "In an emergency we call" is one card at the foot of the list, because
        that number belongs to the family rather than to either child
-     - the children list ends in "Something not right?", with the desk number
-       and a message button, so a parent who cannot find what they came for
-       can see that asking is allowed
-     - the child page opened with About them (Age, Age band, Family, Guardian,
-       With us since, Photo permission) and put the allergy in the second
-       column. Safety is now the first card, across the full width, with the
-       allergy in a red notice and the number we ring in the sentence under it
-     - the child page ends in "If something needs changing", with the desk
-       number and a message button, and its header is down to one button: on a
-       phone the header is a two-column grid, and a second button squeezed the
-       child's name into one word a line
+     - the list and the child page each end in a card that offers a person: the
+       desk number and a message button, so a parent who cannot find what they
+       came for can see that asking is allowed
+     - Safety is the first card on the child page, across the full width, with
+       the allergy in a red notice and the number we ring in the sentence under
+       it
      - the child page carries a bar pinned to the bottom of the viewport when
-       something needs the parent, and it names the thing: "Book the class
-       Emma missed", "Read and sign the photo permission for Lucas". The
-       children list does not carry one, because with two children a single
-       bar could only name one of them — there, the button is on the card
-     - Add a child showed seven fields at once with Save underneath them all,
-       which is the complaint that started this pass. It is three questions:
-       their name and birthday, is there anything a teacher must know, and who
-       do we ring. The last two are answered with two big choices, and each
-       asks for more only once it has been answered — the notes box appears
-       when you say there is something to tell us, the name and number appear
-       when you say somebody other than the contact we already hold. Save is
-       pinned to the bottom of the viewport and says what happens next in one
-       line: nothing is booked yet
-     - those three questions run down the page one card each rather than two
-       abreast, because a form is a sequence and a second column reads as a
-       second thing to deal with. The pair of cards under them is a ui.grid,
-       so they still end level
-
-   Jargon removed from the parent's side: credit and make-up credit (a parent
-   has a class to make up; the credit is the studio's bookkeeping), attendance
-   percentages, age band, guardian, roster, attendance sheet, the status
-   vocabulary Available / Booked / Expiring, and the summary line
-   "1 available · 1 booked".
+       something needs the parent, and it names the thing. The children list
+       does not, because with two children a single bar could only name one
+     - Add a child is three questions — their name and birthday, is there
+       anything a teacher must know, and who do we ring — each asking for more
+       only once it has been answered, with Save pinned to the bottom
 
    Removed, and why a parent does not need it:
      - "Attendance · 96%". A percentage is the studio's measure of a term. The
-       fact a parent can act on is which classes were missed and whether one
-       still needs booking, and that is now said in words, one line each
+       facts a parent can act on are which classes were missed and whether the
+       session was spent, and both are now said in words, one line each
      - "Age band · 8–11". The band is how the studio groups a room. It is said
        as part of a sentence — "in the group for ages 8 to 11" — and Add a
-       child no longer asks for it at all, because it follows from the date of
-       birth the form already asks for
+       child no longer asks for it, because it follows from the date of birth
      - "Family · Johnson family" and "Guardian · Sabrina Moore" from the child
        page. A parent knows their own surname, and the guardian is the person
        reading the page — they appear once, as the number we ring
-     - the status pills against each missed class. "Booked for Fri 31 Jul ·
-       10:00am" says more than a pill reading Booked, and takes the same room
-     - "expires 31 Jul" on every row, replaced by one line under the list
 
    Kept although it looks like clutter:
      - the allergy and the medical note, at the top of the child page in red.
        It is the one thing on this screen that can hurt somebody
      - the emergency name, number and email, in full, on both screens
-     - the date a missed class must be booked by. It is a date a parent has to
-       act on, so it stays, in words, under the list
      - the unsigned photo permission for Lucas. It is paperwork the studio is
        waiting on and the only place the children screens show it
      - "with us since Aug 2024". One clause on a line that was already there,
        and the parent's own check that the record is theirs
 
-   The desk number is the one Console → Settings gives families, which is the
-   number Documents quotes as well. Billing and Book a make-up quote
-   a different number instead; those files are not mine to change, but a parent
-   should not be given two numbers for one studio. */
+   The desk number is the one Console → Settings gives families. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
+  var money = Grove.money;
 
   /* The signed-in parent is the Johnson household. Their children are whoever
      STUDENTS holds against that family — the page never names them itself. */
@@ -113,8 +111,7 @@
     Fri: 'Fridays', Sat: 'Saturdays', Sun: 'Sundays', 'Mon–Fri': 'Every weekday'
   };
 
-  /* A safety flag of kind "warn" has no pill of its own; amber is the nearest,
-     and it is the mapping the make-up rows use elsewhere. */
+  /* A safety flag of kind "warn" has no pill of its own; amber is the nearest. */
   var FLAG = { bad: 'bad', warn: 'amber', ok: 'ok' };
 
   function household() {
@@ -136,24 +133,81 @@
     return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
   }
 
-  /* ---- what the studio holds about one child ---------------------------------
-     Every figure on these screens is counted off the rows shown. A child's
-     missed classes come from MAKEUPS, never from STUDENTS.mk, because a class
-     already booked back in is not one the family still has to do anything
-     about — which is exactly what Schedule → Absences & make-ups shows. */
+  /* ---- the pack of sessions ---------------------------------------------------
+     A pack belongs to one child, not to the family. It is bought, spent class
+     by class, and on the last session it renews: it charges again and grants
+     another pack the same size. Nothing here is a date. The size, the sessions
+     used and the number of classes until the next charge all come from
+     D.pack(), and the price comes from the studio's own pack prices, read by
+     size — so a screen can never quote a rate the studio does not hold. */
 
-  function missedClasses(s) {
-    return D.MAKEUPS.filter(function (m) { return m.child === s.name; });
+  function packPrice(size) {
+    return ((D.PRICING.as || {}).plans || {})['p' + size];
   }
-  function stillToBook(s) {
-    return missedClasses(s).filter(function (m) { return m.status === 'Available'; });
+  /* "the 8th class" — the class the charge lands on. */
+  function ordinal(n) {
+    var tail = n % 100;
+    if (tail >= 11 && tail <= 13) return n + 'th';
+    var last = n % 10;
+    return n + (last === 1 ? 'st' : (last === 2 ? 'nd' : (last === 3 ? 'rd' : 'th')));
   }
-  function useBy(list) {
-    var seen = [];
-    list.forEach(function (m) {
-      if (seen.indexOf(m.expires) === -1) seen.push(m.expires);
-    });
-    return andList(seen);
+
+  function packRows(s) {
+    var p = D.pack(s);
+    if (!p.isPack) {
+      return [{
+        title: 'No pack of sessions',
+        sub: esc(first(s) + ' comes to camp and to classes you book one at a time, so there is ' +
+          'nothing here that renews.')
+      }];
+    }
+    var price = packPrice(p.size);
+    return [
+      {
+        title: esc(p.left
+          ? p.left + (p.left === 1 ? ' class' : ' classes') + ' left of ' + p.size
+          : 'The pack renews with the next class'),
+        sub: esc(p.used + ' of ' + p.size + ' used. It renews on the ' + ordinal(p.size) +
+          ' class — another pack of ' + p.size + (price ? ', ' + money(price, { cents: false }) : '') + '.')
+      },
+      {
+        title: 'Yours until you use them',
+        sub: esc('The pack is paid for, so the sessions stay with ' + first(s) +
+          ' however long they take. There is no date on them.')
+      }
+    ];
+  }
+
+  /* A missed class is not a thing to chase. Either the session stayed in the
+     pack or it was spent, and the row says which. */
+  function absences(s) {
+    return D.absencesFor(s.name);
+  }
+  function absenceRow(s, a) {
+    var bits = String(a.date).split(' · ');
+    return {
+      title: esc(first(s) + ' missed ' + bits[0]),
+      sub: esc((bits[1] ? 'The ' + bits[1] + ' class. ' : '') + a.reason + ' — ' +
+        (a.spent
+          ? 'that was inside 24 hours, so the session was spent.'
+          : 'the session stayed in the pack.'))
+    };
+  }
+
+  /* A class booked on top of a weekly place, to catch up or just for the love
+     of it. It spends a session like any other class. */
+  function extras(s) {
+    return D.EXTRA_CLASSES.filter(function (x) { return x.child === s.name; });
+  }
+  function extraRow(x) {
+    var bits = String(x.when).split(' · ');
+    return {
+      title: esc('Extra class on ' + bits[0]),
+      sub: esc((bits[1] ? bits[1] + ', in ' : 'In ') + x.room +
+        (x.staff && x.staff !== 'Unassigned' ? ' with ' + x.staff : '') +
+        '. It spends a session from the pack, like any other class.'),
+      end: ui.btn({ label: 'Change', kind: 'quiet', size: 'sm', to: 'fMessages' })
+    };
   }
 
   /* The child's own paperwork — a photo permission is held per child. */
@@ -229,52 +283,33 @@
     return b;
   }
 
-  /* ---- the things that need the parent ---------------------------------------
-     Most pressing first: a class with a date to book it by, then paperwork,
-     which has no date on it. Each one carries the sentence it is announced
-     with, the short label for a button beside it, and the full label for a
-     bar that has to name it on its own. */
+  /* ---- the one thing that can need the parent ---------------------------------
+     A pack renewing is not a job for anybody — it happens on the class it
+     happens on — and a missed class is settled the moment it is missed. What
+     is left is paperwork nobody has signed, so there is one of these or none,
+     and the card foot and the pinned bar both read from it. */
 
-  function todos(s) {
-    var list = [];
-    var open = stillToBook(s);
+  function todo(s) {
     var doc = consentDoc(s);
-
-    if (open.length) {
-      list.push({
-        name: open.length === 1
-          ? 'the class ' + first(s) + ' missed'
-          : 'the ' + open.length + ' classes ' + first(s) + ' missed',
-        verb: 'Book',
-        short: 'Book a make-up',
-        line: open.length === 1 ? 'One class to make up' : open.length + ' classes to make up',
-        hint: 'Book before ' + useBy(open) + ' — a make-up class costs nothing',
-        to: 'fBookMakeup'
-      });
-    }
-    if (doc && !doc.signed) {
-      list.push({
-        name: 'the photo permission for ' + first(s),
-        verb: 'Read and sign',
-        short: 'Read and sign',
-        line: 'Photo permission still to sign',
-        hint: 'One page, and a tick — nothing changes until you sign it',
-        to: 'fDocument',
-        id: doc.id
-      });
-    }
-    return list;
-  }
-  function fullLabel(t) {
-    return t.verb + ' ' + t.name;
+    if (!doc || doc.signed) return null;
+    return {
+      label: 'Read and sign the photo permission for ' + first(s),
+      short: 'Read and sign',
+      line: 'Photo permission still to sign',
+      hint: 'One page, and a tick — nothing changes until you sign it',
+      to: 'fDocument',
+      id: doc.id
+    };
   }
 
   /* ---- the children ---------------------------------------------------------- */
 
   function childCard(s) {
-    var t = todos(s);
+    var t = todo(s);
 
-    var rows = placeRows(s).concat([
+    /* Where they are on a Monday, then how many classes are left in the pack,
+       then the thing a teacher must not get wrong. */
+    var rows = placeRows(s).concat([packRows(s)[0]]).concat([
       s.flag
         ? {
             title: esc(s.flag),
@@ -288,11 +323,9 @@
           }
     ]);
 
-    /* Whatever needs the parent sits on this child's own card, with the
-       button on the same line as the sentence that explains it. */
-    var foot = t.length
-      ? h`<span class="strong">${t[0].line}</span>` +
-        ui.btn({ label: t[0].short, kind: 'primary', size: 'sm', to: t[0].to, id: t[0].id })
+    var foot = t
+      ? h`<span class="strong">${t.line}</span>` +
+        ui.btn({ label: t.short, kind: 'primary', size: 'sm', to: t.to, id: t.id })
       : '<span class="mute">Nothing needs you</span>';
 
     return ui.card({
@@ -309,10 +342,14 @@
     eyebrow: 'who you have with us',
     title: 'My children',
     sub: function () {
-      var names = mine().map(first);
+      var kids = mine();
+      var names = kids.map(first);
       if (!names.length) return 'Nobody is on your family yet. Add a child and they will appear here.';
+      var packs = kids.filter(function (s) { return D.pack(s).isPack; });
       return andList(names) + (names.length === 1 ? ' is' : ' are') + ' with us. Open a child to ' +
-        'see when they are in, what a teacher must know about them, and who we ring first.';
+        'see when they are in, how many classes are left in their pack, and what a teacher must ' +
+        'know about them.' +
+        (packs.length > 1 ? ' Each pack belongs to one child and renews on its own.' : '');
     },
     actions: [
       { label: 'Add a child', kind: 'primary', to: 'fAddChild' }
@@ -352,30 +389,8 @@
 
   /* ---- one child ---------------------------------------------------------------
      Safety first and across the full width, because it is the only thing on
-     this page that can hurt somebody. Under it, when they are in, what is
-     left to make up, and how to have any of it changed by a person. */
-
-  function makeupRow(s, m) {
-    var bits = String(m.missed).split(' · ');
-    var why = String(m.reason).split(',')[0].toLowerCase();
-    if (why.indexOf('requested') === 0) why = 'you asked to move it';
-
-    var end;
-    if (m.status === 'Available') {
-      end = ui.btn({ label: 'Book a make-up', kind: 'primary', size: 'sm', to: 'fBookMakeup' });
-    } else if (m.booked) {
-      end = h`<span class="strong">${m.status === 'Booked' ? 'Booked for ' + m.booked : m.booked}</span>` +
-        ui.btn({ label: 'Change', kind: 'quiet', size: 'sm', to: 'fMessages' });
-    } else {
-      end = ui.btn({ label: 'Ask the studio', kind: 'quiet', size: 'sm', to: 'fMessages' });
-    }
-
-    return {
-      title: esc(first(s) + ' missed ' + bits[0]),
-      sub: esc(bits[1] ? 'The ' + bits[1] + ' class — ' + why : why),
-      end: end
-    };
-  }
+     this page that can hurt somebody. Under it, when they are in, what is left
+     in their pack, and how to have any of it changed by a person. */
 
   var childScreen = {
     surface: 'family',
@@ -396,10 +411,9 @@
     body: function (ctx) {
       var s = kid(ctx);
       var f = household();
-      var list = missedClasses(s);
       var doc = consentDoc(s);
       var held = places(s);
-      var t = todos(s);
+      var t = todo(s);
 
       var flag = s.flag
         ? ui.notice({
@@ -449,26 +463,28 @@
         title: first(s) + ' at the studio',
         flush: true,
         note: held.length > 1
-          ? 'These are their ' + held.length + ' places for the term. If a day stops working ' +
-            'for you, tell us and we will see what is possible.'
+          ? 'These are their ' + held.length + ' weekly places. If a day stops working for you, ' +
+            'tell us and we will see what is possible.'
           : (held.length
-              ? 'This is their place for the term. If the day stops working for you, tell us ' +
-                'and we will see what is possible.'
+              ? 'This is their weekly place. If the day stops working for you, tell us and we ' +
+                'will see what is possible.'
               : 'No class is booked yet. Tell us the day you would like and we will see what ' +
                 'is possible.')
       }, ui.rows(rows));
 
-      var makeups = ui.card({
-        title: 'Classes to make up',
+      /* The pack, then every class that has been counted against it: a missed
+         class says whether the session stayed, an extra class says that it
+         spends one. No dates, because there are none to give. */
+      var sessions = ui.card({
+        title: first(s) + '’s pack',
         flush: true,
-        note: list.length
-          ? 'Use them before ' + useBy(list) + '. A make-up class costs nothing, and none of ' +
-            'them can be carried into the autumn term.'
-          : 'Tell us more than 24 hours before a class and ' + first(s) +
-            ' can take another hour instead.'
-      }, list.length
-        ? ui.rows(list.map(function (m) { return makeupRow(s, m); }))
-        : ui.empty('Nothing to book', 'There is no class waiting to be made up.'));
+        head: ui.btn({ label: 'Book an extra class', kind: 'quiet', size: 'sm', to: 'fSchedule' }),
+        note: 'Tell us more than 24 hours before a class and the session stays in the pack — the ' +
+              'pack simply lasts a week longer. Inside 24 hours it is spent, exactly as if they ' +
+              'had come.'
+      }, ui.rows(packRows(s)
+        .concat(absences(s).map(function (a) { return absenceRow(s, a); }))
+        .concat(extras(s).map(extraRow))));
 
       /* Nothing on this page has to be done online, and a parent who cannot
          see the control they want should be able to see that. */
@@ -481,15 +497,15 @@
 
       /* One child, so a bar can name what needs doing without guessing which
          of them was meant. Nothing outstanding, no bar. */
-      var bar = t.length
-        ? ui.formActions(t.map(function (x, i) {
-            return { label: fullLabel(x), kind: i === 0 ? 'primary' : null, to: x.to, id: x.id };
-          }), { sticky: true, hint: t[0].hint })
+      var bar = t
+        ? ui.formActions([
+            { label: t.label, kind: 'primary', to: t.to, id: t.id }
+          ], { sticky: true, hint: t.hint })
         : '';
 
       return h`
         ${raw(care)}
-        <div class="section">${raw(ui.grid(2, [atStudio, ui.col([makeups, help])]))}</div>
+        <div class="section">${raw(ui.grid(2, [atStudio, ui.col([sessions, help])]))}</div>
         ${raw(bar)}
       `;
     }
@@ -623,8 +639,9 @@
           sub: 'You will see them on Children with the others.'
         },
         {
-          title: 'No class is booked yet',
-          sub: 'When you know the day you would like, this is where you choose it.',
+          title: 'No class is booked, and nothing is charged',
+          sub: 'A charge only happens when you buy them a pack of sessions. When you know the ' +
+               'day you would like, this is where you choose it.',
           end: ui.btn({ label: 'Book & enroll', kind: 'quiet', size: 'sm', to: 'rPick' })
         }
       ]));
@@ -650,7 +667,7 @@
         ], {
           sticky: true,
           hint: care
-            ? 'No class is booked yet — you choose their day next'
+            ? 'Nothing is charged by saving — you choose their day next'
             : 'Tell us about allergies above before you save'
         }))}
       `;

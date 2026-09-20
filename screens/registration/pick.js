@@ -4,9 +4,8 @@
    Grove.data.PROGRAMS, each dropping straight into the enrollment flow.
 
    Simplified against the spec:
-     - the per-card tag ("Monthly", "One payment", "By appointment", "Quote")
-       said the same thing as the price unit sitting two inches below it, so
-       the unit says it once
+     - the per-card tag repeated whatever the price unit already said two
+       inches below it, so the unit says it once
      - the per-card availability line ("2 weeks left", "8 dates") is not in
        Grove.data and would be a promise we cannot keep. The flow shows the
        real places on the class you pick
@@ -17,6 +16,19 @@
    Corrected: the spec's fine print claimed every price shown includes the
    fees that apply to it. It does not — the flow adds a one-time registration
    fee from PRICING — so the fine print now says what is actually charged.
+
+   BILLING MODEL CORRECTED
+     After-School is not a subscription and nothing here is a month. A family
+     buys a pack of sessions for a child; when the last session in the pack is
+     used, the pack renews and grants another of the same size. So:
+     - the After-School card no longer says "billed month to month" or "four
+       to sixteen sessions a month". It says what a pack is, when it renews,
+       and that the sessions do not expire.
+     - the price foot no longer reads "/month". PRICING.as.plans p4…p16 are
+       pack prices, not monthly rates, so the card shows the pack price next
+       to the pack it buys.
+     - the pack sizes are counted off PRICING.as.plans rather than written
+       down here, so the card cannot drift from what the studio bills.
 
    FIXED AFTER VISUAL REVIEW
      - The six badge PNGs are gone. Their lettering was an illegible smudge at
@@ -36,9 +48,9 @@
   var ORDER = ['as', 'camp', 'nsd', 'priv', 'bday', 'pop'];
 
   /* The same words the console shows on Programs, so a parent and the owner
-     are reading one description of the same thing. */
+     are reading one description of the same thing. After-School is built from
+     PRICING below, because its sentence names the pack sizes on sale. */
   var BLURB = {
-    as: 'A fixed weekly place across the school year, billed month to month. Four to sixteen sessions a month, split how you like.',
     camp: 'Full days of making through the summer and school breaks. Take a whole week or pick individual days.',
     nsd: 'For teacher workdays and county holidays. Three hours as standard, extend by the hour if you need to.',
     priv: 'One-to-one time with an instructor, on a subject your child chooses. Up to three hours in a session.',
@@ -48,11 +60,36 @@
 
   function m0(n) { return Grove.money(n, { cents: false }); }
 
-  /* The lowest real amount a family could pay for each programme, read from
-     PRICING. Nothing here is a literal rate. */
+  /* The pack sizes on sale, counted off PRICING.as.plans: p4 / p8 / p12 / p16
+     is the number of sessions in the pack, and the amount is what it costs. */
+  function packSizes() {
+    return Object.keys(D.PRICING.as.plans).map(function (key) {
+      return parseInt(key.slice(1), 10);
+    }).sort(function (a, b) { return a - b; });
+  }
+
+  function joinSizes(sizes) {
+    if (sizes.length < 2) return String(sizes[0] || '');
+    return sizes.slice(0, -1).join(', ') + ' or ' + sizes[sizes.length - 1];
+  }
+
+  function blurbOf(id) {
+    if (id === 'as') {
+      return 'A fixed weekly place across the school year. You buy a pack of ' +
+        joinSizes(packSizes()) + ' sessions for your child; it renews when the last ' +
+        'one is used, and the sessions do not expire.';
+    }
+    return BLURB[id];
+  }
+
+  /* What a family pays, read from PRICING. Nothing here is a literal rate and
+     nothing here is a month: After-School is priced by the pack. */
   function priceOf(id) {
     var P = D.PRICING;
-    if (id === 'as')   return { amount: 'from ' + m0(P.as.plans.p4), unit: '/month' };
+    if (id === 'as') {
+      var smallest = packSizes()[0];
+      return { amount: m0(P.as.plans['p' + smallest]), unit: 'a pack of ' + smallest };
+    }
     if (id === 'camp') return { amount: m0(P.camp.week),   unit: '/week' };
     if (id === 'nsd')  return { amount: m0(P.nsd.base),    unit: '/day' };
     if (id === 'priv') return { amount: m0(P.priv.hourly), unit: '/hour' };
@@ -76,7 +113,7 @@
       head: ui.dot(p.color),
       foot: h`<span><span class="strong num">${price.amount}</span> <span class="mute">${price.unit}</span></span>` +
         ui.btn({ label: 'Book this', kind: 'quiet', size: 'sm', to: 'rFlow', id: id })
-    }, h`<p class="hint">${BLURB[id]}</p>`);
+    }, h`<p class="hint">${blurbOf(id)}</p>`);
   }
 
   Grove.screen('rPick', {

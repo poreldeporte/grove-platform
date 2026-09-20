@@ -53,52 +53,52 @@
   };
 
   var FAMILIES = [
-    { id: 'johnson',  name: 'Johnson',  guardian: 'Sabrina Moore',    email: 'sabrina.j@email.com',   phone: '(786) 340-1182', kids: 'Emma (8), Lucas (10)', balance: 18,  plan: '8 + 4 sessions / month',  status: 'Active',          since: 'Aug 2024',    autopay: true,  card: 'Visa ···1183 · exp 04/29', heardVia: 'Word of mouth' },
-    { id: 'okafor',   name: 'Okafor',   guardian: 'Ada Okafor',       email: 'ada.okafor@email.com',  phone: '(305) 771-4409', kids: 'Zara (11), Tobi (9)',  balance: 540, plan: '8 sessions / month',      status: 'Payment failed',  since: 'Sep 2025',    autopay: true,  card: 'Visa ···4417 · exp 11/27', heardVia: 'Instagram' },
-    { id: 'chen',     name: 'Chen',     guardian: 'Wei Chen',         email: 'wei.chen@email.com',    phone: '(786) 209-3318', kids: 'Mia (6)',              balance: 0,   plan: 'Summer camp · week 4',    status: 'Active',          since: 'Jun 2026',    autopay: false, card: 'Visa ···0091 · exp 02/28', heardVia: 'Google' },
-    { id: 'rivera',   name: 'Rivera',   guardian: 'Diego Rivera',     email: 'diego.rivera@email.com',phone: '(305) 442-8890', kids: 'Noah (7)',             balance: 0,   plan: '4 sessions / month',      status: 'Active',          since: 'Jan 2025',    autopay: true,  card: 'Visa ···7734 · exp 07/29', heardVia: 'Word of mouth' },
-    { id: 'smith',    name: 'Smith',    guardian: 'Karen Smith',      email: 'karen.smith@email.com', phone: '(786) 553-1207', kids: 'Ava (8)',              balance: 45,  plan: '4 sessions / month',      status: 'Past due',        since: 'Mar 2025',    autopay: true,  card: 'Mastercard ···9902 · exp 01/28', heardVia: 'School flyer' },
-    { id: 'martinez', name: 'Martinez', guardian: 'Isabel Martinez',  email: 'isabel.m@email.com',    phone: '(305) 118-7742', kids: 'Sophia (8)',           balance: 0,   plan: '12 sessions / month',     status: 'Active',          since: 'Aug 2023',    autopay: true,  card: 'ACH ···6620', heardVia: 'Word of mouth' },
+    { id: 'johnson',  name: 'Johnson',  guardian: 'Sabrina Moore',    email: 'sabrina.j@email.com',   phone: '(786) 340-1182', kids: 'Emma (8), Lucas (10)', balance: 18,  plan: 'Packs of 8 and 4',  status: 'Active',          since: 'Aug 2024',    autopay: true,  card: 'Visa ···1183 · exp 04/29', heardVia: 'Word of mouth' },
+    { id: 'okafor',   name: 'Okafor',   guardian: 'Ada Okafor',       email: 'ada.okafor@email.com',  phone: '(305) 771-4409', kids: 'Zara (11), Tobi (9)',  balance: 540, plan: 'Pack of 8',      status: 'Payment failed',  since: 'Sep 2025',    autopay: true,  card: 'Visa ···4417 · exp 11/27', heardVia: 'Instagram' },
+    { id: 'chen',     name: 'Chen',     guardian: 'Wei Chen',         email: 'wei.chen@email.com',    phone: '(786) 209-3318', kids: 'Mia (6)',              balance: 0,   plan: 'Camp week 4',    status: 'Active',          since: 'Jun 2026',    autopay: false, card: 'Visa ···0091 · exp 02/28', heardVia: 'Google' },
+    { id: 'rivera',   name: 'Rivera',   guardian: 'Diego Rivera',     email: 'diego.rivera@email.com',phone: '(305) 442-8890', kids: 'Noah (7)',             balance: 0,   plan: 'Pack of 4',      status: 'Active',          since: 'Jan 2025',    autopay: true,  card: 'Visa ···7734 · exp 07/29', heardVia: 'Word of mouth' },
+    { id: 'smith',    name: 'Smith',    guardian: 'Karen Smith',      email: 'karen.smith@email.com', phone: '(786) 553-1207', kids: 'Ava (8)',              balance: 45,  plan: 'Pack of 4',      status: 'Past due',        since: 'Mar 2025',    autopay: true,  card: 'Mastercard ···9902 · exp 01/28', heardVia: 'School flyer' },
+    { id: 'martinez', name: 'Martinez', guardian: 'Isabel Martinez',  email: 'isabel.m@email.com',    phone: '(305) 118-7742', kids: 'Sophia (8)',           balance: 0,   plan: 'Pack of 12',     status: 'Active',          since: 'Aug 2023',    autopay: true,  card: 'ACH ···6620', heardVia: 'Word of mouth' },
     { id: 'delgado',  name: 'Delgado',  guardian: 'Paloma Delgado',   email: 'p.delgado@email.com',   phone: '(786) 664-0031', kids: 'Iker (5), Luz (7)',    balance: 200, plan: 'Registered, not yet paid',status: 'Pending payment', since: '27 Jul 2026', autopay: false, card: 'None saved', heardVia: 'Instagram' },
-    { id: 'hollis', name: 'Hollis', guardian: 'Margaret Hollis', email: 'margaret.hollis@email.com', phone: '(305) 852-3546', kids: 'Tariq (7), Paloma (6)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Jun 2026', autopay: true, card: 'Mastercard ···4289 · exp 01/28', heardVia: 'Walked past' },
-    { id: 'lemaire', name: 'Lemaire', guardian: 'Gareth Lemaire', email: 'gareth.lemaire@email.com', phone: '(786) 947-1736', kids: 'Yara (5)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Amex ···7620 · exp 03/29', heardVia: 'Instagram' },
-    { id: 'jimenez', name: 'Jimenez', guardian: 'Maria Jimenez', email: 'maria.jimenez@email.com', phone: '(305) 729-7745', kids: 'Aria (6), Nicolas (6)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Aug 2025', autopay: false, card: 'Mastercard ···1914 · exp 03/28', heardVia: 'Instagram' },
-    { id: 'abreu', name: 'Abreu', guardian: 'Petra Abreu', email: 'petra.abreu@email.com', phone: '(305) 852-7504', kids: 'Iris (5), Rowan (9)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Mastercard ···3037 · exp 02/27', heardVia: 'Sibling already here' },
-    { id: 'okonkwo', name: 'Okonkwo', guardian: 'Rhys Okonkwo', email: 'rhys.okonkwo@email.com', phone: '(305) 685-7579', kids: 'Solene (5), Maeve (10)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Visa ···3910 · exp 07/28', heardVia: 'Google' },
-    { id: 'pereira', name: 'Pereira', guardian: 'Margaret Pereira', email: 'margaret.pereira@email.com', phone: '(786) 311-5762', kids: 'Otto (5), Renata (11)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Aug 2025', autopay: false, card: 'Amex ···6228 · exp 08/28', heardVia: 'Walked past' },
-    { id: 'rocha', name: 'Rocha', guardian: 'Adaeze Rocha', email: 'adaeze.rocha@email.com', phone: '(305) 237-4568', kids: 'Odette (5)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Sep 2025', autopay: true, card: 'Visa ···6926 · exp 03/27', heardVia: 'School flyer' },
-    { id: 'cifuentes', name: 'Cifuentes', guardian: 'Anders Cifuentes', email: 'anders.cifuentes@email.com', phone: '(786) 332-5070', kids: 'Bruno (5)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2025', autopay: true, card: 'Visa ···1781 · exp 06/28', heardVia: 'Sibling already here' },
-    { id: 'estrada', name: 'Estrada', guardian: 'Farah Estrada', email: 'farah.estrada@email.com', phone: '(305) 392-3566', kids: 'Arlo (7)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2025', autopay: true, card: 'Mastercard ···7543 · exp 07/30', heardVia: 'Google' },
-    { id: 'ibrahim', name: 'Ibrahim', guardian: 'Siobhan Ibrahim', email: 'siobhan.ibrahim@email.com', phone: '(305) 479-3592', kids: 'Hana (8)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Amex ···2518 · exp 03/27', heardVia: 'Google' },
-    { id: 'nkemdirim', name: 'Nkemdirim', guardian: 'Tomas Nkemdirim', email: 'tomas.nkemdirim@email.com', phone: '(305) 820-6850', kids: 'Idris (9)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2025', autopay: false, card: 'Amex ···7530 · exp 08/28', heardVia: 'School flyer' },
-    { id: 'bonilla', name: 'Bonilla', guardian: 'Andres Bonilla', email: 'andres.bonilla@email.com', phone: '(786) 703-9899', kids: 'Iris (11), Arlo (9)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Sep 2025', autopay: true, card: 'Amex ···4703 · exp 11/29', heardVia: 'Word of mouth' },
-    { id: 'tavares', name: 'Tavares', guardian: 'Margaret Tavares', email: 'margaret.tavares@email.com', phone: '(305) 583-3076', kids: 'Rowan (11)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Amex ···6143 · exp 04/28', heardVia: 'Walked past' },
-    { id: 'fonseca', name: 'Fonseca', guardian: 'Adaeze Fonseca', email: 'adaeze.fonseca@email.com', phone: '(305) 341-8002', kids: 'Omar (8)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Mastercard ···2312 · exp 08/30', heardVia: 'Instagram' },
-    { id: 'zavala', name: 'Zavala', guardian: 'Siobhan Zavala', email: 'siobhan.zavala@email.com', phone: '(786) 713-8002', kids: 'Enzo (10), Hugo (9)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Sep 2025', autopay: false, card: 'Mastercard ···2141 · exp 09/29', heardVia: 'School flyer' },
-    { id: 'vega', name: 'Vega', guardian: 'Peter Vega', email: 'peter.vega@email.com', phone: '(305) 735-6006', kids: 'Elena (7)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2024', autopay: false, card: 'Mastercard ···8816 · exp 09/28', heardVia: 'Instagram' },
-    { id: 'valdez', name: 'Valdez', guardian: 'Wanjiru Valdez', email: 'wanjiru.valdez@email.com', phone: '(786) 636-6988', kids: 'Kofi (7)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Sep 2025', autopay: false, card: 'Mastercard ···8060 · exp 05/30', heardVia: 'Google' },
-    { id: 'espinal', name: 'Espinal', guardian: 'Dominique Espinal', email: 'dominique.espinal@email.com', phone: '(786) 350-1108', kids: 'Hana (6)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2025', autopay: false, card: 'Amex ···3611 · exp 05/30', heardVia: 'Sibling already here' },
-    { id: 'kouassi', name: 'Kouassi', guardian: 'Ingrid Kouassi', email: 'ingrid.kouassi@email.com', phone: '(305) 805-7330', kids: 'Declan (6)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Amex ···8209 · exp 04/30', heardVia: 'Walked past' },
-    { id: 'salgado', name: 'Salgado', guardian: 'David Salgado', email: 'david.salgado@email.com', phone: '(786) 495-8876', kids: 'Anika (7)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Visa ···6658 · exp 01/29', heardVia: 'Word of mouth' },
-    { id: 'jansen', name: 'Jansen', guardian: 'Samir Jansen', email: 'samir.jansen@email.com', phone: '(305) 736-1130', kids: 'Willa (7)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Visa ···3812 · exp 11/29', heardVia: 'Sibling already here' },
-    { id: 'fabre', name: 'Fabre', guardian: 'Siobhan Fabre', email: 'siobhan.fabre@email.com', phone: '(305) 287-4390', kids: 'Declan (7)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Amex ···4788 · exp 07/29', heardVia: 'Sibling already here' },
-    { id: 'wanjiru', name: 'Wanjiru', guardian: 'Dominique Wanjiru', email: 'dominique.wanjiru@email.com', phone: '(786) 942-5693', kids: 'Esme (8)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Visa ···2840 · exp 09/28', heardVia: 'Walked past' },
-    { id: 'navarro', name: 'Navarro', guardian: 'Renee Navarro', email: 'renee.navarro@email.com', phone: '(786) 935-7858', kids: 'Priya (11)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Mastercard ···3742 · exp 09/30', heardVia: 'School flyer' },
-    { id: 'barros', name: 'Barros', guardian: 'Pierre Barros', email: 'pierre.barros@email.com', phone: '(786) 937-5286', kids: 'Rayan (8), Keiko (11)', balance: 0, plan: '8 sessions / month', status: 'Active', since: 'Jun 2026', autopay: false, card: 'Mastercard ···7829 · exp 08/29', heardVia: 'Walked past' },
-    { id: 'delacroix', name: 'Delacroix', guardian: 'Elena Delacroix', email: 'elena.delacroix@email.com', phone: '(305) 355-2626', kids: 'Mariana (8)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Visa ···2722 · exp 05/27', heardVia: 'Sibling already here' },
-    { id: 'toledo', name: 'Toledo', guardian: 'Samir Toledo', email: 'samir.toledo@email.com', phone: '(305) 543-4410', kids: 'Thea (8)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···7828 · exp 05/29', heardVia: 'Sibling already here' },
-    { id: 'fortier', name: 'Fortier', guardian: 'Fatima Fortier', email: 'fatima.fortier@email.com', phone: '(305) 405-4598', kids: 'Rayan (10)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jun 2026', autopay: false, card: 'Amex ···5836 · exp 04/27', heardVia: 'Walked past' },
-    { id: 'pires', name: 'Pires', guardian: 'Dominique Pires', email: 'dominique.pires@email.com', phone: '(786) 826-8631', kids: 'Camila (13)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2026', autopay: false, card: 'Mastercard ···7528 · exp 03/29', heardVia: 'Instagram' },
-    { id: 'haddad', name: 'Haddad', guardian: 'Farah Haddad', email: 'farah.haddad@email.com', phone: '(786) 500-6224', kids: 'Arjun (14)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···3140 · exp 08/30', heardVia: 'Instagram' },
-    { id: 'jalal', name: 'Jalal', guardian: 'Wanjiru Jalal', email: 'wanjiru.jalal@email.com', phone: '(786) 883-8378', kids: 'Marisol (14)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Amex ···3930 · exp 06/29', heardVia: 'School flyer' },
-    { id: 'klein', name: 'Klein', guardian: 'Petra Klein', email: 'petra.klein@email.com', phone: '(305) 214-7777', kids: 'Imani (13)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Mastercard ···7269 · exp 03/30', heardVia: 'Word of mouth' },
-    { id: 'whitlock', name: 'Whitlock', guardian: 'Siobhan Whitlock', email: 'siobhan.whitlock@email.com', phone: '(786) 686-5935', kids: 'Haruki (14)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Amex ···8804 · exp 11/28', heardVia: 'School flyer' },
-    { id: 'guerrero', name: 'Guerrero', guardian: 'Wanjiru Guerrero', email: 'wanjiru.guerrero@email.com', phone: '(786) 674-1744', kids: 'Arlo (14)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jun 2026', autopay: false, card: 'Amex ···4925 · exp 08/27', heardVia: 'Walked past' },
-    { id: 'moreau', name: 'Moreau', guardian: 'Maria Moreau', email: 'maria.moreau@email.com', phone: '(305) 972-4142', kids: 'Milo (14)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Mastercard ···2182 · exp 06/27', heardVia: 'Sibling already here' },
-    { id: 'lund', name: 'Lund', guardian: 'Bjorn Lund', email: 'bjorn.lund@email.com', phone: '(786) 608-2169', kids: 'Keiko (12)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Amex ···5511 · exp 11/27', heardVia: 'Sibling already here' },
-    { id: 'idowu', name: 'Idowu', guardian: 'Beatriz Idowu', email: 'beatriz.idowu@email.com', phone: '(305) 815-7553', kids: 'Marisol (12)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Sep 2025', autopay: true, card: 'Mastercard ···5285 · exp 03/28', heardVia: 'Sibling already here' },
-    { id: 'restrepo', name: 'Restrepo', guardian: 'Petra Restrepo', email: 'petra.restrepo@email.com', phone: '(305) 228-2774', kids: 'Aria (12)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···7508 · exp 01/27', heardVia: 'Walked past' },
-    { id: 'yusuf', name: 'Yusuf', guardian: 'Carmen Yusuf', email: 'carmen.yusuf@email.com', phone: '(786) 462-3450', kids: 'Valentina (14)', balance: 0, plan: '4 sessions / month', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···5786 · exp 03/30', heardVia: 'School flyer' },
+    { id: 'hollis', name: 'Hollis', guardian: 'Margaret Hollis', email: 'margaret.hollis@email.com', phone: '(305) 852-3546', kids: 'Tariq (7), Paloma (6)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Jun 2026', autopay: true, card: 'Mastercard ···4289 · exp 01/28', heardVia: 'Walked past' },
+    { id: 'lemaire', name: 'Lemaire', guardian: 'Gareth Lemaire', email: 'gareth.lemaire@email.com', phone: '(786) 947-1736', kids: 'Yara (5)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Amex ···7620 · exp 03/29', heardVia: 'Instagram' },
+    { id: 'jimenez', name: 'Jimenez', guardian: 'Maria Jimenez', email: 'maria.jimenez@email.com', phone: '(305) 729-7745', kids: 'Aria (6), Nicolas (6)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Aug 2025', autopay: false, card: 'Mastercard ···1914 · exp 03/28', heardVia: 'Instagram' },
+    { id: 'abreu', name: 'Abreu', guardian: 'Petra Abreu', email: 'petra.abreu@email.com', phone: '(305) 852-7504', kids: 'Iris (5), Rowan (9)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Mastercard ···3037 · exp 02/27', heardVia: 'Sibling already here' },
+    { id: 'okonkwo', name: 'Okonkwo', guardian: 'Rhys Okonkwo', email: 'rhys.okonkwo@email.com', phone: '(305) 685-7579', kids: 'Solene (5), Maeve (10)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Visa ···3910 · exp 07/28', heardVia: 'Google' },
+    { id: 'pereira', name: 'Pereira', guardian: 'Margaret Pereira', email: 'margaret.pereira@email.com', phone: '(786) 311-5762', kids: 'Otto (5), Renata (11)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Aug 2025', autopay: false, card: 'Amex ···6228 · exp 08/28', heardVia: 'Walked past' },
+    { id: 'rocha', name: 'Rocha', guardian: 'Adaeze Rocha', email: 'adaeze.rocha@email.com', phone: '(305) 237-4568', kids: 'Odette (5)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Sep 2025', autopay: true, card: 'Visa ···6926 · exp 03/27', heardVia: 'School flyer' },
+    { id: 'cifuentes', name: 'Cifuentes', guardian: 'Anders Cifuentes', email: 'anders.cifuentes@email.com', phone: '(786) 332-5070', kids: 'Bruno (5)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2025', autopay: true, card: 'Visa ···1781 · exp 06/28', heardVia: 'Sibling already here' },
+    { id: 'estrada', name: 'Estrada', guardian: 'Farah Estrada', email: 'farah.estrada@email.com', phone: '(305) 392-3566', kids: 'Arlo (7)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2025', autopay: true, card: 'Mastercard ···7543 · exp 07/30', heardVia: 'Google' },
+    { id: 'ibrahim', name: 'Ibrahim', guardian: 'Siobhan Ibrahim', email: 'siobhan.ibrahim@email.com', phone: '(305) 479-3592', kids: 'Hana (8)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Amex ···2518 · exp 03/27', heardVia: 'Google' },
+    { id: 'nkemdirim', name: 'Nkemdirim', guardian: 'Tomas Nkemdirim', email: 'tomas.nkemdirim@email.com', phone: '(305) 820-6850', kids: 'Idris (9)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2025', autopay: false, card: 'Amex ···7530 · exp 08/28', heardVia: 'School flyer' },
+    { id: 'bonilla', name: 'Bonilla', guardian: 'Andres Bonilla', email: 'andres.bonilla@email.com', phone: '(786) 703-9899', kids: 'Iris (11), Arlo (9)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Sep 2025', autopay: true, card: 'Amex ···4703 · exp 11/29', heardVia: 'Word of mouth' },
+    { id: 'tavares', name: 'Tavares', guardian: 'Margaret Tavares', email: 'margaret.tavares@email.com', phone: '(305) 583-3076', kids: 'Rowan (11)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Amex ···6143 · exp 04/28', heardVia: 'Walked past' },
+    { id: 'fonseca', name: 'Fonseca', guardian: 'Adaeze Fonseca', email: 'adaeze.fonseca@email.com', phone: '(305) 341-8002', kids: 'Omar (8)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Mastercard ···2312 · exp 08/30', heardVia: 'Instagram' },
+    { id: 'zavala', name: 'Zavala', guardian: 'Siobhan Zavala', email: 'siobhan.zavala@email.com', phone: '(786) 713-8002', kids: 'Enzo (10), Hugo (9)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Sep 2025', autopay: false, card: 'Mastercard ···2141 · exp 09/29', heardVia: 'School flyer' },
+    { id: 'vega', name: 'Vega', guardian: 'Peter Vega', email: 'peter.vega@email.com', phone: '(305) 735-6006', kids: 'Elena (7)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2024', autopay: false, card: 'Mastercard ···8816 · exp 09/28', heardVia: 'Instagram' },
+    { id: 'valdez', name: 'Valdez', guardian: 'Wanjiru Valdez', email: 'wanjiru.valdez@email.com', phone: '(786) 636-6988', kids: 'Kofi (7)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Sep 2025', autopay: false, card: 'Mastercard ···8060 · exp 05/30', heardVia: 'Google' },
+    { id: 'espinal', name: 'Espinal', guardian: 'Dominique Espinal', email: 'dominique.espinal@email.com', phone: '(786) 350-1108', kids: 'Hana (6)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2025', autopay: false, card: 'Amex ···3611 · exp 05/30', heardVia: 'Sibling already here' },
+    { id: 'kouassi', name: 'Kouassi', guardian: 'Ingrid Kouassi', email: 'ingrid.kouassi@email.com', phone: '(305) 805-7330', kids: 'Declan (6)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Amex ···8209 · exp 04/30', heardVia: 'Walked past' },
+    { id: 'salgado', name: 'Salgado', guardian: 'David Salgado', email: 'david.salgado@email.com', phone: '(786) 495-8876', kids: 'Anika (7)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Visa ···6658 · exp 01/29', heardVia: 'Word of mouth' },
+    { id: 'jansen', name: 'Jansen', guardian: 'Samir Jansen', email: 'samir.jansen@email.com', phone: '(305) 736-1130', kids: 'Willa (7)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Visa ···3812 · exp 11/29', heardVia: 'Sibling already here' },
+    { id: 'fabre', name: 'Fabre', guardian: 'Siobhan Fabre', email: 'siobhan.fabre@email.com', phone: '(305) 287-4390', kids: 'Declan (7)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Amex ···4788 · exp 07/29', heardVia: 'Sibling already here' },
+    { id: 'wanjiru', name: 'Wanjiru', guardian: 'Dominique Wanjiru', email: 'dominique.wanjiru@email.com', phone: '(786) 942-5693', kids: 'Esme (8)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Visa ···2840 · exp 09/28', heardVia: 'Walked past' },
+    { id: 'navarro', name: 'Navarro', guardian: 'Renee Navarro', email: 'renee.navarro@email.com', phone: '(786) 935-7858', kids: 'Priya (11)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Mastercard ···3742 · exp 09/30', heardVia: 'School flyer' },
+    { id: 'barros', name: 'Barros', guardian: 'Pierre Barros', email: 'pierre.barros@email.com', phone: '(786) 937-5286', kids: 'Rayan (8), Keiko (11)', balance: 0, plan: 'Pack of 8', status: 'Active', since: 'Jun 2026', autopay: false, card: 'Mastercard ···7829 · exp 08/29', heardVia: 'Walked past' },
+    { id: 'delacroix', name: 'Delacroix', guardian: 'Elena Delacroix', email: 'elena.delacroix@email.com', phone: '(305) 355-2626', kids: 'Mariana (8)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Visa ···2722 · exp 05/27', heardVia: 'Sibling already here' },
+    { id: 'toledo', name: 'Toledo', guardian: 'Samir Toledo', email: 'samir.toledo@email.com', phone: '(305) 543-4410', kids: 'Thea (8)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···7828 · exp 05/29', heardVia: 'Sibling already here' },
+    { id: 'fortier', name: 'Fortier', guardian: 'Fatima Fortier', email: 'fatima.fortier@email.com', phone: '(305) 405-4598', kids: 'Rayan (10)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jun 2026', autopay: false, card: 'Amex ···5836 · exp 04/27', heardVia: 'Walked past' },
+    { id: 'pires', name: 'Pires', guardian: 'Dominique Pires', email: 'dominique.pires@email.com', phone: '(786) 826-8631', kids: 'Camila (13)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2026', autopay: false, card: 'Mastercard ···7528 · exp 03/29', heardVia: 'Instagram' },
+    { id: 'haddad', name: 'Haddad', guardian: 'Farah Haddad', email: 'farah.haddad@email.com', phone: '(786) 500-6224', kids: 'Arjun (14)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···3140 · exp 08/30', heardVia: 'Instagram' },
+    { id: 'jalal', name: 'Jalal', guardian: 'Wanjiru Jalal', email: 'wanjiru.jalal@email.com', phone: '(786) 883-8378', kids: 'Marisol (14)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Amex ···3930 · exp 06/29', heardVia: 'School flyer' },
+    { id: 'klein', name: 'Klein', guardian: 'Petra Klein', email: 'petra.klein@email.com', phone: '(305) 214-7777', kids: 'Imani (13)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Mastercard ···7269 · exp 03/30', heardVia: 'Word of mouth' },
+    { id: 'whitlock', name: 'Whitlock', guardian: 'Siobhan Whitlock', email: 'siobhan.whitlock@email.com', phone: '(786) 686-5935', kids: 'Haruki (14)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2025', autopay: true, card: 'Amex ···8804 · exp 11/28', heardVia: 'School flyer' },
+    { id: 'guerrero', name: 'Guerrero', guardian: 'Wanjiru Guerrero', email: 'wanjiru.guerrero@email.com', phone: '(786) 674-1744', kids: 'Arlo (14)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jun 2026', autopay: false, card: 'Amex ···4925 · exp 08/27', heardVia: 'Walked past' },
+    { id: 'moreau', name: 'Moreau', guardian: 'Maria Moreau', email: 'maria.moreau@email.com', phone: '(305) 972-4142', kids: 'Milo (14)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Mastercard ···2182 · exp 06/27', heardVia: 'Sibling already here' },
+    { id: 'lund', name: 'Lund', guardian: 'Bjorn Lund', email: 'bjorn.lund@email.com', phone: '(786) 608-2169', kids: 'Keiko (12)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Jan 2024', autopay: true, card: 'Amex ···5511 · exp 11/27', heardVia: 'Sibling already here' },
+    { id: 'idowu', name: 'Idowu', guardian: 'Beatriz Idowu', email: 'beatriz.idowu@email.com', phone: '(305) 815-7553', kids: 'Marisol (12)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Sep 2025', autopay: true, card: 'Mastercard ···5285 · exp 03/28', heardVia: 'Sibling already here' },
+    { id: 'restrepo', name: 'Restrepo', guardian: 'Petra Restrepo', email: 'petra.restrepo@email.com', phone: '(305) 228-2774', kids: 'Aria (12)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···7508 · exp 01/27', heardVia: 'Walked past' },
+    { id: 'yusuf', name: 'Yusuf', guardian: 'Carmen Yusuf', email: 'carmen.yusuf@email.com', phone: '(786) 462-3450', kids: 'Valentina (14)', balance: 0, plan: 'Pack of 4', status: 'Active', since: 'Aug 2024', autopay: true, card: 'Visa ···5786 · exp 03/30', heardVia: 'School flyer' },
     { id: 'iglesias', name: 'Iglesias', guardian: 'Maria Iglesias', email: 'maria.iglesias@email.com', phone: '(305) 698-9778', kids: 'Nina (7)', balance: 0, plan: 'Camp and one-off bookings', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Mastercard ···4761 · exp 04/27', heardVia: 'Word of mouth' },
     { id: 'cardoso', name: 'Cardoso', guardian: 'Carlos Cardoso', email: 'carlos.cardoso@email.com', phone: '(305) 730-6583', kids: 'Rayan (5)', balance: 0, plan: 'Camp and one-off bookings', status: 'Active', since: 'Aug 2023', autopay: true, card: 'Mastercard ···5513 · exp 11/29', heardVia: 'Sibling already here' },
     { id: 'galvez', name: 'Galvez', guardian: 'Ana Galvez', email: 'ana.galvez@email.com', phone: '(305) 584-6301', kids: 'Freya (7)', balance: 0, plan: 'Camp and one-off bookings', status: 'Active', since: 'Sep 2025', autopay: true, card: 'Visa ···3844 · exp 12/29', heardVia: 'Sibling already here' },
@@ -120,89 +120,89 @@
     { id: 'ugalde', name: 'Ugalde', guardian: 'Helen Ugalde', email: 'helen.ugalde@email.com', phone: '(786) 598-4154', kids: 'Haruki (5)', balance: 0, plan: 'Camp and one-off bookings', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Amex ···1303 · exp 05/30', heardVia: 'Sibling already here' },
     { id: 'duarte', name: 'Duarte', guardian: 'Margaret Duarte', email: 'margaret.duarte@email.com', phone: '(305) 523-1681', kids: 'Cormac (6)', balance: 0, plan: 'Camp and one-off bookings', status: 'Active', since: 'Jan 2026', autopay: true, card: 'Amex ···4732 · exp 03/30', heardVia: 'Sibling already here' },
     { id: 'bermudez', name: 'Bermudez', guardian: 'Tamsin Bermudez', email: 'tamsin.bermudez@email.com', phone: '(786) 689-7049', kids: 'Rowan (6)', balance: 0, plan: 'Camp and one-off bookings', status: 'Active', since: 'Aug 2023', autopay: false, card: 'Visa ···4961 · exp 11/29', heardVia: 'Word of mouth' },
-    { id: 'brennan',  name: 'Brennan',  guardian: 'Nora Brennan',     email: 'nora.b@email.com',      phone: '(305) 900-2214', kids: 'Cillian (12)',         balance: 0,   plan: 'Cancelling · ends 31 Aug',status: 'Cancelling',      since: 'Sep 2024',    autopay: true,  card: 'Amex ···2201 · exp 09/27', heardVia: 'Walked past' }
+    { id: 'brennan',  name: 'Brennan',  guardian: 'Nora Brennan',     email: 'nora.b@email.com',      phone: '(305) 900-2214', kids: 'Cillian (12)',         balance: 0,   plan: 'Pack of 8 · not renewing',status: 'Cancelling',      since: 'Sep 2024',    autopay: true,  card: 'Amex ···2201 · exp 09/27', heardVia: 'Walked past' }
   ];
 
   var STUDENTS = [
-    { id: 'emma',    name: 'Emma Johnson',    age: 8,  band: '8–11', family: 'Johnson', classIds: ['c2'],  cls: 'Mon 3:15pm · Studio 2',      flag: 'Allergy · peanuts',        flagKind: 'bad',  att: '96%',  mk: 2 },
-    { id: 'lucas',   name: 'Lucas Johnson',   age: 10, band: '8–11', family: 'Johnson', classIds: ['c4'],  cls: 'Wed 3:15pm · Studio 2',      flag: 'Asthma · inhaler in bag',  flagKind: 'bad',  att: '91%',  mk: 0 },
-    { id: 'zara',    name: 'Zara Okafor',     age: 11, band: '8–11', family: 'Okafor', classIds: ['c4', 'c11'],   cls: 'Wed 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '88%',  mk: 1 },
-    { id: 'tobi',    name: 'Tobi Okafor',     age: 9,  band: '8–11', family: 'Okafor', classIds: [],   cls: 'Waitlisted · Mon 3:15pm',    flag: '',                         flagKind: '',     att: '—',    mk: 0 },
-    { id: 'mia',     name: 'Mia Chen',        age: 6,  band: '5–7',  family: 'Chen', classIds: ['c6'],     cls: 'Camp week 4 · Studio 1',    flag: 'Tree nuts',                flagKind: 'bad',  att: '100%', mk: 1 },
-    { id: 'noah',    name: 'Noah Rivera',     age: 7,  band: '5–7',  family: 'Rivera', classIds: ['c1'],   cls: 'Mon 2:15pm · Studio 1',      flag: '',                         flagKind: '',     att: '93%',  mk: 1 },
-    { id: 'ava',     name: 'Ava Smith',       age: 8,  band: '8–11', family: 'Smith', classIds: ['c2'],    cls: 'Mon 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '85%',  mk: 2 },
-    { id: 'sophia',  name: 'Sophia Martinez', age: 8,  band: '8–11', family: 'Martinez', classIds: ['c2', 'c4', 'c5'], cls: 'Mon, Wed, Thu',              flag: 'Requires quiet corner',    flagKind: 'warn', att: '98%',  mk: 1 },
-    { id: 'iker',    name: 'Iker Delgado',    age: 5,  band: '5–7',  family: 'Delgado', classIds: [],  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—',    mk: 0 },
-    { id: 'luz',     name: 'Luz Delgado',     age: 7,  band: '5–7',  family: 'Delgado', classIds: [],  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—',    mk: 0 },
-    { id: 'tariqhollis', name: 'Tariq Hollis', age: 7, band: '5–7', family: 'Hollis', classIds: ['c1', 'c6', 'c8'], flag: '', flagKind: '', att: '94%', mk: 0 },
-    { id: 'yaralemaire', name: 'Yara Lemaire', age: 5, band: '5–7', family: 'Lemaire', classIds: ['c1', 'c8', 'c12'], flag: '', flagKind: '', att: '94%', mk: 0 },
-    { id: 'palomahollis', name: 'Paloma Hollis', age: 6, band: '5–7', family: 'Hollis', classIds: ['c1', 'c6'], flag: '', flagKind: '', att: '88%', mk: 0 },
-    { id: 'ariajimenez', name: 'Aria Jimenez', age: 6, band: '5–7', family: 'Jimenez', classIds: ['c1'], flag: '', flagKind: '', att: '87%', mk: 0 },
-    { id: 'irisabreu', name: 'Iris Abreu', age: 5, band: '5–7', family: 'Abreu', classIds: ['c1', 'c6'], flag: '', flagKind: '', att: '89%', mk: 0 },
-    { id: 'soleneokonkwo', name: 'Solene Okonkwo', age: 5, band: '5–7', family: 'Okonkwo', classIds: ['c1', 'c6', 'c8'], flag: '', flagKind: '', att: '89%', mk: 0 },
-    { id: 'ottopereira', name: 'Otto Pereira', age: 5, band: '5–7', family: 'Pereira', classIds: ['c1', 'c6'], flag: '', flagKind: '', att: '86%', mk: 0 },
-    { id: 'odetterocha', name: 'Odette Rocha', age: 5, band: '5–7', family: 'Rocha', classIds: ['c1'], flag: '', flagKind: '', att: '84%', mk: 0 },
-    { id: 'brunocifuentes', name: 'Bruno Cifuentes', age: 5, band: '5–7', family: 'Cifuentes', classIds: ['c1', 'c6'], flag: '', flagKind: '', att: '90%', mk: 0 },
-    { id: 'arloestrada', name: 'Arlo Estrada', age: 7, band: '5–7', family: 'Estrada', classIds: ['c1', 'c6', 'c8'], flag: '', flagKind: '', att: '94%', mk: 0 },
-    { id: 'hanaibrahim', name: 'Hana Ibrahim', age: 8, band: '8–11', family: 'Ibrahim', classIds: ['c2', 'c7'], flag: '', flagKind: '', att: '98%', mk: 0 },
-    { id: 'idrisnkemdirim', name: 'Idris Nkemdirim', age: 9, band: '8–11', family: 'Nkemdirim', classIds: ['c2', 'c7'], flag: '', flagKind: '', att: '99%', mk: 0 },
-    { id: 'renatapereira', name: 'Renata Pereira', age: 11, band: '8–11', family: 'Pereira', classIds: ['c2', 'c7'], flag: '', flagKind: '', att: '84%', mk: 0 },
-    { id: 'maeveokonkwo', name: 'Maeve Okonkwo', age: 10, band: '8–11', family: 'Okonkwo', classIds: ['c2', 'c7'], flag: 'Allergy · dairy', flagKind: 'bad', att: '97%', mk: 0 },
-    { id: 'irisbonilla', name: 'Iris Bonilla', age: 11, band: '8–11', family: 'Bonilla', classIds: ['c2', 'c7'], flag: '', flagKind: '', att: '88%', mk: 0 },
-    { id: 'rowantavares', name: 'Rowan Tavares', age: 11, band: '8–11', family: 'Tavares', classIds: ['c2'], flag: '', flagKind: '', att: '95%', mk: 0 },
-    { id: 'omarfonseca', name: 'Omar Fonseca', age: 8, band: '8–11', family: 'Fonseca', classIds: ['c2', 'c7'], flag: '', flagKind: '', att: '100%', mk: 0 },
-    { id: 'arlobonilla', name: 'Arlo Bonilla', age: 9, band: '8–11', family: 'Bonilla', classIds: ['c2', 'c10'], flag: '', flagKind: '', att: '88%', mk: 0 },
-    { id: 'enzozavala', name: 'Enzo Zavala', age: 10, band: '8–11', family: 'Zavala', classIds: ['c2'], flag: '', flagKind: '', att: '93%', mk: 0 },
-    { id: 'nicolasjimenez', name: 'Nicolas Jimenez', age: 6, band: '5–7', family: 'Jimenez', classIds: ['c3', 'c6'], flag: '', flagKind: '', att: '94%', mk: 0 },
-    { id: 'elenavega', name: 'Elena Vega', age: 7, band: '5–7', family: 'Vega', classIds: ['c3'], flag: '', flagKind: '', att: '88%', mk: 0 },
-    { id: 'kofivaldez', name: 'Kofi Valdez', age: 7, band: '5–7', family: 'Valdez', classIds: ['c3'], flag: '', flagKind: '', att: '86%', mk: 0 },
-    { id: 'hanaespinal', name: 'Hana Espinal', age: 6, band: '5–7', family: 'Espinal', classIds: ['c3', 'c6', 'c8'], flag: '', flagKind: '', att: '96%', mk: 0 },
-    { id: 'declankouassi', name: 'Declan Kouassi', age: 6, band: '5–7', family: 'Kouassi', classIds: ['c3'], flag: '', flagKind: '', att: '87%', mk: 0 },
-    { id: 'anikasalgado', name: 'Anika Salgado', age: 7, band: '5–7', family: 'Salgado', classIds: ['c3', 'c6'], flag: '', flagKind: '', att: '100%', mk: 0 },
-    { id: 'willajansen', name: 'Willa Jansen', age: 7, band: '5–7', family: 'Jansen', classIds: ['c3', 'c6', 'c12'], flag: '', flagKind: '', att: '92%', mk: 0 },
-    { id: 'declanfabre', name: 'Declan Fabre', age: 7, band: '5–7', family: 'Fabre', classIds: ['c3'], flag: 'Allergy · eggs', flagKind: 'bad', att: '84%', mk: 0 },
-    { id: 'esmewanjiru', name: 'Esme Wanjiru', age: 8, band: '8–11', family: 'Wanjiru', classIds: ['c4'], flag: '', flagKind: '', att: '98%', mk: 0 },
-    { id: 'priyanavarro', name: 'Priya Navarro', age: 11, band: '8–11', family: 'Navarro', classIds: ['c4'], flag: '', flagKind: '', att: '84%', mk: 0 },
-    { id: 'rayanbarros', name: 'Rayan Barros', age: 8, band: '8–11', family: 'Barros', classIds: ['c4'], flag: 'Allergy · latex', flagKind: 'bad', att: '97%', mk: 0 },
-    { id: 'marianadelacroix', name: 'Mariana Delacroix', age: 8, band: '8–11', family: 'Delacroix', classIds: ['c4', 'c7', 'c10'], flag: '', flagKind: '', att: '92%', mk: 0 },
-    { id: 'theatoledo', name: 'Thea Toledo', age: 8, band: '8–11', family: 'Toledo', classIds: ['c4'], flag: '', flagKind: '', att: '94%', mk: 0 },
-    { id: 'keikobarros', name: 'Keiko Barros', age: 11, band: '8–11', family: 'Barros', classIds: ['c4', 'c7'], flag: '', flagKind: '', att: '83%', mk: 0 },
-    { id: 'rowanabreu', name: 'Rowan Abreu', age: 9, band: '8–11', family: 'Abreu', classIds: ['c4', 'c7'], flag: '', flagKind: '', att: '90%', mk: 0 },
-    { id: 'rayanfortier', name: 'Rayan Fortier', age: 10, band: '8–11', family: 'Fortier', classIds: ['c4'], flag: '', flagKind: '', att: '99%', mk: 0 },
-    { id: 'hugozavala', name: 'Hugo Zavala', age: 9, band: '8–11', family: 'Zavala', classIds: ['c4'], flag: '', flagKind: '', att: '82%', mk: 0 },
-    { id: 'camilapires', name: 'Camila Pires', age: 13, band: '12+', family: 'Pires', classIds: ['c5', 'c10'], flag: '', flagKind: '', att: '95%', mk: 0 },
-    { id: 'arjunhaddad', name: 'Arjun Haddad', age: 14, band: '12+', family: 'Haddad', classIds: ['c5', 'c12'], flag: '', flagKind: '', att: '88%', mk: 0 },
-    { id: 'marisoljalal', name: 'Marisol Jalal', age: 14, band: '12+', family: 'Jalal', classIds: ['c5', 'c10'], flag: '', flagKind: '', att: '93%', mk: 0 },
-    { id: 'imaniklein', name: 'Imani Klein', age: 13, band: '12+', family: 'Klein', classIds: ['c5', 'c12'], flag: '', flagKind: '', att: '99%', mk: 0 },
-    { id: 'harukiwhitlock', name: 'Haruki Whitlock', age: 14, band: '12+', family: 'Whitlock', classIds: ['c5'], flag: '', flagKind: '', att: '84%', mk: 0 },
-    { id: 'arloguerrero', name: 'Arlo Guerrero', age: 14, band: '12+', family: 'Guerrero', classIds: ['c5'], flag: '', flagKind: '', att: '96%', mk: 0 },
-    { id: 'milomoreau', name: 'Milo Moreau', age: 14, band: '12+', family: 'Moreau', classIds: ['c5'], flag: '', flagKind: '', att: '98%', mk: 0 },
-    { id: 'keikolund', name: 'Keiko Lund', age: 12, band: '12+', family: 'Lund', classIds: ['c5', 'c10', 'c12'], flag: '', flagKind: '', att: '88%', mk: 0 },
-    { id: 'marisolidowu', name: 'Marisol Idowu', age: 12, band: '12+', family: 'Idowu', classIds: ['c5'], flag: 'Wears hearing aids', flagKind: 'warn', att: '96%', mk: 0 },
-    { id: 'ariarestrepo', name: 'Aria Restrepo', age: 12, band: '12+', family: 'Restrepo', classIds: ['c5'], flag: '', flagKind: '', att: '83%', mk: 0 },
-    { id: 'valentinayusuf', name: 'Valentina Yusuf', age: 14, band: '12+', family: 'Yusuf', classIds: ['c5', 'c10'], flag: '', flagKind: '', att: '93%', mk: 0 },
-    { id: 'ninaiglesias', name: 'Nina Iglesias', age: 7, band: '5–7', family: 'Iglesias', classIds: ['c6', 'c12'], flag: '', flagKind: '', att: '86%', mk: 0 },
-    { id: 'rayancardoso', name: 'Rayan Cardoso', age: 5, band: '5–7', family: 'Cardoso', classIds: ['c6', 'c8'], flag: '', flagKind: '', att: '88%', mk: 0 },
-    { id: 'freyagalvez', name: 'Freya Galvez', age: 7, band: '5–7', family: 'Galvez', classIds: ['c6', 'c12'], flag: '', flagKind: '', att: '87%', mk: 0 },
-    { id: 'rosadorsey', name: 'Rosa Dorsey', age: 7, band: '5–7', family: 'Dorsey', classIds: ['c6'], flag: '', flagKind: '', att: '96%', mk: 0 },
-    { id: 'arloybarra', name: 'Arlo Ybarra', age: 5, band: '5–7', family: 'Ybarra', classIds: ['c6'], flag: '', flagKind: '', att: '87%', mk: 0 },
-    { id: 'saoirsealvarez', name: 'Saoirse Alvarez', age: 5, band: '5–7', family: 'Alvarez', classIds: ['c6'], flag: '', flagKind: '', att: '98%', mk: 0 },
-    { id: 'oscarzamora', name: 'Oscar Zamora', age: 10, band: '8–11', family: 'Zamora', classIds: ['c7', 'c10'], flag: 'Asthma · inhaler in bag', flagKind: 'bad', att: '87%', mk: 0 },
-    { id: 'theagrimaldi', name: 'Thea Grimaldi', age: 8, band: '8–11', family: 'Grimaldi', classIds: ['c7', 'c10'], flag: '', flagKind: '', att: '83%', mk: 0 },
-    { id: 'andresquintero', name: 'Andres Quintero', age: 11, band: '8–11', family: 'Quintero', classIds: ['c7', 'c10'], flag: '', flagKind: '', att: '85%', mk: 0 },
-    { id: 'ninaserrano', name: 'Nina Serrano', age: 9, band: '8–11', family: 'Serrano', classIds: ['c7'], flag: '', flagKind: '', att: '82%', mk: 0 },
-    { id: 'declankilbride', name: 'Declan Kilbride', age: 8, band: '8–11', family: 'Kilbride', classIds: ['c7'], flag: '', flagKind: '', att: '87%', mk: 0 },
-    { id: 'marianaherrera', name: 'Mariana Herrera', age: 6, band: '5–7', family: 'Herrera', classIds: ['c8'], flag: 'Allergy · shellfish', flagKind: 'bad', att: '97%', mk: 0 },
-    { id: 'amelieximenes', name: 'Amelie Ximenes', age: 5, band: '5–7', family: 'Ximenes', classIds: ['c8'], flag: '', flagKind: '', att: '95%', mk: 0 },
-    { id: 'mateoescobar', name: 'Mateo Escobar', age: 6, band: '5–7', family: 'Escobar', classIds: ['c8', 'c12'], flag: '', flagKind: '', att: '84%', mk: 0 },
-    { id: 'odetteurbina', name: 'Odette Urbina', age: 9, band: '8–11', family: 'Urbina', classIds: ['c10'], flag: '', flagKind: '', att: '95%', mk: 0 },
-    { id: 'jonahmaldonado', name: 'Jonah Maldonado', age: 10, band: '8–11', family: 'Maldonado', classIds: ['c10', 'c12'], flag: 'Needs a quiet corner', flagKind: 'warn', att: '84%', mk: 0 },
-    { id: 'esmecastillo', name: 'Esme Castillo', age: 5, band: '5–7', family: 'Castillo', classIds: ['c10'], flag: 'Epilepsy · see care plan', flagKind: 'bad', att: '86%', mk: 0 },
-    { id: 'antoniaocampo', name: 'Antonia Ocampo', age: 9, band: '8–11', family: 'Ocampo', classIds: ['c10', 'c12'], flag: '', flagKind: '', att: '91%', mk: 0 },
-    { id: 'harukiugalde', name: 'Haruki Ugalde', age: 5, band: '5–7', family: 'Ugalde', classIds: ['c10'], flag: '', flagKind: '', att: '82%', mk: 0 },
-    { id: 'cormacduarte', name: 'Cormac Duarte', age: 6, band: '5–7', family: 'Duarte', classIds: ['c12'], flag: '', flagKind: '', att: '94%', mk: 0 },
-    { id: 'rowanbermudez', name: 'Rowan Bermudez', age: 6, band: '5–7', family: 'Bermudez', classIds: ['c12'], flag: '', flagKind: '', att: '92%', mk: 0 },
-    { id: 'cillian', name: 'Cillian Brennan', age: 12, band: '12+',  family: 'Brennan', classIds: ['c5'],  cls: 'Thu 4:30pm · 2-hour',        flag: '',                         flagKind: '',     att: '79%',  mk: 0 }
+    { id: 'emma',    name: 'Emma Johnson',    age: 8,  band: '8–11', family: 'Johnson', classIds: ['c2'], pack: 8, used: 5,  cls: 'Mon 3:15pm · Studio 2',      flag: 'Allergy · peanuts',        flagKind: 'bad',  att: '96%' },
+    { id: 'lucas',   name: 'Lucas Johnson',   age: 10, band: '8–11', family: 'Johnson', classIds: ['c4'], pack: 4, used: 2,  cls: 'Wed 3:15pm · Studio 2',      flag: 'Asthma · inhaler in bag',  flagKind: 'bad',  att: '91%' },
+    { id: 'zara',    name: 'Zara Okafor',     age: 11, band: '8–11', family: 'Okafor', classIds: ['c4', 'c11'], pack: 8, used: 6,   cls: 'Wed 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '88%' },
+    { id: 'tobi',    name: 'Tobi Okafor',     age: 9,  band: '8–11', family: 'Okafor', classIds: [], pack: 0, used: 0,   cls: 'Waitlisted · Mon 3:15pm',    flag: '',                         flagKind: '',     att: '—' },
+    { id: 'mia',     name: 'Mia Chen',        age: 6,  band: '5–7',  family: 'Chen', classIds: ['c6'], pack: 0, used: 0,     cls: 'Camp week 4 · Studio 1',    flag: 'Tree nuts',                flagKind: 'bad',  att: '100%' },
+    { id: 'noah',    name: 'Noah Rivera',     age: 7,  band: '5–7',  family: 'Rivera', classIds: ['c1'], pack: 4, used: 1,   cls: 'Mon 2:15pm · Studio 1',      flag: '',                         flagKind: '',     att: '93%' },
+    { id: 'ava',     name: 'Ava Smith',       age: 8,  band: '8–11', family: 'Smith', classIds: ['c2'], pack: 4, used: 3,    cls: 'Mon 3:15pm · Studio 2',      flag: '',                         flagKind: '',     att: '85%' },
+    { id: 'sophia',  name: 'Sophia Martinez', age: 8,  band: '8–11', family: 'Martinez', classIds: ['c2', 'c4', 'c5'], pack: 12, used: 9, cls: 'Mon, Wed, Thu',              flag: 'Requires quiet corner',    flagKind: 'warn', att: '98%' },
+    { id: 'iker',    name: 'Iker Delgado',    age: 5,  band: '5–7',  family: 'Delgado', classIds: [], pack: 0, used: 0,  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—' },
+    { id: 'luz',     name: 'Luz Delgado',     age: 7,  band: '5–7',  family: 'Delgado', classIds: [], pack: 0, used: 0,  cls: 'Not yet enrolled',           flag: '',                         flagKind: '',     att: '—' },
+    { id: 'tariqhollis', name: 'Tariq Hollis', age: 7, band: '5–7', family: 'Hollis', classIds: ['c1', 'c6', 'c8'], pack: 4, used: 2, flag: '', flagKind: '', att: '94%' },
+    { id: 'yaralemaire', name: 'Yara Lemaire', age: 5, band: '5–7', family: 'Lemaire', classIds: ['c1', 'c8', 'c12'], pack: 4, used: 1, flag: '', flagKind: '', att: '94%' },
+    { id: 'palomahollis', name: 'Paloma Hollis', age: 6, band: '5–7', family: 'Hollis', classIds: ['c1', 'c6'], pack: 4, used: 3, flag: '', flagKind: '', att: '88%' },
+    { id: 'ariajimenez', name: 'Aria Jimenez', age: 6, band: '5–7', family: 'Jimenez', classIds: ['c1'], pack: 4, used: 0, flag: '', flagKind: '', att: '87%' },
+    { id: 'irisabreu', name: 'Iris Abreu', age: 5, band: '5–7', family: 'Abreu', classIds: ['c1', 'c6'], pack: 4, used: 0, flag: '', flagKind: '', att: '89%' },
+    { id: 'soleneokonkwo', name: 'Solene Okonkwo', age: 5, band: '5–7', family: 'Okonkwo', classIds: ['c1', 'c6', 'c8'], pack: 4, used: 0, flag: '', flagKind: '', att: '89%' },
+    { id: 'ottopereira', name: 'Otto Pereira', age: 5, band: '5–7', family: 'Pereira', classIds: ['c1', 'c6'], pack: 4, used: 2, flag: '', flagKind: '', att: '86%' },
+    { id: 'odetterocha', name: 'Odette Rocha', age: 5, band: '5–7', family: 'Rocha', classIds: ['c1'], pack: 4, used: 0, flag: '', flagKind: '', att: '84%' },
+    { id: 'brunocifuentes', name: 'Bruno Cifuentes', age: 5, band: '5–7', family: 'Cifuentes', classIds: ['c1', 'c6'], pack: 4, used: 1, flag: '', flagKind: '', att: '90%' },
+    { id: 'arloestrada', name: 'Arlo Estrada', age: 7, band: '5–7', family: 'Estrada', classIds: ['c1', 'c6', 'c8'], pack: 4, used: 0, flag: '', flagKind: '', att: '94%' },
+    { id: 'hanaibrahim', name: 'Hana Ibrahim', age: 8, band: '8–11', family: 'Ibrahim', classIds: ['c2', 'c7'], pack: 4, used: 0, flag: '', flagKind: '', att: '98%' },
+    { id: 'idrisnkemdirim', name: 'Idris Nkemdirim', age: 9, band: '8–11', family: 'Nkemdirim', classIds: ['c2', 'c7'], pack: 4, used: 3, flag: '', flagKind: '', att: '99%' },
+    { id: 'renatapereira', name: 'Renata Pereira', age: 11, band: '8–11', family: 'Pereira', classIds: ['c2', 'c7'], pack: 4, used: 3, flag: '', flagKind: '', att: '84%' },
+    { id: 'maeveokonkwo', name: 'Maeve Okonkwo', age: 10, band: '8–11', family: 'Okonkwo', classIds: ['c2', 'c7'], pack: 4, used: 0, flag: 'Allergy · dairy', flagKind: 'bad', att: '97%' },
+    { id: 'irisbonilla', name: 'Iris Bonilla', age: 11, band: '8–11', family: 'Bonilla', classIds: ['c2', 'c7'], pack: 4, used: 1, flag: '', flagKind: '', att: '88%' },
+    { id: 'rowantavares', name: 'Rowan Tavares', age: 11, band: '8–11', family: 'Tavares', classIds: ['c2'], pack: 4, used: 0, flag: '', flagKind: '', att: '95%' },
+    { id: 'omarfonseca', name: 'Omar Fonseca', age: 8, band: '8–11', family: 'Fonseca', classIds: ['c2', 'c7'], pack: 4, used: 3, flag: '', flagKind: '', att: '100%' },
+    { id: 'arlobonilla', name: 'Arlo Bonilla', age: 9, band: '8–11', family: 'Bonilla', classIds: ['c2', 'c10'], pack: 4, used: 0, flag: '', flagKind: '', att: '88%' },
+    { id: 'enzozavala', name: 'Enzo Zavala', age: 10, band: '8–11', family: 'Zavala', classIds: ['c2'], pack: 4, used: 0, flag: '', flagKind: '', att: '93%' },
+    { id: 'nicolasjimenez', name: 'Nicolas Jimenez', age: 6, band: '5–7', family: 'Jimenez', classIds: ['c3', 'c6'], pack: 4, used: 1, flag: '', flagKind: '', att: '94%' },
+    { id: 'elenavega', name: 'Elena Vega', age: 7, band: '5–7', family: 'Vega', classIds: ['c3'], pack: 4, used: 0, flag: '', flagKind: '', att: '88%' },
+    { id: 'kofivaldez', name: 'Kofi Valdez', age: 7, band: '5–7', family: 'Valdez', classIds: ['c3'], pack: 4, used: 3, flag: '', flagKind: '', att: '86%' },
+    { id: 'hanaespinal', name: 'Hana Espinal', age: 6, band: '5–7', family: 'Espinal', classIds: ['c3', 'c6', 'c8'], pack: 4, used: 0, flag: '', flagKind: '', att: '96%' },
+    { id: 'declankouassi', name: 'Declan Kouassi', age: 6, band: '5–7', family: 'Kouassi', classIds: ['c3'], pack: 4, used: 1, flag: '', flagKind: '', att: '87%' },
+    { id: 'anikasalgado', name: 'Anika Salgado', age: 7, band: '5–7', family: 'Salgado', classIds: ['c3', 'c6'], pack: 4, used: 0, flag: '', flagKind: '', att: '100%' },
+    { id: 'willajansen', name: 'Willa Jansen', age: 7, band: '5–7', family: 'Jansen', classIds: ['c3', 'c6', 'c12'], pack: 4, used: 1, flag: '', flagKind: '', att: '92%' },
+    { id: 'declanfabre', name: 'Declan Fabre', age: 7, band: '5–7', family: 'Fabre', classIds: ['c3'], pack: 4, used: 2, flag: 'Allergy · eggs', flagKind: 'bad', att: '84%' },
+    { id: 'esmewanjiru', name: 'Esme Wanjiru', age: 8, band: '8–11', family: 'Wanjiru', classIds: ['c4'], pack: 4, used: 3, flag: '', flagKind: '', att: '98%' },
+    { id: 'priyanavarro', name: 'Priya Navarro', age: 11, band: '8–11', family: 'Navarro', classIds: ['c4'], pack: 4, used: 1, flag: '', flagKind: '', att: '84%' },
+    { id: 'rayanbarros', name: 'Rayan Barros', age: 8, band: '8–11', family: 'Barros', classIds: ['c4'], pack: 4, used: 0, flag: 'Allergy · latex', flagKind: 'bad', att: '97%' },
+    { id: 'marianadelacroix', name: 'Mariana Delacroix', age: 8, band: '8–11', family: 'Delacroix', classIds: ['c4', 'c7', 'c10'], pack: 4, used: 2, flag: '', flagKind: '', att: '92%' },
+    { id: 'theatoledo', name: 'Thea Toledo', age: 8, band: '8–11', family: 'Toledo', classIds: ['c4'], pack: 4, used: 1, flag: '', flagKind: '', att: '94%' },
+    { id: 'keikobarros', name: 'Keiko Barros', age: 11, band: '8–11', family: 'Barros', classIds: ['c4', 'c7'], pack: 4, used: 0, flag: '', flagKind: '', att: '83%' },
+    { id: 'rowanabreu', name: 'Rowan Abreu', age: 9, band: '8–11', family: 'Abreu', classIds: ['c4', 'c7'], pack: 4, used: 1, flag: '', flagKind: '', att: '90%' },
+    { id: 'rayanfortier', name: 'Rayan Fortier', age: 10, band: '8–11', family: 'Fortier', classIds: ['c4'], pack: 4, used: 2, flag: '', flagKind: '', att: '99%' },
+    { id: 'hugozavala', name: 'Hugo Zavala', age: 9, band: '8–11', family: 'Zavala', classIds: ['c4'], pack: 4, used: 0, flag: '', flagKind: '', att: '82%' },
+    { id: 'camilapires', name: 'Camila Pires', age: 13, band: '12+', family: 'Pires', classIds: ['c5', 'c10'], pack: 4, used: 0, flag: '', flagKind: '', att: '95%' },
+    { id: 'arjunhaddad', name: 'Arjun Haddad', age: 14, band: '12+', family: 'Haddad', classIds: ['c5', 'c12'], pack: 4, used: 0, flag: '', flagKind: '', att: '88%' },
+    { id: 'marisoljalal', name: 'Marisol Jalal', age: 14, band: '12+', family: 'Jalal', classIds: ['c5', 'c10'], pack: 4, used: 1, flag: '', flagKind: '', att: '93%' },
+    { id: 'imaniklein', name: 'Imani Klein', age: 13, band: '12+', family: 'Klein', classIds: ['c5', 'c12'], pack: 4, used: 3, flag: '', flagKind: '', att: '99%' },
+    { id: 'harukiwhitlock', name: 'Haruki Whitlock', age: 14, band: '12+', family: 'Whitlock', classIds: ['c5'], pack: 4, used: 3, flag: '', flagKind: '', att: '84%' },
+    { id: 'arloguerrero', name: 'Arlo Guerrero', age: 14, band: '12+', family: 'Guerrero', classIds: ['c5'], pack: 4, used: 2, flag: '', flagKind: '', att: '96%' },
+    { id: 'milomoreau', name: 'Milo Moreau', age: 14, band: '12+', family: 'Moreau', classIds: ['c5'], pack: 4, used: 3, flag: '', flagKind: '', att: '98%' },
+    { id: 'keikolund', name: 'Keiko Lund', age: 12, band: '12+', family: 'Lund', classIds: ['c5', 'c10', 'c12'], pack: 4, used: 3, flag: '', flagKind: '', att: '88%' },
+    { id: 'marisolidowu', name: 'Marisol Idowu', age: 12, band: '12+', family: 'Idowu', classIds: ['c5'], pack: 4, used: 2, flag: 'Wears hearing aids', flagKind: 'warn', att: '96%' },
+    { id: 'ariarestrepo', name: 'Aria Restrepo', age: 12, band: '12+', family: 'Restrepo', classIds: ['c5'], pack: 4, used: 2, flag: '', flagKind: '', att: '83%' },
+    { id: 'valentinayusuf', name: 'Valentina Yusuf', age: 14, band: '12+', family: 'Yusuf', classIds: ['c5', 'c10'], pack: 4, used: 1, flag: '', flagKind: '', att: '93%' },
+    { id: 'ninaiglesias', name: 'Nina Iglesias', age: 7, band: '5–7', family: 'Iglesias', classIds: ['c6', 'c12'], pack: 0, used: 0, flag: '', flagKind: '', att: '86%' },
+    { id: 'rayancardoso', name: 'Rayan Cardoso', age: 5, band: '5–7', family: 'Cardoso', classIds: ['c6', 'c8'], pack: 0, used: 0, flag: '', flagKind: '', att: '88%' },
+    { id: 'freyagalvez', name: 'Freya Galvez', age: 7, band: '5–7', family: 'Galvez', classIds: ['c6', 'c12'], pack: 0, used: 0, flag: '', flagKind: '', att: '87%' },
+    { id: 'rosadorsey', name: 'Rosa Dorsey', age: 7, band: '5–7', family: 'Dorsey', classIds: ['c6'], pack: 0, used: 0, flag: '', flagKind: '', att: '96%' },
+    { id: 'arloybarra', name: 'Arlo Ybarra', age: 5, band: '5–7', family: 'Ybarra', classIds: ['c6'], pack: 0, used: 0, flag: '', flagKind: '', att: '87%' },
+    { id: 'saoirsealvarez', name: 'Saoirse Alvarez', age: 5, band: '5–7', family: 'Alvarez', classIds: ['c6'], pack: 0, used: 0, flag: '', flagKind: '', att: '98%' },
+    { id: 'oscarzamora', name: 'Oscar Zamora', age: 10, band: '8–11', family: 'Zamora', classIds: ['c7', 'c10'], pack: 0, used: 0, flag: 'Asthma · inhaler in bag', flagKind: 'bad', att: '87%' },
+    { id: 'theagrimaldi', name: 'Thea Grimaldi', age: 8, band: '8–11', family: 'Grimaldi', classIds: ['c7', 'c10'], pack: 0, used: 0, flag: '', flagKind: '', att: '83%' },
+    { id: 'andresquintero', name: 'Andres Quintero', age: 11, band: '8–11', family: 'Quintero', classIds: ['c7', 'c10'], pack: 0, used: 0, flag: '', flagKind: '', att: '85%' },
+    { id: 'ninaserrano', name: 'Nina Serrano', age: 9, band: '8–11', family: 'Serrano', classIds: ['c7'], pack: 0, used: 0, flag: '', flagKind: '', att: '82%' },
+    { id: 'declankilbride', name: 'Declan Kilbride', age: 8, band: '8–11', family: 'Kilbride', classIds: ['c7'], pack: 0, used: 0, flag: '', flagKind: '', att: '87%' },
+    { id: 'marianaherrera', name: 'Mariana Herrera', age: 6, band: '5–7', family: 'Herrera', classIds: ['c8'], pack: 0, used: 0, flag: 'Allergy · shellfish', flagKind: 'bad', att: '97%' },
+    { id: 'amelieximenes', name: 'Amelie Ximenes', age: 5, band: '5–7', family: 'Ximenes', classIds: ['c8'], pack: 0, used: 0, flag: '', flagKind: '', att: '95%' },
+    { id: 'mateoescobar', name: 'Mateo Escobar', age: 6, band: '5–7', family: 'Escobar', classIds: ['c8', 'c12'], pack: 0, used: 0, flag: '', flagKind: '', att: '84%' },
+    { id: 'odetteurbina', name: 'Odette Urbina', age: 9, band: '8–11', family: 'Urbina', classIds: ['c10'], pack: 0, used: 0, flag: '', flagKind: '', att: '95%' },
+    { id: 'jonahmaldonado', name: 'Jonah Maldonado', age: 10, band: '8–11', family: 'Maldonado', classIds: ['c10', 'c12'], pack: 0, used: 0, flag: 'Needs a quiet corner', flagKind: 'warn', att: '84%' },
+    { id: 'esmecastillo', name: 'Esme Castillo', age: 5, band: '5–7', family: 'Castillo', classIds: ['c10'], pack: 0, used: 0, flag: 'Epilepsy · see care plan', flagKind: 'bad', att: '86%' },
+    { id: 'antoniaocampo', name: 'Antonia Ocampo', age: 9, band: '8–11', family: 'Ocampo', classIds: ['c10', 'c12'], pack: 0, used: 0, flag: '', flagKind: '', att: '91%' },
+    { id: 'harukiugalde', name: 'Haruki Ugalde', age: 5, band: '5–7', family: 'Ugalde', classIds: ['c10'], pack: 0, used: 0, flag: '', flagKind: '', att: '82%' },
+    { id: 'cormacduarte', name: 'Cormac Duarte', age: 6, band: '5–7', family: 'Duarte', classIds: ['c12'], pack: 0, used: 0, flag: '', flagKind: '', att: '94%' },
+    { id: 'rowanbermudez', name: 'Rowan Bermudez', age: 6, band: '5–7', family: 'Bermudez', classIds: ['c12'], pack: 0, used: 0, flag: '', flagKind: '', att: '92%' },
+    { id: 'cillian', name: 'Cillian Brennan', age: 12, band: '12+',  family: 'Brennan', classIds: ['c5'], pack: 8, used: 7,  cls: 'Thu 4:30pm · 2-hour',        flag: '',                         flagKind: '',     att: '79%' }
   ];
 
   var CLASSES = [
@@ -230,10 +230,10 @@
   ];
 
   var INVOICES = [
-    { id: 'INV-2841', fam: 'Okafor',   date: '1 Jul 2026',  due: '8 Jul 2026', amt: 540, status: 'Failed',            kind: 'bad',  method: 'Visa ···4417',       note: 'Card declined — insufficient funds. 2 retries.' },
+    { id: 'INV-2841', fam: 'Okafor',   date: '1 Jul 2026',  due: '8 Jul 2026', amt: 540, status: 'Failed',            kind: 'bad',  method: 'Visa ···4417',       note: 'Pack of 8 for Zara. Card declined — insufficient funds. 2 retries.' },
     { id: 'INV-2842', fam: 'Johnson',  date: '20 Jul 2026', due: '27 Jul 2026', amt: 18,  status: 'Past due',          kind: 'bad',  method: 'Visa ···1183',       note: 'Late pickup — 15 minutes on 20 July.' },
     { id: 'INV-2840', fam: 'Smith',    date: '1 Jul 2026',  due: '8 Jul 2026', amt: 45,  status: 'Past due',          kind: 'bad',  method: 'Mastercard ···9902', note: 'Late pickup fee, 45 minutes across 3 days.' },
-    { id: 'INV-2839', fam: 'Delgado',  date: '27 Jul 2026', due: 'On receipt', amt: 200, status: 'Awaiting payment',  kind: 'warn', method: 'None saved',         note: 'Registration submitted, spot held until 30 Jul.' },
+    { id: 'INV-2839', fam: 'Delgado',  date: '27 Jul 2026', due: 'On receipt', amt: 200, status: 'Awaiting payment',  kind: 'warn', method: 'None saved',         note: 'Registration and a first pack, held until 30 Jul.' },
     { id: 'INV-2838', fam: 'Johnson',  date: '1 Jul 2026',  due: '8 Jul 2026', amt: 820, status: 'Paid',              kind: 'ok',   method: 'Visa ···1183',       note: '' },
     { id: 'INV-2837', fam: 'Martinez', date: '1 Jul 2026',  due: '8 Jul 2026', amt: 780, status: 'Paid',              kind: 'ok',   method: 'ACH ···6620',        note: '' },
     { id: 'INV-2836', fam: 'Chen',     date: '12 Jul 2026', due: 'On receipt', amt: 415, status: 'Paid',              kind: 'ok',   method: 'Visa ···0091',       note: 'Camp week 4 plus one extra hour.' },
@@ -298,7 +298,7 @@
     { id: 'INV-2900', fam: 'Ugalde', date: '1 Jul 2026', due: '8 Jul 2026', amt: 400, status: 'Paid', kind: 'ok', method: 'Amex ···1303', note: '' },
     { id: 'INV-2901', fam: 'Duarte', date: '1 Jul 2026', due: '8 Jul 2026', amt: 400, status: 'Paid', kind: 'ok', method: 'Amex ···4732', note: '' },
     { id: 'INV-2902', fam: 'Bermudez', date: '1 Jul 2026', due: '8 Jul 2026', amt: 400, status: 'Paid', kind: 'ok', method: 'Visa ···4961', note: '' },
-    { id: 'INV-2834', fam: 'Brennan',  date: '1 Jul 2026',  due: '8 Jul 2026', amt: 540, status: 'Paid',              kind: 'ok',   method: 'Amex ···2201',       note: 'Final invoice — membership ends 31 Aug.' }
+    { id: 'INV-2834', fam: 'Brennan',  date: '1 Jul 2026',  due: '8 Jul 2026', amt: 540, status: 'Paid',              kind: 'ok',   method: 'Amex ···2201',       note: 'Last pack. The family asked not to renew it.' }
   ];
 
   var WAITLIST = [
@@ -310,15 +310,24 @@
     { id: 'w6', cls: 'Wed 3:15pm · Ages 8–11', child: 'Otis Lund',       fam: 'Lund',     joined: '25 Jul', pos: 2 }
   ];
 
-  var MAKEUPS = [
-    { id: 'm0',  child: 'Mia Chen',        missed: 'Tue 21 Jul · 2:00pm', reason: 'Requested Fri 31 Jul, 10:00am', expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
-    { id: 'm0b', child: 'Sophia Martinez', missed: 'Mon 20 Jul · 3:15pm', reason: 'Requested Wed 5 Aug, 3:15pm',   expires: '31 Aug', status: 'Awaiting approval', kind: 'warn', booked: 'Requested by the family' },
-    { id: 'm1',  child: 'Emma Johnson',    missed: 'Mon 13 Jul · 3:15pm', reason: 'Illness, reported 26 hrs ahead',expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
-    { id: 'm2',  child: 'Emma Johnson',    missed: 'Mon 6 Jul · 3:15pm',  reason: 'Family travel',                 expires: '31 Jul', status: 'Booked',            kind: 'info', booked: 'Fri 31 Jul · 10:00am' },
-    { id: 'm3',  child: 'Ava Smith',       missed: 'Mon 13 Jul · 3:15pm', reason: 'Illness',                       expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
-    { id: 'm4',  child: 'Ava Smith',       missed: 'Mon 20 Jul · 3:15pm', reason: 'No reason given',               expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
-    { id: 'm6',  child: 'Noah Rivera',     missed: 'Mon 6 Jul · 2:15pm',  reason: 'Public holiday',                expires: '31 Jul', status: 'Available',         kind: 'ok',   booked: '' },
-    { id: 'm7',  child: 'Zara Okafor',     missed: 'Wed 8 Jul · 3:15pm',  reason: 'Illness',                       expires: '31 Jul', status: 'Expiring',          kind: 'warn', booked: 'No eligible class has space' }
+  /* An absence. `spent` is the only thing that matters: told us in time and the
+     session stays in the child's pack, so the pack simply lasts a week longer.
+     Inside the notice period the session is spent, exactly as if they came. */
+  var ABSENCES = [
+    { id: 'ab1', child: 'Emma Johnson',    date: 'Mon 13 Jul · 3:15pm', reason: 'Illness, told us 26 hours ahead',   spent: false },
+    { id: 'ab2', child: 'Emma Johnson',    date: 'Mon 6 Jul · 3:15pm',  reason: 'Family travel, told us a week ahead', spent: false },
+    { id: 'ab3', child: 'Ava Smith',       date: 'Mon 13 Jul · 3:15pm', reason: 'Illness',                            spent: false },
+    { id: 'ab4', child: 'Ava Smith',       date: 'Mon 20 Jul · 3:15pm', reason: 'Told us on the day',                 spent: true  },
+    { id: 'ab5', child: 'Noah Rivera',     date: 'Mon 6 Jul · 2:15pm',  reason: 'Studio closed for the holiday',      spent: false },
+    { id: 'ab6', child: 'Zara Okafor',     date: 'Wed 8 Jul · 3:15pm',  reason: 'Illness',                            spent: false },
+    { id: 'ab7', child: 'Sophia Martinez', date: 'Mon 20 Jul · 3:15pm', reason: 'School trip, told us three days ahead', spent: false },
+    { id: 'ab8', child: 'Mia Chen',        date: 'Tue 21 Jul · 2:00pm', reason: 'Told us the same morning',           spent: true  }
+  ];
+
+  /* A catch-up class a family booked on top of their weekly place. It spends a
+     session from the pack like any other class. */
+  var EXTRA_CLASSES = [
+    { id: 'x1', child: 'Emma Johnson', when: 'Fri 31 Jul · 10:00am', room: 'Studio 2', staff: 'Lauren Ortiz' }
   ];
 
   var INVENTORY = [
@@ -433,7 +442,7 @@
     { at: '10:42', what: 'Rey M. took a $400 camp payment — Chen family' },
     { at: '10:15', what: 'Waitlist place offered — Tobi Okafor, Mon 3:15pm' },
     { at: '09:58', what: 'Lauren O. clocked in' },
-    { at: '09:31', what: 'Absence reported — Emma Johnson, make-up credit issued' },
+    { at: '09:31', what: 'Absence reported — Emma Johnson, told us in time so the session stays' },
     { at: '08:47', what: 'New registration — Delgado family, 2 children' },
     { at: '08:12', what: 'Payment failed — Okafor family, retry scheduled 30 Jul' }
   ];
@@ -441,12 +450,12 @@
   /* The Johnson family's ledger, shown in Console → Billing → ledger and in
      the family's own Billing screen. */
   var LEDGER = [
-    { d: '1 Jul 2026',  what: 'July tuition — Emma, 8 sessions',  amt: 540, paid: true },
-    { d: '1 Jul 2026',  what: 'July tuition — Lucas, 4 sessions', amt: 280, paid: true },
+    { d: '1 Jul 2026',  what: 'Pack of 8 — Emma',  amt: 540, paid: true },
+    { d: '1 Jul 2026',  what: 'Pack of 4 — Lucas', amt: 280, paid: true },
     { d: '1 Jul 2026',  what: 'Sibling discount — Lucas',           amt: -140, paid: true },
     { d: '12 Jul 2026', what: 'Camp week 4 extra hour — Emma',      amt: 28,  paid: true },
     { d: '20 Jul 2026', what: 'Late pickup — 15 minutes',           amt: 18,  paid: false },
-    { d: '27 Jul 2026', what: 'Make-up credit applied — Emma',      amt: -28, paid: true }
+    { d: '27 Jul 2026', what: 'Session returned — Emma, told us in time',      amt: -28, paid: true }
   ];
 
   var DOCUMENTS = [
@@ -527,7 +536,8 @@
     STAFF: STAFF,
     INVOICES: INVOICES,
     WAITLIST: WAITLIST,
-    MAKEUPS: MAKEUPS,
+    ABSENCES: ABSENCES,
+    EXTRA_CLASSES: EXTRA_CLASSES,
     INVENTORY: INVENTORY,
     SUPPLY_REQUESTS: SUPPLY_REQUESTS,
     LESSON_PLANS: LESSON_PLANS,
@@ -570,6 +580,26 @@
         return (rule.drop || []).indexOf(name) === -1;
       });
       return out.concat(rule.add || []);
+    },
+
+    /* A child's session pack. Nothing here is a date: a pack renews when the
+       last session in it is used, so the next charge is a number of classes
+       away, not a day on the calendar. Sessions do not expire. */
+    pack: function (student) {
+      var size = student.pack || 0;
+      var used = student.used || 0;
+      return {
+        size: size,
+        used: used,
+        left: Math.max(0, size - used),
+        renewsIn: Math.max(0, size - used),
+        isPack: size > 0
+      };
+    },
+
+    /* Absences for one child, and whether each one cost them a session. */
+    absencesFor: function (name) {
+      return ABSENCES.filter(function (a) { return a.child === name; });
     },
 
     /* Every child on a class's roll. */

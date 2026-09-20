@@ -1,55 +1,40 @@
-/* Family → Schedule (Upcoming + Absences & make-ups) and Book a make-up.
+/* Family → Schedule (Upcoming + Absences) and Book an extra class.
 
-   Simplifications against the previous build:
-     - "Absences & make-ups" was a second rail item. An absence is a schedule
-       event, so it is now the second tab of Schedule. One rail item, one
-       subject
-     - the old attendance page opened with a 4-up stat strip, then an absence
-       form, then a credits card, then a requests card, then a filtered
-       history card — five blocks saying the same thing. It is one credits
-       table, one card of where the family stands, one card of rule. "Can’t
-       make it" now lives on the session itself, which is where a parent
-       looks for it, so the separate absence form is gone
-     - the decorative child pills on the old schedule (they set state but
-       never filtered anything) are cut. Every row names its child
-     - the month grid is NOT rendered. It needs a 7-column cell grid, four
-       pip colours and a legend, none of which exist in app.css. Its dated
-       content is the "After this week" card instead
-     - the two "Studio closed" rows are dropped: the only closure on the books
-       is announcement an4, which is still Scheduled and therefore not yet
-       visible to families. The closed-day rule is stated once, in the
-       make-up card
+   The billing model changed and this screen carried most of the old one.
+   A family buys a pack of sessions for one child; the child attends; when the
+   last session in the pack is used the pack renews and charges again. There is
+   no month, no billing cycle and no date the next charge lands on — the next
+   charge is a number of classes away.
 
-   Read off the roll, not out of the words on a timetable line:
-     - the week is every class each child of the family is on the roll for
-       (D.classesOf), sorted by day and then start time. It used to name one
-       after-school class and one camp week by id and read the second child's
-       day out of his `cls` string, which meant a child moved between classes
-       kept showing the old one. A child put into a third class now simply
-       shows a third row
-     - the birthday party row is gone. It named class c12 outright and no
-       child of this family is on that roll — it is another family's party
-     - a make-up looks for the class it was earned in among that child's own
-       classes, so the room and the teacher shown on the booking screen are
-       the ones she actually misses
-     - every figure is counted off the rows on screen: the week count, the
-       "1 available · 1 booked" tally, the expiry dates
-     - two rows linked to screens that do not exist (fEvent, fNews) and only
-       ever raised "No screen yet". The announcement now reads as a plain row,
-       the way the studio's news reads on Home
+   Deleted outright, not renamed:
+     - the make-up credit. A session cancelled in time is simply not spent, so
+       there is no credit to issue, nothing to approve and no queue. The
+       "Absences & make-ups" tab is now just "Absences", and each row says the
+       one thing that matters: did that session come back to the pack or not
+     - every expiry. Sessions are paid for, so they are the family's until
+       used. The "Use it before 31 Aug" rule, the expiry column, the
+       "cannot be carried into the autumn term" line and the `expires` field
+       on the booking screen are all gone
+     - the "credit" framing on the booking screen. Booking a catch-up is
+       booking an extra class, and it spends a session from the pack like any
+       other class. The day/time picker and the "a different day" escape are
+       unchanged; what the card explains underneath them is not
+     - the gate that only let you open the booking screen if you held a credit.
+       A family can book an extra class whenever they have sessions
 
-   Fixed after the visual review:
-     - the first session read "Emma Johnson · 1 hour · After-School". The
-       After-School class records are named by their length, which is a
-       duration and not a class name, so the class-name slot carries the
-       programme name and the length stays on the time line underneath
-     - the "classes to make up" heading counted itself twice ("1 One class to
-       make up") because plural() already writes the number
-     - Book a make-up offered "Fri 31 Jul · 11:00am · Studio 1" although camp
-       week 4 holds Studio 1 from 10:00 to 1:00 every day that week, and it
-       offered Emma the 10:00 hour her own other credit is already booked
-       into. An hour already holding one of the family's credits now says so
-       rather than looking free */
+   Kept from the previous build, and why:
+     - the screen key stays `fBookMakeup` because js/nav.js and the sibling
+       family screens route to it. It is a route id, not a word a parent reads
+     - "Absences" is a schedule event, so it stays the second tab rather than a
+       second rail item
+     - the week is read off the roll (D.classesOf), not out of a timetable
+       string, so a child moved between classes shows the class she is in
+     - the month grid is still not rendered: it needs a 7-column cell grid,
+       four pip colours and a legend, none of which exist in app.css
+
+   Every figure is counted off the rows on screen or read from js/data.js: the
+   week count, the sessions used and left, the renewal price, the hours already
+   holding one of the family's bookings. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -76,47 +61,87 @@
   function childNamed(name) {
     return kids().filter(function (s) { return s.name === name; })[0] || null;
   }
-  function credits() {
-    var names = kids().map(function (s) { return s.name; });
-    return D.MAKEUPS.filter(function (m) { return names.indexOf(m.child) !== -1; });
-  }
-  function byStatus(list, status) {
-    return list.filter(function (m) { return m.status === status; });
-  }
   function plural(n, one, many) {
     return n + ' ' + (n === 1 ? one : many);
   }
   function firstName(name) {
     return String(name).split(' ')[0];
   }
+  function owns(name) {
+    return firstName(name) + '’s';
+  }
+  function lower(text) {
+    var s = String(text);
+    return s.charAt(0).toLowerCase() + s.slice(1);
+  }
+  function ordinal(n) {
+    var tens = n % 100, unit = n % 10;
+    if (tens >= 11 && tens <= 13) return n + 'th';
+    return n + (unit === 1 ? 'st' : unit === 2 ? 'nd' : unit === 3 ? 'rd' : 'th');
+  }
+  function money(n) {
+    var v = Math.round(n * 100) / 100;
+    return '$' + (v % 1 === 0 ? String(v) : v.toFixed(2));
+  }
 
-  /* Counted from the rows on screen, never written down: "1 available ·
-     1 booked" has to survive somebody editing js/data.js. */
-  function tallies(list) {
-    var order = [], n = {};
-    list.forEach(function (m) {
-      if (n[m.status] === undefined) { n[m.status] = 0; order.push(m.status); }
-      n[m.status] += 1;
+  /* ---- the family's sessions ------------------------------------------------
+     A pack belongs to one child, so Emma's pack and Lucas's pack renew
+     independently and are counted independently. */
+
+  function packOf(student) {
+    return D.pack(student);
+  }
+  function packPrice(size) {
+    return D.PRICING.as.plans['p' + size];
+  }
+  function onPack() {
+    return kids().filter(function (s) { return packOf(s).isPack; });
+  }
+  /* "5 of 8 used · renews on the 8th class and charges $540" — the size, the
+     count and the price all come from the record, never from a sentence. */
+  function packLine(student) {
+    var p = packOf(student);
+    var price = packPrice(p.size);
+    return p.used + ' of ' + p.size + ' used · renews on the ' + ordinal(p.size) + ' class' +
+      (price ? ' and charges ' + money(price) : '');
+  }
+
+  function absences() {
+    var out = [];
+    kids().forEach(function (s) {
+      D.absencesFor(s.name).forEach(function (a) { out.push(a); });
     });
-    return order.map(function (s) { return n[s] + ' ' + s.toLowerCase(); }).join(' · ');
+    return out;
   }
-  function expiry(list) {
-    var seen = [];
-    list.forEach(function (m) { if (seen.indexOf(m.expires) === -1) seen.push(m.expires); });
-    return seen.join(' · ') || '—';
+  function spentOnes(list) {
+    return list.filter(function (a) { return a.spent; });
   }
-  /* With nothing to make up there is no date to name, and a rule that reads
-     "Use it before —" is worse than the rule stated plainly. */
-  function useBy(list) {
-    var when = expiry(list);
-    return when === '—' ? 'Use one before the term ends' : 'Use it before ' + when;
+  function keptOnes(list) {
+    return list.filter(function (a) { return !a.spent; });
+  }
+  function extras() {
+    var names = kids().map(function (s) { return s.name; });
+    return D.EXTRA_CLASSES.filter(function (x) { return names.indexOf(x.child) !== -1; });
   }
 
-  /* The Friday the extra hours sit on. The family's booked credit names the
-     date, so the schedule and the booking screen cannot drift apart. */
+  /* Counted from the rows on screen, so the count above the list cannot
+     disagree with the list. */
+  function tallies(list) {
+    var parts = [];
+    var kept = keptOnes(list).length;
+    var used = spentOnes(list).length;
+    if (kept) parts.push(plural(kept, 'session kept', 'sessions kept'));
+    if (used) parts.push(plural(used, 'session spent', 'sessions spent'));
+    return parts.join(' · ');
+  }
+
+  /* The Friday the studio opened those extra hours on. A catch-up class
+     already booked that day names the date, so the schedule and the booking
+     screen cannot drift apart; the fallback is this Friday, today being
+     Tuesday 28 July. */
   function friday() {
-    var b = credits().filter(function (m) { return m.booked && m.booked.indexOf('Fri') === 0; })[0];
-    return b ? b.booked.split(' · ')[0] : 'Fri 31 Jul';
+    var x = extras()[0];
+    return x ? String(x.when).split(' · ')[0] : 'Fri 31 Jul';
   }
   function dayOff(when) {
     return String(when).replace(/^[A-Za-z]+ /, '');
@@ -134,22 +159,27 @@
     return String(text).replace(MONTH, '').replace(/\s{2,}/g, ' ').replace(/\s+$/, '');
   }
 
-  /* The class a credit was earned in. The credit names the day and the start
+  /* The class an absence happened in. The absence names the day and the start
      time ("Mon 13 Jul · 3:15pm"); the child's own roll says which of her
      classes that is, so no class she is not on can ever match. */
-  function missedClass(m) {
-    var child = childNamed(m.child);
+  function whenMissed(a) {
+    return String(a.date).split(' · ')[0];
+  }
+  function atMissed(a) {
+    return String(a.date).split(' · ')[1] || '';
+  }
+  function missedClass(a) {
+    var child = childNamed(a.child);
     if (!child) return null;
-    var bits = String(m.missed).split(' · ');
-    var day = bits[0].split(' ')[0];
-    var start = (bits[1] || '').replace(/(am|pm)/i, '');
+    var day = whenMissed(a).split(' ')[0];
+    var start = atMissed(a).replace(/(am|pm)/i, '');
     if (!start) return null;
     return D.classesOf(child).filter(function (c) {
       return c.day === day && c.time.indexOf(start) === 0;
     })[0] || null;
   }
-  function where(m) {
-    var c = missedClass(m);
+  function where(a) {
+    var c = missedClass(a);
     return c ? c.room + ' · ' + c.staff : '';
   }
 
@@ -195,6 +225,7 @@
       D.classesOf(s).forEach(function (c) {
         list.push({
           child: s.name,
+          onPack: packOf(s).isPack,
           day: c.day,
           time: c.time,
           prog: c.prog,
@@ -215,7 +246,7 @@
     crumbTitle: 'Schedule',
     eyebrow: 'your week',
     title: 'Schedule',
-    sub: 'Your weekly places are fixed for the term. Change one and we release it to the waitlist, so please only do that if you mean it.',
+    sub: 'Your weekly place is held for you. Change one and we release it to the waitlist, so please only do that if you mean it.',
     actions: [
       { label: 'Message the studio', to: 'fMessages' }
     ],
@@ -230,7 +261,7 @@
       key: 'fSchedule',
       items: [
         { label: 'Upcoming' },
-        { label: 'Absences & make-ups', count: credits().length }
+        { label: 'Absences', count: absences().length }
       ]
     };
   }
@@ -255,22 +286,45 @@
                   label: 'Can’t make it',
                   kind: 'quiet',
                   size: 'sm',
-                  msg: 'Absence reported · ' + s.child + ' · a make-up class is on the way'
+                  msg: s.onPack
+                    ? 'Told the studio · the session stays in ' + owns(s.child) + ' pack'
+                    : 'Told the studio · ' + firstName(s.child) + ' is off the list for that day'
                 })
           };
         }))
       : ui.empty('No classes booked', 'Nobody in the family is on a class roll at the moment. Book a place and it will show here.'));
 
-    var open = byStatus(credits(), 'Available');
+    var holders = onPack();
+    var packs = holders.length
+      ? ui.card({ title: 'Sessions left', flush: true, note: 'A pack renews when the last session in it is used. There is no date to watch — it is a number of classes away.' },
+          ui.rows(holders.map(function (s) {
+            var p = packOf(s);
+            return {
+              title: esc(s.name),
+              sub: esc(packLine(s)),
+              end: ui.pill(plural(p.left, 'class left', 'classes left'), p.left <= 1 ? 'amber' : 'ok')
+            };
+          })))
+      : '';
+
     var autumn = ann('an1');
+    var free = slots().filter(function (s) { return !s.taken; });
     var soon = [];
 
-    if (open.length) {
+    extras().forEach(function (x) {
+      soon.push({
+        lead: esc(dayOff(String(x.when).split(' · ')[0])),
+        title: esc(owns(x.child) + ' extra class'),
+        sub: esc(x.when + ' · ' + x.room + ' · ' + x.staff +
+                 ' · spends one session from the pack')
+      });
+    });
+    if (free.length && holders.length) {
       soon.push({
         lead: esc(dayOff(friday())),
-        title: 'Extra make-up hours',
-        sub: esc(HOURS.map(function (s) { return s.at; }).join(' and ') + ' · ' +
-                 plural(open.length, 'class still to make up', 'classes still to make up')),
+        title: free.length === 1 ? 'An extra hour this Friday' : 'Extra hours this Friday',
+        sub: esc(free.map(function (s) { return s.at; }).join(' and ') +
+                 ' · an extra class spends a session from the pack'),
         to: 'fBookMakeup'
       });
     }
@@ -284,7 +338,7 @@
 
     var different = ui.notice({
       title: 'Need a different day?',
-      text: 'Your day and time are your place for the term. If a different day would work better, call or message the studio and we will see what is possible.'
+      text: 'Your day and time are your place each week. If a different day would work better, call or message the studio and we will see what is possible.'
     });
 
     return h`
@@ -296,93 +350,103 @@
           : ''
       }))}
       ${raw(week)}
+      ${raw(packs ? '<div class="section">' + packs + '</div>' : '')}
       <div class="section">${raw(later)}</div>
       <div class="section">${raw(different)}</div>
     `;
   }
 
-  /* ---- classes to make up ---------------------------------------------------
-     Written for a parent who is not confident with a screen. Every missed
-     class states, in a sentence, what happened and what to do about it, with
-     the button on the same line. The old version was an admin table — Missed
-     / Reason / Expires / Status — above a six-figure tally, with the only
-     action hidden in the header of an explainer card halfway down the page.
-
-     "Credit" is gone from the parent's side of the product. It is the
-     studio's word for the entitlement; a parent has "a class to make up". */
-
-  function whenMissed(m) {
-    return String(m.missed).split(' · ')[0];
-  }
-  function atMissed(m) {
-    return String(m.missed).split(' · ')[1] || '';
-  }
-  function whyMissed(m) {
-    var why = String(m.reason).split(',')[0].toLowerCase();
-    return why.indexOf('requested') === 0 ? 'you asked to move it' : why;
-  }
+  /* ---- absences --------------------------------------------------------------
+     Written for a parent who is not confident with a screen. One fact per
+     absence: the session came back to the pack, or it did not. That is the
+     whole rule now, so the old five blocks — a stat strip, an absence form, a
+     credits table, an approvals queue and a filtered history — are one list
+     and one card of rule. "Can’t make it" lives on the session itself, which
+     is where a parent looks for it. */
 
   function absenceTab() {
-    var list = credits();
-    var open = byStatus(list, 'Available');
+    var list = absences();
+    var used = spentOnes(list);
+    var kept = keptOnes(list);
 
-    var lead = open.length
-      ? ui.notice({
-          kind: 'warn',
-          title: plural(open.length, 'class to make up', 'classes to make up'),
-          text: firstName(open[0].child) + ' can take an extra class to make up for the one missed on ' +
-                whenMissed(open[0]) + '. Please book it before ' + expiry(open) + '.',
-          action: { label: 'Book a make-up class', kind: 'primary', to: 'fBookMakeup' }
-        })
-      : ui.notice({
-          kind: 'ok',
-          title: 'Nothing to book',
-          text: 'Every missed class has been made up. If one is coming up, tell us at least 24 hours ahead.'
-        });
+    var lead;
+    if (!list.length) {
+      lead = ui.notice({
+        kind: 'ok',
+        title: 'No classes missed',
+        text: 'If one is coming up, tell us at least 24 hours ahead and the session stays in the pack.'
+      });
+    } else if (used.length) {
+      lead = ui.notice({
+        kind: 'warn',
+        title: plural(used.length, 'session spent', 'sessions spent'),
+        text: firstName(used[0].child) + ' missed ' + whenMissed(used[0]) + ' inside the 24 hours, so that ' +
+              'session counted as attended. Tell us a day ahead and the session stays in the pack instead.',
+        action: { label: 'Book an extra class', kind: 'primary', to: 'fBookMakeup' }
+      });
+    } else {
+      lead = ui.notice({
+        kind: 'ok',
+        title: 'Nothing lost',
+        text: 'You told us in time every time, so ' + plural(kept.length, 'session', 'sessions') +
+              ' stayed in the pack. To catch a class up, book an extra one and it spends a session like any other class.',
+        action: { label: 'Book an extra class', kind: 'primary', to: 'fBookMakeup' }
+      });
+    }
 
-    var rows = list.map(function (m) {
-      var isOpen = m.status === 'Available';
+    var rows = list.map(function (a) {
+      var room = where(a);
       return {
-        title: esc(firstName(m.child) + ' missed ' + whenMissed(m)),
-        sub: esc('The ' + atMissed(m) + ' class — ' + whyMissed(m)),
-        end: isOpen
-          ? ui.btn({ label: 'Book a make-up', kind: 'primary', size: 'sm', to: 'fBookMakeup' })
-          : h`<span class="strong">${'Booked for ' + m.booked}</span>` +
-            ui.btn({ label: 'Change', kind: 'quiet', size: 'sm', to: 'fMessages' })
+        title: esc(firstName(a.child) + ' missed ' + whenMissed(a)),
+        sub: esc('The ' + atMissed(a) + ' class' + (room ? ' in ' + room : '') + ' — ' + lower(a.reason)),
+        end: ui.pill(a.spent ? 'Session spent' : 'Session kept', a.spent ? 'warn' : 'ok')
       };
     });
 
-    var rule = ui.card({ title: 'How a make-up class works', flush: true }, ui.rows([
+    var rule = ui.card({ title: 'How an absence works', flush: true }, ui.rows([
       {
         title: 'Tell us 24 hours ahead',
-        sub: 'Then the missed class comes back to you and you can book another hour instead.'
+        sub: 'The session is not spent. It stays in the pack, and the pack simply lasts a week longer.'
       },
       {
-        title: useBy(list),
-        sub: 'Classes cannot be carried into the autumn term.'
+        title: 'Inside 24 hours the session is spent',
+        sub: 'It counts exactly as if they had come, because the place was held and the room was staffed.'
       },
       {
-        title: 'If the studio closes, we do it for you',
-        sub: 'You do not have to ask, and it lands the same day.'
+        title: 'Sessions never expire',
+        sub: 'The pack is paid for, so it is yours until you have used it.'
+      },
+      {
+        title: 'If the studio closes, nothing is spent',
+        sub: 'You do not have to ask us, and you will see it here.'
+      },
+      {
+        title: 'Catching the class up',
+        sub: 'Book an extra class on top of the weekly place. It spends a session from the pack, like any other class.',
+        to: 'fBookMakeup'
       }
     ]));
 
     return h`
       ${raw(ui.toolbar({ tabs: scheduleTabs(), count: tallies(list) }))}
       ${raw(lead)}
-      <div class="section">${raw(ui.card({ title: 'Classes missed this term', flush: true },
-        rows.length ? ui.rows(rows) : ui.empty('Nothing missed', 'There is nothing to make up.')))}</div>
+      <div class="section">${raw(ui.card({ title: 'Classes missed', flush: true },
+        rows.length ? ui.rows(rows) : ui.empty('Nothing missed', 'Every class has been attended.')))}</div>
       <div class="section">${raw(rule)}</div>
     `;
   }
 
-  /* ---- book a make-up --------------------------------------------------------
+  /* ---- book an extra class ----------------------------------------------------
      One question: which hour? The hours the studio has opened come first, and
      "a different day" is the last option in the same list rather than a third
      radio dressed as a slot, so a parent who needs another day can see that
      asking is allowed. The button sits in a bar pinned to the bottom of the
      screen, because on the old layout it was below a three-step explainer and
-     people missed it. */
+     people missed it.
+
+     The screen no longer asks whether the family holds a credit, because no
+     credit exists. It asks which hour, and says what the hour costs: one
+     session out of the pack. */
 
   Grove.on('pickSlot', function (d) { Grove.setFilter('makeupSlot', d.id); });
   Grove.on('pickDay', function (d) { Grove.flip('mkday-' + d.id, false); });
@@ -390,14 +454,17 @@
   var ASK = 'slot-ask';
   var WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
+  /* An hour already holding one of this family's extra classes says so rather
+     than looking free. */
   function slots() {
-    var taken = credits().filter(function (m) { return m.status === 'Booked' && m.booked; });
+    var booked = extras();
     return HOURS.map(function (s) {
       return {
         id: s.id,
+        at: s.at,
         label: s.label,
         places: s.places,
-        taken: taken.filter(function (m) { return m.booked.indexOf(s.at) !== -1; })[0] || null
+        taken: booked.filter(function (x) { return String(x.when).indexOf(s.at) !== -1; })[0] || null
       };
     });
   }
@@ -408,36 +475,59 @@
   function chosenSlot() {
     return Grove.filter('makeupSlot', firstOpen());
   }
-  function credit() {
-    var list = credits();
-    return byStatus(list, 'Available')[0] || list[0] || null;
-  }
   function chosenDays() {
     return WEEK.filter(function (d) { return Grove.toggle('mkday-' + d, false); });
+  }
+
+  /* Who the class is for: the child with a class to catch up, otherwise the
+     first child holding a pack. The other children are named in the help card
+     rather than put behind a second question. */
+  function catchUp() {
+    return absences().filter(function (a) {
+      var child = childNamed(a.child);
+      return child && packOf(child).isPack;
+    })[0] || null;
+  }
+  function subject() {
+    var a = catchUp();
+    return (a && childNamed(a.child)) || onPack()[0] || kids()[0] || null;
+  }
+  function others(child) {
+    return kids().filter(function (s) {
+      return s.name !== child.name && packOf(s).isPack;
+    }).map(function (s) { return firstName(s.name); });
   }
 
   Grove.screen('fBookMakeup', {
     surface: 'family',
     crumbs: [{ label: 'Schedule', to: 'fSchedule' }],
-    crumbTitle: 'Book a make-up',
+    crumbTitle: 'Book an extra class',
     eyebrow: 'nothing changes until we confirm',
-    title: 'Book a make-up class',
-    sub: 'Choose an hour below. We check the room by hand and write back, usually the same day.',
+    title: 'Book an extra class',
+    sub: function () {
+      var child = subject();
+      return child && packOf(child).isPack
+        ? 'Choose an hour below. An extra class spends one session out of ' + owns(child.name) +
+          ' pack, the same as any other class.'
+        : 'Choose an hour below. We check the room by hand and write back, usually the same day.';
+    },
     actions: [
       { label: 'Message the studio', to: 'fMessages' }
     ],
 
     body: function () {
-      var c = credit();
-      if (!c) {
+      var child = subject();
+      if (!child) {
         return h`${raw(ui.notice({
           kind: 'ok',
-          title: 'Nothing to book',
-          text: 'Every missed class has been made up. If one is coming up, tell us at least 24 hours ahead and we will add it.',
+          title: 'Nothing to book yet',
+          text: 'Nobody in the family is on a class roll. Message the studio and we will find a place first.',
           action: { label: 'Back to your schedule', to: 'fSchedule' }
         }))}`;
       }
 
+      var p = packOf(child);
+      var a = catchUp();
       var picked = chosenSlot();
       var day = friday();
       var asking = picked === ASK;
@@ -482,18 +572,29 @@
 
       /* A few plain lines. The old card listed child, missed, room, teacher,
          reason, expiry, status and the family's other credit — eight rows of
-         the studio's bookkeeping in front of a parent making one choice. The
-         room and the teacher are the ones on the class she missed, read off
-         her own roll. */
-      var facts = [
-        ['Who', esc(c.child)],
-        ['Class missed', esc(whenMissed(c) + ' · ' + atMissed(c))]
-      ];
-      var room = where(c);
-      if (room) facts.push(['Usually in', esc(room)]);
-      facts.push(['Book before', esc(c.expires)]);
+         the studio's bookkeeping in front of a parent making one choice. What
+         is left is who it is for, what it costs and where the pack stands
+         afterwards, all counted from the child's own record. */
+      var facts = [['Who', esc(child.name)]];
+      if (a) {
+        facts.push(['Catching up', esc(whenMissed(a) + ' · ' + atMissed(a))]);
+        var room = where(a);
+        if (room) facts.push(['Usually in', esc(room)]);
+      }
+      if (p.isPack) {
+        var price = packPrice(p.size);
+        var after = p.used + 1;
+        facts.push(['What it spends', 'One session out of the pack of ' + p.size]);
+        facts.push(['Pack afterwards', after >= p.size
+          ? esc('This is the ' + ordinal(p.size) + ' class, so the pack renews' +
+                (price ? ' — ' + money(price) + ' for another ' + p.size : ''))
+          : esc(after + ' of ' + p.size + ' used · ' +
+                plural(p.size - after, 'class', 'classes') + ' before it renews')]);
+      } else {
+        facts.push(['What it costs', 'Booked as a one-off and invoiced afterwards']);
+      }
 
-      var about = ui.card({ title: 'What this is for' }, ui.kv(facts));
+      var about = ui.card({ title: 'What you are booking' }, ui.kv(facts));
 
       var label = asking ? 'Ask for another day' : 'Request this hour';
       var hint = asking
@@ -508,10 +609,17 @@
       /* A short reassurance beside the choice, rather than a column of white.
          Someone unsure whether they are allowed to ask should be able to see
          that they are, without leaving the page. */
+      var siblings = others(child);
       var help = ui.card({ title: 'If you are not sure' }, h`
         <div class="stack">
           <p class="hint">Ring the desk on ${D.STUDIO.phone} or send a message and we will
-          book it for you. Nothing is charged for a make-up class.</p>
+          book it for you. ${p.isPack
+            ? 'This is not a new charge — it uses a session you have already paid for, so the next renewal comes one class sooner.'
+            : 'We will tell you what it costs before anything is booked.'}</p>
+          ${raw(siblings.length
+            ? '<p class="hint">Booking for ' + esc(siblings.join(' or ')) +
+              ' instead? Send a message and we will set it up from their own pack.</p>'
+            : '')}
           <div class="btn-group">
             ${raw(ui.btn({ label: 'Message the studio', to: 'fMessages' }))}
           </div>

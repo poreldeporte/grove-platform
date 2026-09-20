@@ -4,24 +4,47 @@
    desk has been doing. It declares its header as data and returns only a body
    built from Grove.ui components.
 
-   Changes in the owner-fit pass:
+   Changes in the billing-model pass:
+     - the make-up queue is gone, machinery and all. A session cancelled more
+       than 24 hours ahead is simply not spent — it stays in the child's pack
+       and the pack lasts a week longer — so there is no credit to issue, hold,
+       approve, place or expire, and nothing here to ask her about. The
+       exception table that ranked "class full", "wrong age band", "credit
+       expired", "nowhere to place it" and "no such hour" has been deleted
+       rather than renamed, along with the date arithmetic underneath it, which
+       only ever measured how long a credit had left to live
+     - a pack renews when the last session in it is used, so the next charge is
+       a number of classes away rather than a day on the calendar. "Last class
+       in the pack" is the new card in that slot: the children who take the
+       final session of their pack at their very next class, what each pack
+       costs to renew, and how each charge is taken. It is the only place on
+       this screen where money that has not happened yet is shown, and every
+       figure in it is counted off the child's own pack
+     - a pack belongs to one child, not to a family, so every row on that card
+       is a child and two children in one family appear twice. The Johnsons
+       renew separately, on different classes, for different amounts
+     - the money rows say what the failed card is about to be asked for next.
+       A card that has just been refused is the card the next renewal will go
+       to, which is the reason to fix it this morning rather than at the end of
+       the week. That sentence is read off the family's own children
+
+   Kept from the owner-fit pass:
      - the screen is a decision list first. Everything waiting on her was
        spread across two notices, a rail badge and three screens she had to go
-       and open: four unpaid invoices, two make-up exceptions, two supply
-       orders and one over-full class. They are one dense table at the top of
-       the page, biggest money first, and every row carries the button that
-       ends it. She is at a desk with a keyboard, and nine rows of table are
-       faster for her than nine cards
+       and open: four unpaid invoices, two supply orders and one over-full
+       class. They are one dense table at the top of the page, biggest money
+       first, and every row carries the button that ends it. She is at a desk
+       with a keyboard, and seven rows of table are faster for her than seven
+       cards
      - the six-figure stat strip is cut. A statbar cannot be clicked, so it was
        six numbers with nothing to do about any of them, and three of them —
-       revenue this month, average attendance, how many sit on a waitlist —
-       were nothing she could act on this morning at all. Every fact it carried
-       is still in the product and nearer its action: the outstanding money is
-       the money rows and their amounts; sessions today and the children
-       expected are the note under On today; the waitlist total is the waitlist
-       table; revenue, enrollment and attendance belong to Reports, which is
-       where she goes when the question is how the month is doing rather than
-       what to do next
+       revenue, average attendance, how many sit on a waitlist — were nothing
+       she could act on this morning at all. Every fact it carried is still in
+       the product and nearer its action: the outstanding money is the money
+       rows and their amounts; sessions today and the children expected are the
+       note under On today; the waitlist total is the waitlist table; revenue,
+       enrollment and attendance belong to Reports, which is where she goes
+       when the question is how trade is going rather than what to do next
      - both notices went with it. "4 invoices are unpaid → Resolve" and "the
        Thursday class is over capacity → Rebalance" were headlines over a page
        that then let her resolve and rebalance nothing. Both are rows in the
@@ -31,13 +54,6 @@
        there is a card to charge, or there is not. The button is "Charge $45",
        or — for the Delgado family, who have no card and have written to say
        they have a new one — "Open their message"
-     - a make-up that asks nothing is no longer asked. A request confirms
-       itself when the hour the family picked has a free place and the child's
-       age band matches, which is the rule the Requests screen applies; only
-       the exceptions reach this table, each carrying the check that failed and
-       the numbers behind it. Today that is Sophia Martinez, whose Wednesday
-       hour is full at 12 of 12, and Zara Okafor's credit, which has nowhere
-       left to go before it runs out on 31 Jul
      - header actions went from three to one. "Add family" opened the family
        list, which is a button that asks nothing, and "New program" is already
        the primary action of the Programs screen, where it belongs
@@ -47,6 +63,9 @@
        On today shows the enrolment and the places its class record holds, not
        a figure travelling alongside the session. Camp extended care is the one
        session with no class behind it, so it keeps the numbers the day carries
+     - every pack figure comes from D.pack(child) and every pack price from
+       PRICING.as.plans, so a renewal amount on this screen is the same amount
+       the registration flow quotes and the ledger records
      - Waiting for a place is built from the classes that have somebody waiting
        rather than from the distinct strings in the waitlist rows. A class with
        a queue therefore always names its instructor and its room, and the
@@ -54,13 +73,12 @@
        the same rows. The over-full class in the decision table reads the same
        count, so the two cards cannot state different numbers for one class
 
-   No sticky action bar, deliberately. This screen dispatches nine separate
+   No sticky action bar, deliberately. This screen dispatches seven separate
    decisions rather than completing one, and there is no honest bulk button for
    them: a single "charge every card" would sweep up a card that has already
-   been refused twice, and a single "approve every make-up" would put a
-   thirteenth child in a room set for twelve. The work is the first thing on
-   the page instead, above everything else, and each row states its own
-   consequence beside its own button. */
+   been refused twice. The work is the first thing on the page instead, above
+   everything else, and each row states its own consequence beside its own
+   button. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -69,8 +87,6 @@
     Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday',
     Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday'
   };
-  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   function plain(n) { return Grove.money(n, { cents: false }); }
 
@@ -82,6 +98,13 @@
 
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   function firstName(name) { return String(name).split(' ')[0]; }
+
+  /* 4 → '4th', 12 → '12th'. Used to name the class a pack renews on. */
+  function ordinal(n) {
+    var tail = ['th', 'st', 'nd', 'rd'];
+    var v = n % 100;
+    return n + (tail[(v - 20) % 10] || tail[v] || tail[0]);
+  }
 
   /* Two buttons in a table cell. ui.btns wraps them onto two lines when the
      column is tight, which stands those rows a line taller than the rest; the
@@ -98,45 +121,29 @@
     return /^\d/.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1);
   }
 
-  /* ---- dates ------------------------------------------------------------------
-     The dataset states its own today, so every "n days" on this screen is
-     measured from it rather than typed in. */
+  /* ---- packs -------------------------------------------------------------------
+     A family buys a pack of sessions for one child. The child attends, and when
+     the last session in the pack is used the pack charges again and grants
+     another of the same size. There is no billing date anywhere in here, and
+     nothing expires: a pack is paid for, so it is theirs until it is used.
+     Everything below is read off D.pack(child) and the studio's pack prices. */
 
-  function todayDate() {
-    var m = /(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/.exec(String(D.today));
-    if (!m) return null;
-    var mo = MONTHS.indexOf(m[2].slice(0, 3));
-    if (mo === -1) return null;
-    return new Date(parseInt(m[3], 10), mo, parseInt(m[1], 10));
+  function packPrice(size) {
+    var plans = D.PRICING.as.plans || {};
+    var p = plans['p' + size];
+    return typeof p === 'number' ? p : 0;
   }
 
-  /* '31 Jul' → whole days from today. Negative means it has already passed. */
-  function dayCount(text) {
-    var t = todayDate();
-    var m = /(\d{1,2})\s+([A-Za-z]{3})/.exec(String(text));
-    if (!t || !m) return null;
-    var mo = MONTHS.indexOf(m[2]);
-    if (mo === -1) return null;
-    var d = new Date(t.getFullYear(), mo, parseInt(m[1], 10));
-    return Math.round((d.getTime() - t.getTime()) / 86400000);
+  function familyNamed(name) {
+    return D.FAMILIES.filter(function (f) { return f.name === name; })[0] || null;
   }
 
-  function inDays(n) {
-    if (n === null || n === undefined) return '';
-    if (n < 0) return 'already past';
-    if (n === 0) return 'today';
-    if (n === 1) return 'tomorrow';
-    return n + ' days left';
+  /* A family that has said they are finishing. They keep what they have paid
+     for; the pack simply does not renew when it runs out. */
+  function notRenewing(f) {
+    if (!f) return false;
+    return /not renewing/i.test(String(f.plan)) || f.status === 'Cancelling';
   }
-
-  /* ---- matching the free-text records back to the records they name ------------
-     A class carries its own roll, so anything about a class — who is in it, how
-     many, how many places are left — is counted off that roll. What is left
-     here are the records that still name their subject in prose rather than by
-     key: today's sessions, the supply requests, the make-up credits. Every
-     match below is the one the screen that owns that record already makes, so
-     the dashboard cannot state a different figure from Classes, Requests,
-     Billing or Inventory. Each one is a foreign key in waiting. */
 
   /* '2:15–3:15pm' -> '2:15pm'; '10:00am–1:00pm' -> '10:00am'. */
   function startTime(c) {
@@ -147,27 +154,57 @@
     return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
   }
 
-  function hourOf(c) { return c.day + ' ' + startTime(c); }
-  function freePlaces(c) { return c ? Math.max(0, c.cap - c.en) : 0; }
-
-  /* 'Mon–Fri' is five days, not two. */
-  function classDays(c) {
-    var text = String(c.day);
-    var r = /([A-Za-z]{3})\s*[–-]\s*([A-Za-z]{3})/.exec(text);
-    if (r) {
-      var a = WEEK.indexOf(r[1]), b = WEEK.indexOf(r[2]);
-      if (a !== -1 && b !== -1 && b >= a) return WEEK.slice(a, b + 1);
-    }
-    return text.split(/[^A-Za-z]+/).filter(function (d) { return d; });
+  /* The after-school hours a pack is spent on. Camp weeks and one-off bookings
+     are bought separately, so they are not what the pack pays for. */
+  function packHours(s) {
+    return D.classesOf(s)
+      .filter(function (c) { return c.prog === 'as'; })
+      .map(function (c) { return DAYS[c.day] + ' ' + startTime(c) + ' · ' + c.room; })
+      .join(', ');
   }
 
-  function mentionsDay(text, c) {
-    var hit = false;
-    classDays(c).forEach(function (d) {
-      if (text.indexOf(d.toLowerCase()) !== -1) hit = true;
+  /* Children whose next class takes the last session in their pack. */
+  function lastInPack() {
+    return D.STUDENTS.filter(function (s) {
+      var p = D.pack(s);
+      return p.isPack && p.renewsIn === 1;
+    }).map(function (s) {
+      var f = familyNamed(s.family);
+      var p = D.pack(s);
+      var ends = notRenewing(f);
+      return { s: s, f: f, p: p, ends: ends, price: ends ? 0 : packPrice(p.size) };
+    }).sort(function (a, b) {
+      if (b.price !== a.price) return b.price - a.price;
+      return a.s.name < b.s.name ? -1 : 1;
     });
-    return hit;
   }
+
+  /* The next charge coming to a family: the child of theirs whose pack runs out
+     soonest. Null when nobody in the family holds a pack. */
+  function nextRenewal(famName) {
+    var kids = D.STUDENTS.filter(function (s) {
+      return s.family === famName && D.pack(s).isPack;
+    }).sort(function (a, b) { return D.pack(a).renewsIn - D.pack(b).renewsIn; });
+    if (!kids.length) return null;
+    var s = kids[0], p = D.pack(s);
+    return { s: s, p: p, price: packPrice(p.size) };
+  }
+
+  function renewPhrase(n) {
+    if (n <= 1) return 'on the next class';
+    return 'in ' + n + ' classes';
+  }
+
+  /* ---- matching the free-text records back to the records they name ------------
+     A class carries its own roll, so anything about a class — who is in it, how
+     many, how many places are left — is counted off that roll. What is left
+     here are the records that still name their subject in prose rather than by
+     key: today's sessions and the supply requests. Each match below is the one
+     the screen that owns that record already makes, so the dashboard cannot
+     state a different figure from Classes, Billing or Inventory. Each one is a
+     foreign key in waiting. */
+
+  function freePlaces(c) { return c ? Math.max(0, c.cap - c.en) : 0; }
 
   /* A waitlist entry names its class as 'Mon 3:15pm · Ages 8–11', and the
      dataset counts a class's queue off that same day-and-start-time opening
@@ -215,105 +252,14 @@
   }
 
   function famIdFor(name) {
-    var f = D.FAMILIES.filter(function (x) { return x.name === name; })[0];
+    var f = familyNamed(name);
     return f ? f.id : undefined;
   }
   function threadFor(name) {
     return D.THREADS.filter(function (t) { return t.fam === name; })[0] || null;
   }
-  function studentNamed(name) {
-    return D.STUDENTS.filter(function (s) { return s.name === name; })[0] || null;
-  }
 
-  /* ---- the make-up rule --------------------------------------------------------
-     A request confirms itself when the hour the family asked for has a free
-     place and the child's age band matches it. Those two checks were the whole
-     of the approval, so a request that passes both is asking her nothing and
-     never reaches this page. What is left is a genuine exception, and it
-     arrives carrying the check that failed. This is the Requests screen's rule,
-     applied to the same rows, so the two screens name the same exceptions. */
-
-  function isRequest(m) { return /^Requested\s+/.test(String(m.reason)); }
-  function askedFor(m) { return String(m.reason).replace(/^Requested\s+/, ''); }
-  function bandOf(m) {
-    var s = studentNamed(m.child);
-    return s ? String(s.band) : '';
-  }
-
-  /* The hour named in 'Requested Fri 31 Jul, 10:00am'. Where two classes share
-     an hour, the one in the child's age band wins, so a mismatch can still be
-     reported rather than quietly matched away. */
-  function askedClass(m) {
-    var text = askedFor(m).toLowerCase();
-    if (!text) return null;
-    var band = bandOf(m).toLowerCase();
-    var any = null, onBand = null;
-    D.CLASSES.forEach(function (c) {
-      if (!mentionsDay(text, c)) return;
-      if (text.indexOf(startTime(c)) === -1) return;
-      if (!any) any = c;
-      if (!onBand && String(c.band).toLowerCase() === band) onBand = c;
-    });
-    return onBand || any;
-  }
-
-  /* Why a credit has nowhere to go, read off the timetable rather than copied
-     out of the sentence the dataset carries. */
-  function nowhereWhy(m) {
-    var band = bandOf(m);
-    var list = band ? D.CLASSES.filter(function (c) {
-      return c.prog === 'as' && String(c.band) === band;
-    }) : [];
-    if (!list.length) return String(m.booked);
-    return 'every ages ' + band + ' hour is full — ' + list.map(function (c) {
-      return hourOf(c) + ' ' + c.en + ' of ' + c.cap;
-    }).join(', ');
-  }
-
-  /* null when the credit is asking her nothing. */
-  function makeupProblem(m) {
-    var left = dayCount(m.expires);
-    var expired = left !== null && left < 0;
-
-    if (isRequest(m)) {
-      if (expired) {
-        return { code: 'expired', head: 'Credit expired', why: 'the credit ran out on ' + m.expires };
-      }
-      var c = askedClass(m);
-      if (!c) {
-        return { code: 'nohour', head: 'No such hour',
-                 why: 'nothing on the timetable runs at ' + askedFor(m) };
-      }
-      var band = bandOf(m);
-      if (band && String(c.band) !== band) {
-        return { code: 'band', head: 'Wrong age band', cls: c,
-                 why: hourOf(c) + ' is ages ' + c.band + ', not ' + band };
-      }
-      if (freePlaces(c) < 1) {
-        return { code: 'full', head: 'Class full', cls: c,
-                 why: hourOf(c) + ' is full at ' + c.en + ' of ' + c.cap };
-      }
-      return null;
-    }
-
-    if (m.status === 'Booked') return null;
-    if (expired) {
-      return { code: 'expired', head: 'Credit expired', why: 'the credit ran out on ' + m.expires };
-    }
-    if (m.status === 'Expiring') {
-      return { code: 'nowhere', head: 'Nowhere to place it', why: nowhereWhy(m) };
-    }
-    return null;
-  }
-
-  function makeupExceptions() {
-    return D.MAKEUPS.filter(function (m) { return makeupProblem(m) !== null; });
-  }
-  function placedThemselves() {
-    return D.MAKEUPS.filter(function (m) { return isRequest(m) && makeupProblem(m) === null; });
-  }
-
-  /* ---- the rest of what is waiting on her -------------------------------------- */
+  /* ---- what is waiting on her -------------------------------------------------- */
 
   function unpaidInvoices() {
     return D.INVOICES.filter(function (i) { return i.status !== 'Paid'; })
@@ -341,12 +287,13 @@
   }
 
   /* ---- the rows ----------------------------------------------------------------
-     One shape for all four kinds: a tag, who or what it is about, where it
+     One shape for all three kinds: a tag, who or what it is about, where it
      stands, the money if there is any, and the button that ends it. Every
      button that moves money or fills a room says what it will do. */
 
   function moneyRow(inv) {
-    var button;
+    var button, stands = inv.note;
+
     if (noCardSaved(inv)) {
       var t = threadFor(inv.fam);
       button = t
@@ -366,6 +313,14 @@
         msg: plain(inv.amt) + ' charged to ' + inv.method + ' · the ' + inv.fam +
           ' family is emailed the result'
       });
+
+      /* The same card is about to be asked for the next pack, which is the
+         reason to fix this one this morning. */
+      var next = nextRenewal(inv.fam);
+      if (next && next.price) {
+        stands = (stands ? stands + ' ' : '') + firstName(next.s.name) + '’s pack renews ' +
+          renewPhrase(next.p.renewsIn) + ' — ' + plain(next.price) + ' to the same card.';
+      }
     }
 
     return {
@@ -373,64 +328,9 @@
       cells: [
         ui.pill('Money', 'bad'),
         ui.two(inv.fam + ' family', inv.id + ' · due ' + lower(inv.due)),
-        ui.two(inv.method + ' · ' + String(inv.status).toLowerCase(), inv.note),
+        ui.two(inv.method + ' · ' + String(inv.status).toLowerCase(), stands),
         owedAmount(inv.amt),
         button
-      ]
-    };
-  }
-
-  /* The exception buttons are the Requests screen's, word for word, so the same
-     decision reads the same in both places. */
-  function makeupButtons(m, p) {
-    if (p.code === 'nowhere') {
-      /* Doing nothing lets it expire, so there is no button for doing nothing. */
-      return ui.btn({
-        label: 'Open a slot',
-        kind: 'primary',
-        size: 'sm',
-        msg: 'Extra make-up hour opened · ' + firstName(m.child) + ' can be booked before ' + m.expires
-      });
-    }
-    if (p.code === 'expired') {
-      return pair(
-        { label: 'Let it go', size: 'sm', msg: 'Credit closed · ' + m.child + ' keeps nothing' },
-        { label: 'Extend', kind: 'primary', size: 'sm', msg: 'Credit extended · ' + m.child + ' can book again' }
-      );
-    }
-    if (p.code === 'nohour') {
-      return pair(
-        { label: 'Decline', size: 'sm', msg: 'Declined · ' + m.child + ' keeps the credit until ' + m.expires },
-        { label: 'Message', size: 'sm', to: 'newMessage' }
-      );
-    }
-    return pair(
-      { label: 'Decline', size: 'sm', msg: 'Declined · ' + m.child + ' keeps the credit until ' + m.expires },
-      {
-        label: 'Add anyway',
-        kind: 'primary',
-        size: 'sm',
-        msg: p.code === 'full'
-          ? m.child + ' added · ' + hourOf(p.cls) + ' now holds ' + (p.cls.en + 1) +
-            ' in a room set for ' + p.cls.cap
-          : m.child + ' added · ages ' + bandOf(m) + ' in an ages ' + p.cls.band + ' hour'
-      }
-    );
-  }
-
-  function makeupRow(m) {
-    var p = makeupProblem(m);
-    var s = studentNamed(m.child);
-    var asked = isRequest(m) ? 'Asked for ' + askedFor(m) : p.head;
-
-    return {
-      to: 'makeupRequest', id: m.id,
-      cells: [
-        ui.pill('Make-up', 'warn'),
-        ui.two(m.child, s ? s.family + ' family' : ''),
-        ui.two(asked, p.why + ' · expires ' + m.expires + ', ' + inDays(dayCount(m.expires))),
-        ui.mute('—'),
-        makeupButtons(m, p)
       ]
     };
   }
@@ -483,7 +383,6 @@
   function decisionRows() {
     return []
       .concat(unpaidInvoices().map(moneyRow))
-      .concat(makeupExceptions().map(makeupRow))
       .concat(pendingSupplies().map(supplyRow))
       .concat(overCapacity().map(capacityRow));
   }
@@ -522,23 +421,15 @@
 
     body: function () {
       var rows = decisionRows();
-      var auto = placedThemselves();
-
-      var note = 'Charging a card takes the money today and emails a receipt; a card that fails ' +
-        'is not tried again on its own. Adding a child to a class that is full puts them in a ' +
-        'room set for fewer. Approving an order adds it to the next order to the supplier.';
-      if (auto.length) {
-        note += ' ' + plural(auto.length, 'make-up placed itself', 'make-ups placed themselves') +
-          ' this morning — the hour had a place and the age band matched — so ' +
-          (auto.length === 1 ? 'it is' : 'they are') + ' not listed here.';
-      }
 
       var decisions = ui.card(
         {
           title: 'Needs a decision',
           head: ui.mute(plural(rows.length, 'thing is', 'things are') + ' waiting on you'),
           flush: true,
-          note: note
+          note: 'Charging a card takes the money today and emails a receipt; a card that fails ' +
+            'is not tried again on its own. Approving an order adds it to the next order to ' +
+            'the supplier.'
         },
         ui.table(
           [
@@ -551,7 +442,7 @@
           rows,
           {
             emptyTitle: 'Nothing is waiting on you',
-            emptyText: 'Every invoice is settled, every request answered and every class within its places.'
+            emptyText: 'Every invoice is settled, every order answered and every class within its places.'
           }
         )
       );
@@ -588,6 +479,72 @@
         ui.rows(D.ACTIVITY.map(function (a) {
           return { lead: esc(a.at), title: esc(a.what) };
         }))
+      );
+
+      /* Packs about to run out. A pack renews on the class that spends its last
+         session, so this is a queue of charges, not a calendar. */
+      var running = lastInPack();
+      var renewing = running.filter(function (r) { return !r.ends; });
+      var ending = running.length - renewing.length;
+      var dueNext = sum(renewing, function (r) { return r.price; });
+
+      var packNote = 'A pack renews when the last session in it is used, so the next charge is a ' +
+        'number of classes away rather than a day on the calendar. ';
+      if (renewing.length) {
+        packNote += plural(renewing.length, 'pack renews', 'packs renew') +
+          ' at these children’s next class, ' + plain(dueNext) + ' in all.';
+      } else {
+        packNote += 'None of these packs renews.';
+      }
+      if (ending) {
+        packNote += ' ' + plural(ending, 'family has', 'families have') +
+          ' said they are not renewing, so that pack ends when it runs out and nothing is charged.';
+      }
+
+      var packs = ui.card(
+        {
+          title: 'Last class in the pack',
+          head: ui.btn({ label: 'Open billing', kind: 'quiet', size: 'sm', to: 'billing' }),
+          flush: true,
+          note: packNote
+        },
+        ui.table(
+          ['Child', 'Pack', 'What happens next', { label: 'Amount', align: 'right', shrink: true }],
+          running.map(function (r) {
+            var s = r.s, f = r.f, p = r.p;
+            var what;
+
+            if (r.ends) {
+              what = ui.two('Not renewing', 'the place ends when the pack runs out');
+            } else if (f && f.status !== 'Active') {
+              what = ui.two('Charges the card again', 'the account is ' +
+                String(f.status).toLowerCase() + ' — it is in the decisions above');
+            } else if (f && f.autopay) {
+              what = ui.two('Charges automatically', f.card);
+            } else {
+              what = ui.two('Taken at the desk', 'autopay is off · ' + (f ? f.card : 'no card saved'));
+            }
+
+            return {
+              to: 'studentRecord', id: s.id,
+              cells: [
+                ui.two(s.name, s.family + ' family'),
+                ui.two(
+                  p.used + ' of ' + p.size + ' used · ' + (r.ends
+                    ? 'the ' + ordinal(p.size) + ' class is the last one'
+                    : 'renews on the ' + ordinal(p.size) + ' class'),
+                  packHours(s)
+                ),
+                what,
+                r.price ? esc(plain(r.price)) : ui.mute('—')
+              ]
+            };
+          }),
+          {
+            emptyTitle: 'No pack runs out at the next class',
+            emptyText: 'Every child has more than one session left, so nothing renews yet.'
+          }
+        )
       );
 
       var queued = queues();
@@ -628,6 +585,7 @@
       return h`
         ${raw(decisions)}
         <div class="section">${raw(ui.grid(2, [today, activity]))}</div>
+        <div class="section">${raw(packs)}</div>
         <div class="section">${raw(waitlists)}</div>
       `;
     }

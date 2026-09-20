@@ -5,27 +5,38 @@
    stays a table and the records stay dense. What came out of these screens is
    ceremony, not density.
 
-   THIS PASS — the whole roll
-     - the register is the join. A child's classes come from D.classesOf, never
-       from reading a day and an hour back out of the free-text line printed
-       under their name. That line spelled out a class for eleven children and
-       said nothing at all for the rest of the roll, so a screen that parsed it
-       could only ever describe the eleven. Nothing here reads it now
-     - a child can hold three places at once — an after-school hour, a camp
-       week, a party — so Enrollment is the list of those classes rather than
-       one "Class" row, with who teaches each one and which ages it takes. The
-       table still gets a column: the first class in full, the rest counted,
-       and the record lists them all
-     - the table carries every child on the books against every family, so
-       search reaches the age band and the class as well as the name and the
-       family, and the count line states the whole when nothing is filtered out
-       rather than telling her that every family matched. It never repeats back
-       the chip she just pressed either
-     - cancelling releases places, not children. A family with two children in
-       five classes between them gives up five places, and each one names the
-       child who comes off it and the family who inherits it.
+   THIS PASS — packs, not months
+     - a family does not pay a monthly rate here. A child holds a pack of
+       sessions, they attend, and on the last session in the pack it charges
+       again and grants another pack the same size. So nothing on these three
+       screens is a date: the next charge is a number of classes away, read off
+       D.pack, and the desk can answer "when am I charged again?" from the
+       Packs column without opening anything
+     - a pack belongs to ONE child. Emma holds eight and Lucas four, and they
+       renew on their own classes, so the list states the sizes the children
+       actually hold rather than FAMILIES.plan, which totals two packs of four
+       into "Pack of 8" for half the roll. Billing names each child, their
+       countdown and what that renewal costs, from PRICING
+     - make-up credits are gone, because the rule that created them is gone.
+       Tell the studio more than 24 hours ahead and the session simply stays in
+       the pack — the pack lasts a week longer. Inside 24 hours it is spent, as
+       if they came. So there is no credit to hold, approve, book or expire:
+       the Credits column, the credit tally, the credit pill vocabulary and the
+       link into the make-up queue all came out. The child's record now shows
+       the absences themselves, each one saying whether it cost a session, and
+       the catch-up class Emma booked on top of her weekly place, which spends
+       a session like any other class
+     - sessions never expire, so no expiry date is printed anywhere
+     - a family that holds no pack — camp and one-off bookings, or a
+       registration not yet paid — is not offered a button that would stop
+       nothing. That card states that nothing renews and stops
+     - "membership" was the wrong word twice over: a family is not a member,
+       and cancelling is not an event on a calendar. They stop the renewal, use
+       the sessions they have already paid for, and the pack does not charge
+       again. The card is Renewal, and it states the sessions each child keeps
+       before it states the places that come free.
 
-   Cut in the owner pass:
+   Cut in the owner pass, still cut:
      - "Billing exceptions" is gone as a card. It held two per-family
        overrides of studio-wide settings: "Send bills by post", whose answer
        was always no because the studio emails, and "Skip automatic billing",
@@ -37,40 +48,31 @@
      - the three pills under the title (status, autopay, owing) said one thing
        three ways and none of them said what to do about it. They are one
        notice at the top naming the open invoice, the amount, the due date and
-       the reason it failed, with "Record a payment" on it. That notice used
-       to be a pink box halfway down, inside the Billing card
+       the reason it failed, with "Record a payment" on it
      - "Record a payment" left the header. It appears only when something is
-       actually owed, beside the amount it refers to. A family at zero is not
-       offered a control with nothing to do
+       actually owed, beside the amount it refers to
      - the list's "Active" chip was the exact complement of "Needs attention" —
-       four chips for three decisions. Three chips now
-     - the Students tab filtered by age band, which is the one thing the Child
-       column already spells out under every name. It filters on the two things
-       she acts on: a safety note before a camp day, and a child on the books
-       with no place. The band stayed searchable, so "12+" still finds them
-     - Documents printed the studio's version numbers on the record of every
-       family whose paperwork it cannot report on. A version number is not a
-       fact about this family. Every row now says whether a signed copy is on
-       file, and the head counts what is left to chase
-     - the child's record carried "Family plan", which is the family's, and a
-       make-up tally directly above the card that lists those same credits row
-       by row. The tally is now the head of the list it counts.
+       four chips for three decisions. Three chips now, and the renewal tally
+       went into the count line rather than becoming a fourth
+     - the Students tab filters on the two things she acts on: a safety note
+       before a camp day, and a child on the books with no place
+     - Documents report whether a signed copy is on file, not the studio's
+       version numbers, and the head counts what is left to chase.
 
    Consequences, because there is nobody behind her to undo anything:
-     - cancelling states, before the button, every place that comes off the
-       register, who on the waitlist takes each one, that the balance is still
-       owed afterwards, and what is kept. All of it derived
-     - a family already cancelling is not offered "Cancel membership" again.
-       It is offered the only decision left, which is to keep it.
+     - stopping a renewal states, before the button, the sessions each child
+       keeps, every place that comes free and who inherits it, that the balance
+       is still owed afterwards, and what is kept. All of it derived
+     - a family already not renewing is not offered it again. It is offered the
+       only decision left, which is to keep the packs renewing.
 
    Standing decisions from earlier passes, still true:
+     - the register is the join: a child's classes come from D.classesOf, never
+       from the free-text line under their name
      - the Children column is derived from the children on the books, so it
        cannot disagree with the Students tab beside it
-     - Current plan never restates the Status pill two cells to its right
      - a document is reported signed only on the record of the family whose
        signature Grove.data carries
-     - make-up credits are counted off the MAKEUPS rows a child holds, never
-       off the STUDENTS.mk tally, because the rows are on this same screen
      - the sibling rule is read from PRICING, the one place the studio keeps it
      - "Open the ledger" is offered only to the family whose ledger Grove.data
        holds; every other family opens Billing
@@ -87,16 +89,6 @@
     'Past due': 'bad',
     'Pending payment': 'warn',
     'Cancelling': null
-  };
-
-  /* The same statuses, and the same colours, as the make-ups queue in
-     Requests: a booked credit is settled, and an expiring one is a loss
-     rather than another decision waiting on you. */
-  var MAKEUP_PILL = {
-    'Awaiting approval': 'warn',
-    'Available': 'ok',
-    'Booked': null,
-    'Expiring': 'bad'
   };
 
   var TAB_KEY = 'people';
@@ -141,6 +133,91 @@
     return kidsOf(f.name).map(function (s) {
       return firstName(s.name) + ' (' + s.age + ')';
     }).join(', ');
+  }
+
+  function lowerFirst(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+
+  /* ---- packs ---------------------------------------------------------------
+     A pack is bought for one child. They attend, and on the last session in
+     the pack it charges again for another pack the same size. Nothing here is
+     a date, and nothing expires: every figure is D.pack read off the child. */
+
+  function packKids(f) {
+    return kidsOf(f.name).filter(function (k) { return D.pack(k).isPack; });
+  }
+
+  /* "Pack of 8", "Packs of 8 and 4" — the sizes the children actually hold. */
+  function packSummary(f) {
+    var sizes = packKids(f).map(function (k) { return D.pack(k).size; });
+    if (!sizes.length) return '';
+    if (sizes.length === 1) return 'Pack of ' + sizes[0];
+    return 'Packs of ' + sizes.slice(0, -1).join(', ') + ' and ' + sizes[sizes.length - 1];
+  }
+
+  /* How far off the next charge is, counted in classes rather than days. */
+  function renewsIn(p) {
+    return p.renewsIn <= 1 ? 'on the next class' : 'in ' + p.renewsIn + ' classes';
+  }
+
+  function toGoLine(p) {
+    return p.renewsIn <= 1
+      ? 'renews on the next class'
+      : p.renewsIn + ' to go before it renews';
+  }
+
+  function usedLine(p) {
+    return p.used + ' of ' + p.size + ' used';
+  }
+
+  function sessionWord(n) {
+    return n === 1 ? '1 session' : n + ' sessions';
+  }
+
+  /* What another pack of that size costs. The studio keeps pack prices in
+     PRICING and no screen sets a rate of its own. */
+  function packPrice(p) {
+    var amt = D.PRICING.as.plans['p' + p.size];
+    return amt === undefined ? '' : Grove.money(amt, { cents: false });
+  }
+
+  /* A family that has asked not to renew keeps its sessions and stops there,
+     so nothing on these screens counts it towards a charge that is coming. */
+  function notRenewing(f) { return f.status === 'Cancelling'; }
+
+  function sessionsLeft(f) {
+    return packKids(f).reduce(function (n, k) { return n + D.pack(k).left; }, 0);
+  }
+
+  /* The pack that charges soonest — what the desk is asked on the phone. */
+  function nextRenewal(f) {
+    return packKids(f).sort(function (a, b) {
+      return D.pack(a).renewsIn - D.pack(b).renewsIn;
+    })[0];
+  }
+
+  function renewalLine(f) {
+    var k = nextRenewal(f);
+    if (!k) return '';
+    return notRenewing(f)
+      ? 'Not renewing · ' + sessionWord(sessionsLeft(f)) + ' left'
+      : firstName(k.name) + ' renews ' + renewsIn(D.pack(k));
+  }
+
+  /* A family whose next class takes the last session in a pack is a charge
+     about to happen, which is the one thing worth counting on the list. */
+  function renewingNext(f) {
+    if (notRenewing(f)) return false;
+    return packKids(f).filter(function (k) { return D.pack(k).renewsIn <= 1; }).length > 0;
+  }
+
+  /* The pack line on a child, as the desk says it: what is left, and whether
+     anything is coming after it. */
+  function packSub(s) {
+    var p = D.pack(s);
+    var f = famByName(s.family);
+    return f && notRenewing(f)
+      ? sessionWord(p.left) + ' left · not renewing'
+      : toGoLine(p);
   }
 
   /* ---- classes -------------------------------------------------------------
@@ -205,58 +282,41 @@
     }).sort(function (a, b) { return a.pos - b.pos; });
   }
 
-  /* Two families record a status where a plan belongs — "Cancelling · ends 31
-     Aug" beside a Cancelling pill, "Registered, not yet paid" beside Pending
-     payment. Show only the part the pill does not already say. */
-  function planOf(f) {
-    var p = String(f.plan);
-    var sep = p.indexOf(' · ');
-    if (sep !== -1 && p.slice(0, sep) === f.status) {
-      var rest = p.slice(sep + 3);
-      return rest.charAt(0).toUpperCase() + rest.slice(1);
-    }
-    return /session|camp|week/i.test(p) ? p : '';
+  /* ---- absences ------------------------------------------------------------
+     There is no credit to hold. An absence either cost a session or it did
+     not, and that is the whole of it. */
+
+  function extrasFor(name) {
+    return D.EXTRA_CLASSES.filter(function (x) { return x.child === name; });
   }
 
-  function lowerFirst(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
-
-  /* Every make-up credit a child holds, counted off the MAKEUPS rows rather
-     than the STUDENTS.mk tally. The rows and the count appear on the same
-     screen here, so the number has to be the length of the list drawn under
-     it rather than a second figure kept beside it. The family portal counts
-     them off the same rows. */
-  function creditsOf(name) {
-    return D.MAKEUPS.filter(function (m) { return m.child === name; });
-  }
-
-  /* "1 available · 1 booked" — the wording the family's own children screen
-     uses, because a credit already booked is not one still to spend. */
-  function creditLine(list) {
-    if (!list.length) return 'None';
-    var order = [], count = {};
-    list.forEach(function (m) {
-      if (count[m.status] === undefined) { count[m.status] = 0; order.push(m.status); }
-      count[m.status] += 1;
-    });
-    return order.map(function (k) { return count[k] + ' ' + k.toLowerCase(); }).join(' · ');
+  /* "2 kept · 1 spent" — how the absences a child has behind them landed. */
+  function absenceLine(list) {
+    var kept = list.filter(function (a) { return !a.spent; }).length;
+    var spent = list.length - kept;
+    var parts = [];
+    if (kept) parts.push(kept + ' kept');
+    if (spent) parts.push(spent + ' spent');
+    return parts.join(' · ');
   }
 
   /* One child, as the register has them. A name on a family record opens that
      child's record rather than sitting there as a line of text. */
   function childRow(s) {
     var classes = D.classesOf(s);
-    var held = creditsOf(s.name).length;
+    var p = D.pack(s);
     var end = '';
     if (!classes.length) {
       end = ui.pill(waitlistEntry(s.name) ? 'Waitlist' : 'Not enrolled', 'warn');
     } else if (s.flag) {
       end = ui.pill(s.flag, s.flagKind === 'bad' ? 'bad' : 'warn');
-    } else if (held) {
-      end = ui.mute(held === 1 ? '1 make-up credit' : held + ' make-up credits');
+    } else if (p.isPack) {
+      end = ui.mute(packSub(s));
     }
     return {
       title: esc(s.name),
-      sub: esc('Age ' + s.age + ' · ' + whereLine(s)),
+      sub: esc('Age ' + s.age + ' · ' + whereLine(s) +
+        (p.isPack ? ' · ' + usedLine(p) : '')),
       end: end,
       to: 'studentRecord', id: s.id
     };
@@ -361,8 +421,8 @@
     title: 'Families',
     sub: function () {
       return currentTab() === T_STUDENTS
-        ? 'Every child on the books: the classes they sit in, what a teacher has to know before they walk in, and the credits they are holding.'
-        : 'The family is the billing unit. Guardians, children, payment methods and documents all hang off it.';
+        ? 'Every child on the books: the classes they sit in, what a teacher has to know before they walk in, and how close their pack is to renewing.'
+        : 'The family is the billing unit, but a pack belongs to one child: two children renew on their own classes and are charged separately.';
     },
     actions: [
       { label: 'Export', msg: 'Exported to CSV' },
@@ -384,12 +444,22 @@
     };
   }
 
+  /* The packs the children hold, and the one that charges first. A family with
+     no pack pays for what it books, which is a fact worth stating rather than
+     a blank cell. */
+  function packCell(f) {
+    var sum = packSummary(f);
+    if (sum) return ui.two(sum, renewalLine(f));
+    var booked = kidsOf(f.name).filter(function (k) { return D.classesOf(k).length; }).length;
+    return booked ? ui.mute('Camp and one-off bookings') : '<span class="mute">—</span>';
+  }
+
   function familiesTab() {
     var q = Grove.query('families');
     var filter = Grove.filter('families', F_ALL);
 
     var rows = D.FAMILIES.filter(function (f) {
-      if (!Grove.match(q, f.name, f.guardian, f.email, childNames(f), f.phone)) return false;
+      if (!Grove.match(q, f.name, f.guardian, f.email, childNames(f), f.phone, packSummary(f))) return false;
       if (filter === F_OWING) return f.balance > 0;
       if (filter === F_ATTENTION) return f.status !== 'Active';
       return true;
@@ -399,17 +469,18 @@
        that list is worth rather than repeating a page total. On the Owing chip
        every row is already owing, so only the money is worth saying twice. */
     var owing = rows.filter(function (f) { return f.balance > 0; });
+    var renewing = rows.filter(renewingNext);
     var count = countLine(rows.length, D.FAMILIES.length, 'families');
     if (owing.length) {
       count += ' · ' + (filter === F_OWING
         ? Grove.money(sumBalance(owing)) + ' owing'
         : owing.length + ' owing ' + Grove.money(sumBalance(owing)));
     }
+    if (renewing.length) count += ' · ' + renewing.length + ' renew on the next class';
 
     var table = ui.table(
-      ['Family', 'Children', 'Contact', 'Current plan', { label: 'Balance', align: 'right' }, { label: 'Status', shrink: true }],
+      ['Family', 'Children', 'Contact', 'Packs', { label: 'Balance', align: 'right' }, { label: 'Status', shrink: true }],
       rows.map(function (f) {
-        var plan = planOf(f);
         var kids = childNames(f);
         return {
           to: 'familyRecord', id: f.id,
@@ -417,7 +488,7 @@
             ui.two(f.name + ' family', f.guardian),
             kids ? ui.mute(kids) : '<span class="mute">None yet</span>',
             ui.two(f.email, f.phone),
-            plan ? ui.mute(plan) : '<span class="mute">—</span>',
+            packCell(f),
             '<span class="' + (f.balance > 0 ? 'clay strong' : 'mute') + '">' + Grove.money(f.balance) + '</span>',
             ui.pill(f.status, STATUS_KIND[f.status])
           ]
@@ -453,19 +524,28 @@
     var filter = Grove.filter('students', S_ALL);
 
     var rows = D.STUDENTS.filter(function (s) {
-      if (!Grove.match(q, s.name, s.family, s.band, whereLine(s))) return false;
+      var p = D.pack(s);
+      if (!Grove.match(q, s.name, s.family, s.band, whereLine(s),
+        p.isPack ? 'Pack of ' + p.size : 'camp and one-off bookings')) return false;
       if (filter === S_SAFETY) return !!s.flag;
       if (filter === S_UNPLACED) return D.classesOf(s).length === 0;
       return true;
     });
 
     var flagged = rows.filter(function (s) { return !!s.flag; }).length;
+    var renewing = rows.filter(function (s) {
+      var p = D.pack(s);
+      var f = famByName(s.family);
+      return p.isPack && p.renewsIn <= 1 && !(f && notRenewing(f));
+    }).length;
     var count = countLine(rows.length, D.STUDENTS.length, 'children');
     if (flagged && filter !== S_SAFETY) count += ' · ' + flagged + ' with a safety note';
+    if (renewing) count += ' · ' + renewing + ' renew on the next class';
 
     var table = ui.table(
-      ['Child', 'Family', 'Class', 'Safety', { label: 'Attendance', align: 'right' }, { label: 'Credits', align: 'right' }],
+      ['Child', 'Family', 'Class', 'Safety', { label: 'Attendance', align: 'right' }, 'Pack'],
       rows.map(function (s) {
+        var p = D.pack(s);
         return {
           to: 'studentRecord', id: s.id,
           cells: [
@@ -474,7 +554,9 @@
             classCell(s),
             s.flag ? ui.pill(s.flag, s.flagKind) : '<span class="mute">—</span>',
             '<span class="num">' + esc(s.att) + '</span>',
-            '<span class="num">' + creditsOf(s.name).length + '</span>'
+            p.isPack
+              ? ui.two(usedLine(p), packSub(s))
+              : (D.classesOf(s).length ? ui.mute('Camp and one-off') : '<span class="mute">—</span>')
           ]
         };
       }),
@@ -497,8 +579,8 @@
 
   function autopayLine(f) {
     return f.autopay
-      ? 'Autopay is on for ' + String(f.card).split(' · ')[0] + '.'
-      : 'Autopay is off, so this family is invoiced by hand.';
+      ? 'The card on file is charged when a pack renews — ' + String(f.card).split(' · ')[0] + '.'
+      : 'Autopay is off, so a renewal is invoiced by hand.';
   }
 
   /* "8 Jul 2026" stays as it is; "On receipt" is mid-sentence here. */
@@ -530,11 +612,14 @@
     var last = latestInvoiceOf(f);
 
     if (f.status === 'Cancelling') {
-      var ends = planOf(f);
+      var left = sessionsLeft(f);
       return ui.notice({
-        title: 'Membership ' + (ends ? lowerFirst(ends) : 'is ending'),
-        text: (last ? 'The last invoice, ' + last.id + ' for ' + Grove.money(last.amt) + ', is paid. ' : '') +
-              'Nothing further will be charged.'
+        title: 'Not renewing',
+        text: (last ? 'The last pack, ' + last.id + ' for ' + Grove.money(last.amt) + ', is paid. ' : '') +
+              (left
+                ? sessionWord(left) + (left === 1 ? ' is' : ' are') +
+                  ' left to use, and nothing further will be charged.'
+                : 'Nothing further will be charged.')
       });
     }
 
@@ -546,22 +631,32 @@
     });
   }
 
-  /* ---- what cancelling does ----------------------------------------------
-     Named children, named classes, the family who inherits each place and the
-     money that is still owed afterwards. A child holding three places gives up
-     three of them, so there is a row for each. She has nobody to undo this for
-     her, so it is all on the screen before the button rather than in a toast. */
+  /* ---- what stopping the renewal does -------------------------------------
+     The sessions already paid for stay theirs, so this states them first, then
+     the named places that come free and who inherits each one, then the money
+     still owed. She has nobody to undo this for her, so it is all on the
+     screen before the button rather than in a toast. */
 
-  function cancelRows(f, ending) {
+  function renewalRows(f, ending) {
     var rows = [];
 
     kidsOf(f.name).forEach(function (k) {
+      var p = D.pack(k);
       var classes = D.classesOf(k);
+
+      if (p.isPack) {
+        rows.push({
+          title: esc(k.name + ' keeps ' + sessionWord(p.left)),
+          sub: 'Already paid for, and sessions do not expire. The pack does not charge again once they are used.'
+        });
+      }
+
       if (classes.length) {
         classes.forEach(function (c) {
           var waiting = waitingOn(c, f.name);
           rows.push({
-            title: esc(k.name + ' comes off ' + classShort(c)),
+            title: esc(k.name + ' comes off ' + classShort(c) +
+              (p.isPack && c.prog === 'as' ? ' when the pack runs out' : '')),
             sub: esc(waiting.length
               ? 'The place goes to ' + waiting[0].child + ', first of ' + waiting.length + ' waiting.'
               : 'Nobody is waiting for that place.')
@@ -569,6 +664,7 @@
         });
         return;
       }
+
       var w = waitlistEntry(k.name);
       if (w) {
         rows.push({
@@ -581,51 +677,88 @@
     if (f.balance > 0) {
       rows.push({
         title: esc(Grove.money(f.balance) + ' still has to be collected'),
-        sub: 'This stops future billing. It does not clear what is already owed.'
+        sub: 'This stops the next charge. It does not clear what is already owed.'
       });
     }
 
     rows.push(ending
       ? {
-          title: 'No further invoice is raised',
-          sub: 'The family keeps portal access until the end date. Invoices, documents and messages are kept.'
+          title: 'No further charge is taken',
+          sub: 'The family keeps portal access while the sessions last. Invoices, documents and messages are kept.'
         }
       : {
-          title: 'Billing stops at the end of the current cycle',
-          sub: 'The family keeps portal access until then. Invoices, documents and messages are kept.'
+          title: 'The pack does not renew',
+          sub: 'They use what they have paid for and nothing is charged after that. Invoices, documents and messages are kept.'
         });
 
     return rows;
   }
 
-  function membershipCard(f) {
-    var ending = f.status === 'Cancelling';
+  function renewalFoot(f, ending) {
+    if (ending) {
+      return '<span class="mute">Everything above is already agreed.</span>' +
+        ui.btn({ label: 'Keep the packs renewing', msg: 'Renewal kept · the packs charge as before' });
+    }
+
     /* Places, not children: a child in a camp week and an after-school hour
-       releases two of them. Counted off the roll. */
+       gives up two of them. Counted off the roll. */
     var places = kidsOf(f.name).reduce(function (n, k) {
       return n + D.classesOf(k).length;
     }, 0);
+    var left = sessionsLeft(f);
+    var said = ['Renewal stopped · nothing further will be charged'];
+    if (left) said.push(sessionWord(left) + ' left to use');
+    said.push(places === 1 ? '1 place released' : places + ' places released');
 
-    var foot = ending
-      ? '<span class="mute">Everything above is already scheduled.</span>' +
-        ui.btn({ label: 'Keep the membership', msg: 'Membership kept · billing continues as before' })
-      : '<span class="mute">All of it happens at once, and there is no undo.</span>' +
-        ui.btn({
-          label: 'Cancel the membership',
-          kind: 'danger',
-          msg: 'Membership cancelled · billing stops after this cycle · ' +
-               (places === 1 ? '1 place released' : places + ' places released')
-        });
+    return '<span class="mute">All of it happens at once, and there is no undo.</span>' +
+      ui.btn({ label: 'Stop the renewal', kind: 'danger', msg: said.join(' · ') });
+  }
+
+  function renewalCard(f) {
+    var ending = notRenewing(f);
+    var sum = packSummary(f);
+
+    /* Nothing renews for a family that books camp and one-off classes, so
+       there is no button here that would do anything. */
+    if (!sum) {
+      return ui.card({
+        title: 'Renewal',
+        head: ui.pill('Nothing renewing')
+      }, ui.empty('No pack to stop',
+        'No pack has been bought for a child in this family, so nothing charges again. ' +
+        'Camp weeks and one-off classes are paid for as they are booked.'));
+    }
 
     return ui.card({
-      title: 'Membership',
+      title: 'Renewal',
       flush: true,
-      head: ending ? ui.pill(planOf(f) || 'Ending', 'warn') : '',
-      foot: foot
-    }, ui.rows(cancelRows(f, ending)));
+      head: ending ? ui.pill('Not renewing', 'warn') : ui.pill(sum),
+      note: ending
+        ? 'The sessions already paid for stay theirs until they are used, whichever way this goes.'
+        : 'A pack is paid for, so the sessions stay theirs until they are used. Stopping the renewal only stops the next charge.',
+      foot: renewalFoot(f, ending)
+    }, ui.rows(renewalRows(f, ending)));
   }
 
   /* ---- family record ------------------------------------------------------ */
+
+  /* A family with no pack either books camp and one-off classes, or has not
+     started yet. The two are not the same thing to say back to them. */
+  function noPackLine(f) {
+    var booked = kidsOf(f.name).filter(function (k) { return D.classesOf(k).length; }).length;
+    return booked ? 'None — camp and one-off bookings' : 'Nothing booked yet';
+  }
+
+  /* What the desk is asked on the phone, in one line under the children. */
+  function nextRenewalFoot(f) {
+    var k = nextRenewal(f);
+    if (k && notRenewing(f)) return 'Not renewing · ' + sessionWord(sessionsLeft(f)) + ' left to use';
+    if (k) {
+      var p = D.pack(k);
+      return firstName(k.name) + ' ' + renewsIn(p) + ' · ' + packPrice(p);
+    }
+    return noPackLine(f);
+  }
 
   Grove.screen('familyRecord', {
     surface: 'console',
@@ -650,15 +783,14 @@
       var f = fam(ctx);
       var kids = kidsOf(f.name);
       var thread = threadOf(f);
-      var plan = planOf(f);
       var inv = latestInvoiceOf(f);
 
       var children = ui.card({
         title: 'Children',
         flush: true,
         head: ui.btn({ label: 'Enroll a child', kind: 'quiet', size: 'sm', msg: 'Prototype — no form yet' }),
-        foot: h`<span class="mute">Current plan</span><span class="strong">${plan || 'Not set yet'}</span>`,
-        note: 'A child is enrolled against the family, so a second child joins this record rather than starting another one.'
+        foot: h`<span class="mute">Next renewal</span><span class="strong">${nextRenewalFoot(f)}</span>`,
+        note: 'A pack belongs to the child it was bought for, so two children renew at different times and are charged separately.'
       }, kids.length
         ? ui.rows(kids.map(childRow))
         : ui.empty('Nobody on the register', 'The family has an account but no child is enrolled.'));
@@ -700,11 +832,25 @@
       }, ui.kv(docRows));
 
       /* One place where money is set, and it states the studio-wide rules it
-         is following rather than offering a second copy of them to edit. */
-      var moneyRows = [
-        ['Payment method', esc(f.card)],
-        { k: 'Automatic billing', v: f.autopay ? 'On' : 'Off · invoiced by hand', tone: f.autopay ? null : 'mute' }
-      ];
+         is following rather than offering a second copy of them to edit. Each
+         child's pack is here because each pack is a separate charge. */
+      var moneyRows = [];
+      var packing = packKids(f);
+      if (packing.length) {
+        packing.forEach(function (k) {
+          var p = D.pack(k);
+          moneyRows.push({
+            k: firstName(k.name),
+            v: esc(notRenewing(f)
+              ? 'Pack of ' + p.size + ' · ' + sessionWord(p.left) + ' left · not renewing'
+              : 'Pack of ' + p.size + ' · renews ' + renewsIn(p) + ' · ' + packPrice(p))
+          });
+        });
+      } else {
+        moneyRows.push({ k: 'Packs', v: esc(noPackLine(f)), tone: 'mute' });
+      }
+      moneyRows.push(['Payment method', esc(f.card)]);
+      moneyRows.push({ k: 'Automatic billing', v: f.autopay ? 'On' : 'Off · invoiced by hand', tone: f.autopay ? null : 'mute' });
       if (kids.length > 1) {
         moneyRows.push(['Sibling relief', esc(siblingRelief())]);
         moneyRows.push({ k: 'Applies to', v: esc(laterKids(kids)), tone: 'mute' });
@@ -724,7 +870,7 @@
 
       return leadNotice(f) +
         '<div class="section">' + ui.grid(3, [children, contact, docs]) + '</div>' +
-        '<div class="section">' + ui.grid(2, [billing, membershipCard(f)]) + '</div>';
+        '<div class="section">' + ui.grid(2, [billing, renewalCard(f)]) + '</div>';
     }
   });
 
@@ -747,6 +893,16 @@
       h`<span class="inline"><span class="mute">Photo permission</span><span class="${raw(toneClass(perm.tone))}">${raw(perm.v)}</span></span>`;
   }
 
+  /* The pack, stated the way the desk says it out loud. */
+  function packFoot(p, ending) {
+    if (ending) {
+      return h`<span class="inline"><span class="mute">Renewal</span><span class="strong">stopped</span></span>` +
+        h`<span class="inline"><span class="mute">Left to use</span><span class="strong">${sessionWord(p.left)}</span></span>`;
+    }
+    return h`<span class="inline"><span class="mute">Renews</span><span class="strong">on the ${raw(esc(ord(p.size)))} class</span></span>` +
+      h`<span class="inline"><span class="mute">Then charges</span><span class="strong">${packPrice(p)}</span></span>`;
+  }
+
   Grove.screen('studentRecord', {
     surface: 'console',
     crumbs: [{ label: 'Families', to: 'families' }],
@@ -766,7 +922,9 @@
       var f = famByName(s.family);
       var doc = photoDoc(s.name);
       var mine = ownsDocs(f);
-      var missed = creditsOf(s.name);
+      var p = D.pack(s);
+      var missed = D.absencesFor(s.name);
+      var extras = extrasFor(s.name);
       var siblings = kidsOf(s.family).filter(function (k) { return k.id !== s.id; });
       var classes = D.classesOf(s);
       var placed = classes.length > 0;
@@ -815,35 +973,47 @@
         ? ui.notice({
             kind: s.flagKind,
             title: s.flag,
-            text: 'Recorded on the registration form. It travels with the child to camp and to any make-up class.'
+            text: 'Recorded on the registration form. It travels with the child to camp and to any extra class they book.'
           })
         : ui.notice({
             title: 'Nothing on file',
             text: 'No allergy, condition or medication has been recorded for this child.'
           }));
 
-      /* The tally sits on the head of the list it counts, rather than one
-         card above the same rows it is counting. */
+      /* Everything that has moved the pack: the classes booked on top of the
+         weekly place, which spend a session, and the absences, which spend one
+         only when the studio was told too late. */
+      var moves = extras.map(function (x) {
+        return {
+          title: esc('Extra class · ' + x.when),
+          sub: esc(x.room + ' · ' + x.staff + ' · booked on top of the weekly place'),
+          end: ui.pill('Session spent')
+        };
+      }).concat(missed.map(function (a) {
+        return {
+          title: esc(a.date),
+          sub: esc(a.reason),
+          end: a.spent ? ui.pill('Session spent') : ui.pill('Session kept', 'ok')
+        };
+      }));
+
       var sessions = ui.card({
-        title: 'Missed sessions',
+        title: 'Sessions',
         flush: true,
-        head: missed.length ? ui.pill(creditLine(missed)) : '',
-        note: 'A class missed with more than 24 hours notice becomes a make-up credit, which lapses on the date shown.'
-      }, missed.length
-        ? ui.rows(missed.map(function (m) {
-            return {
-              title: esc(m.missed),
-              sub: esc(m.reason + ' · expires ' + m.expires + (m.booked ? ' · ' + m.booked : '')),
-              end: ui.pill(m.status, MAKEUP_PILL[m.status]),
-              to: 'makeupRequest', id: m.id
-            };
-          }))
+        head: h`<span class="inline">${raw(p.isPack
+          ? ui.pill(usedLine(p))
+          : ui.pill(placed ? 'Camp and one-off bookings' : 'No pack'))}${raw(
+            missed.length ? ui.pill(absenceLine(missed)) : '')}</span>`,
+        foot: p.isPack ? packFoot(p, notRenewing(f)) : '',
+        note: 'Told more than 24 hours ahead, the session stays in the pack and the pack lasts a week longer. Inside 24 hours it is spent, exactly as if they came. Sessions do not expire.'
+      }, moves.length
+        ? ui.rows(moves)
         : ui.empty('Nothing missed', 'No absence has been recorded against this child.'));
 
       var family = ui.card({
         title: 'Family',
         head: ui.pill(f.status, STATUS_KIND[f.status]),
-        note: 'Money is recorded against the family, never against a child.'
+        note: 'Money is recorded against the family. A pack is bought for one child, so each child renews on their own classes.'
       }, ui.kv([
         ['Guardian', esc(f.guardian)],
         ['Email', esc(f.email)],

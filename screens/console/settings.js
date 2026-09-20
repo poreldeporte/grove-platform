@@ -5,77 +5,77 @@
    should read as a rule sheet. What was wrong was not the density, it was
    that nothing on the screen did anything.
 
-   THIS PASS — CEREMONY REMOVED
+   THIS PASS — A PACK, NOT A MONTH
 
-   1. Twenty-two buttons that all opened the same toast are gone: the twelve
-      per-card "Edit" heads and the ten per-row "Edit" buttons on Templates.
-      In their place the screen edits what it owns, in the card, and routes to
-      the screen that owns the rest:
-        · what the studio is called, and when it is open   -> fields here
-        · billing, make-up and registration-form rules     -> fields here
-        · which messages go out automatically              -> switches here
-        · a price                                          -> Programs
-        · a class time                                     -> Classes
-        · a reduction for one family                       -> Billing
-      A template row is itself the control now, so the ten buttons beside the
-      ten rows they described are gone.
-      Net: 18 controls that do something, in place of 22 that did not.
+   A family buys a pack of sessions for one child. The child attends. When the
+   last session in the pack is used, the pack is charged again and the next one
+   begins. There is no billing date, so the next charge is a number of classes
+   away rather than a day on the calendar. Everything below follows from that.
 
-   2. ONE THING, ONE BAR. Every tab ends in ui.formActions(..., {sticky:true}),
-      so the action is pinned to the foot of the viewport and the state line
-      beside it says what saving will do to families before she does it. The
-      header keeps one button — the preview — rather than competing with it.
-      Pricing is the exception and says so: it sets no prices, so its bar
-      opens the program that charges the price rather than pretending to save.
+   1. PRICING. The four tiers are pack sizes, not monthly rates: $280 buys four
+      sessions, and each tier says which class the renewal lands on. The "hours
+      a week / sessions a month" arithmetic, and the four-weeks-to-a-month
+      constant it rested on, are deleted. What one class works out at is now
+      divided out of the pack price rather than read from PRICING.extraClassRate
+      — the two agree to the cent, but under this model booking an extra class
+      is not a separate charge, it spends a session like any other class, so
+      quoting that key here would have read as a second price.
 
-   3. Controls whose answer was always the same, now stated facts:
-      - "Send urgent notices by text message". No provider is connected, so
-        the switch could not take effect whichever way it was thrown. The two
-        text templates are stated as written-and-waiting instead.
-      - "Retry cadence · Day 1, 3, 7", "Bookable into · any age-appropriate
-        class", "Transferable · No", "Re-sign behaviour · ask at next sign-in".
-        None of them has a second sensible answer; each is now one clause of
-        the note on the card it belonged to.
-      - The three registration-form fields the studio cannot legally drop —
-        allergies and medical, one authorised pick-up, photo permission per
-        child — are stated. The two that are genuinely a choice, the referral
-        question and the second guardian, are switches.
+   2. POLICIES. "Tuition bills on · 1st of month" is gone; nothing bills on a
+      date. In its place sits the only decision a renewal has: what happens when
+      the last session is used. The 30-day cancellation notice went with it — a
+      family that is stopping simply uses what it has paid for and the pack does
+      not renew — and so did the sentence about a final billed month. The word
+      membership does not appear: a family holds sessions, it is not a member.
 
-   4. Two controls that were one decision:
-      - The grace period lived on Policies and the late fee it triggers lived
-        on Pricing. They are one rule and now sit in one card, one above the
-        other. Late pick-up moved with it, for the same reason.
-      - "Scholarship · owner approval" and "Goodwill · recorded with a reason"
-        were one act — you reduce one family's bill, you say why, it is
-        written down. They are one row, "One-off reduction", and its head
-        button opens the screen that actually issues it.
-      That takes the ways of reducing what a family owes from six to five,
-      and every one of the five now names where it is applied.
+   3. THE MAKE-UP MACHINERY IS DELETED, NOT RENAMED. Tell the studio more than
+      24 hours ahead and the session is not spent: it stays in the child's pack,
+      which then simply lasts a week longer. Inside the window it is spent,
+      exactly as if they had come. Nothing is issued, approved, queued or
+      expired, so: the card collapses to that one rule; "A credit expires · end
+      of the billing cycle" and "A family asks for a make-up · you approve each
+      one" are gone; the two make-up templates and the {{credit_*}} merge fields
+      are gone; and the count of make-ups awaiting approval is gone with them —
+      it read D.MAKEUPS, a table that no longer exists, so this screen threw on
+      every Policies tab render. A catch-up is now an ordinary extra class, and
+      the Friday hours on the Studio tab are labelled as such and read off
+      Grove.data.EXTRA_CLASSES rather than being typed.
+      The card earns its place by showing what the rule did: sessions returned
+      and sessions spent, counted off ABSENCES.
 
-   5. Duplicates dropped:
-      - Sibling relief was stated twice on the Pricing tab, in the Fees note
-        and as a Discounts row. It is a discount, so it is in Discounts, and
-        the amount is split out of the sentence PRICING holds so it lands in
-        the value column with every other figure.
-      - "Failed payments · retried automatically · cadence on the Policies
-        tab" was a row whose only content was the address of another row.
+   4. SESSIONS NEVER EXPIRE, so no expiry is offered anywhere — not even as the
+      option a select would have had to list. A paid-for session is the child's
+      until it is used, and that is stated on the card rather than chosen.
 
-   WHAT CARRIES OVER FROM THE PARENT PASS
-   Sticky form actions with a state line; every total derived from the rows
-   displayed; one studio name and one phone number, from Grove.data.STUDIO;
-   the primary action never below an explainer.
+   5. "Full-term prepay · 5%" left the Discounts card. A pack is paid before its
+      sessions are used and a larger pack already costs less a class, so the row
+      was paying for the same thing twice.
 
-   FACTS STILL DERIVED, NOT TYPED
+   WHAT CARRIES OVER FROM THE EARLIER PASSES
+   - Twenty-two buttons that all opened the same toast are gone. The screen
+     edits what it owns, in the card, and routes to the screen that owns the
+     rest: a price -> Programs, a class time -> Classes, a reduction for one
+     family -> Billing. A template row is itself the control.
+   - ONE THING, ONE BAR. Every tab ends in ui.formActions(..., {sticky:true}),
+     with a state line saying what saving does to families. Pricing is the
+     exception and says so: it sets no prices, so its bar opens the program
+     that charges the price rather than pretending to save.
+   - A control whose answer was always the same is a stated fact in the card
+     note: the retry cadence, the three registration questions that cannot be
+     switched off, text messages having no provider connected.
+   - The grace period and the late fee it triggers are one rule in one card.
+     Scholarship and goodwill are one row, "One-off reduction".
+
+   FACTS DERIVED, NOT TYPED
    - Weekday class times, the camp block and the no-school block come from
-     Grove.data.CLASSES; the payment methods from INVOICES; every amount from
-     PRICING; the program count from PROGRAMS; the list of emails under the
-     automatic switch from the template rows above it; the policy counts from
-     one list plus the per-program adds and drops. The nine policy names are
-     now spelled the way the program builder spells them, so the two screens
-     describe one set of documents rather than two.
-   - An after-school plan key counts sessions and one session is one hour, so
-     a tier's weekly hours, its monthly sessions and its rate per hour are all
-     arithmetic on the key and cannot drift apart.
+     Grove.data.CLASSES; the extra-class hours from EXTRA_CLASSES; the payment
+     methods from INVOICES; every amount from PRICING; the program count from
+     PROGRAMS; the emails under the automatic switch from the template rows
+     above it; the policy counts from one list plus the per-program adds and
+     drops; the returned and spent session counts from ABSENCES.
+   - A pack key counts the sessions it buys, so the pack size, the class the
+     renewal lands on and the price a class works out at are all arithmetic on
+     the key and cannot drift apart.
 
    NOT BUILT HERE
    - No policy editor and no template editor. Grove.data holds neither the
@@ -100,17 +100,20 @@
   var LATE_FEE = 25;           // "a $25 late fee after the seven-day grace"
   var PICKUP_GRACE = 10;       // "a 10-minute grace period"
   var PICKUP_RATE = 1;         // "a late fee of $1 per minute"
-  var NOTICE_DAYS = 30;        // cancellation notice
   var NSD_BASE_HOURS = 3;      // the no-school block PRICING.nsd.base buys
   var RETRY_DAYS = [1, 3, GRACE_DAYS];
 
-  /* Four weeks to a billing month; a plan key counts the sessions it buys. */
-  var PLAN_KEYS = ['p4', 'p8', 'p12', 'p16'];
-  var WEEKS_PER_MONTH = 4;
+  /* A pack key counts the sessions it buys: p8 is a pack of eight. */
+  var PACK_KEYS = ['p4', 'p8', 'p12', 'p16'];
 
   function money(n) { return Grove.money(n, { cents: false }); }
   /* A rate that may carry cents — $67.50 must not round to $68. */
   function rate(n) { return n % 1 === 0 ? Grove.money(n, { cents: false }) : Grove.money(n); }
+  /* "the 8th class" — which class in the pack the renewal lands on. */
+  function ordinal(n) {
+    var tail = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (tail[(v - 20) % 10] || tail[v] || tail[0]);
+  }
 
   /* One stated fact: name on the left, value on the right. A note is divided
      from the value by a middot so the two never read as one phrase, and
@@ -188,10 +191,33 @@
     })).filter(function (m) { return m !== 'None'; });
   }
 
-  /* Make-ups a family has asked for and nobody has answered. Counted off
-     MAKEUPS so the line cannot outlive the queue it points at. */
-  function waitingMakeups() {
-    return D.MAKEUPS.filter(function (m) { return m.status === 'Awaiting approval'; }).length;
+  /* An extra class is a catch-up booked on top of a weekly place. It spends a
+     session from the pack like any other class, so the hours it runs belong on
+     the class-times card beside the weekly ones — read off the extras on the
+     books rather than typed, so the card cannot advertise an hour nobody runs. */
+  var DAY_NAME = {
+    Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday',
+    Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday'
+  };
+  function extraRows() {
+    var days = distinct(D.EXTRA_CLASSES.map(function (x) {
+      return String(x.when).split(' ')[0];
+    }));
+    return days.map(function (d) {
+      var times = distinct(D.EXTRA_CLASSES.filter(function (x) {
+        return String(x.when).indexOf(d + ' ') === 0;
+      }).map(function (x) {
+        var parts = String(x.when).split('·');
+        return (parts[parts.length - 1] || '').replace(/^\s+|\s+$/g, '');
+      }));
+      return row(DAY_NAME[d] || d, times.join(' · '), 'Extra classes only', 'mute');
+    });
+  }
+
+  /* What the notice rule actually did, counted off the absences on record.
+     `spent: false` is a session that stayed in the child's pack. */
+  function absences(spent) {
+    return D.ABSENCES.filter(function (a) { return !!a.spent === spent; }).length;
   }
 
   /* A pop-up is priced per event; print one figure only while they agree. */
@@ -202,14 +228,18 @@
     return money(amounts[0]) + '–' + money(amounts[amounts.length - 1]) + ' / child';
   }
 
-  /* One tier, labelled out of its own key: p12 is 12 sessions, 12 sessions is
-     three hours a week, and $780 across those 12 hours is the $65 PRICING
-     holds in extraClassRate. */
-  function planRow(key) {
+  /* What one class works out at inside a pack: $780 across 12 sessions is $65.
+     Divided out of the pack price, never typed. */
+  function perClass(key) {
+    return P.as.plans[key] / Number(key.slice(1));
+  }
+
+  /* One tier, labelled out of its own key: p12 buys twelve sessions and
+     charges again on the twelfth class. */
+  function packRow(key) {
     var sessions = Number(key.slice(1));
-    var weekly = sessions / WEEKS_PER_MONTH;
-    return row(weekly + ' hour' + (weekly === 1 ? '' : 's') + ' a week · ' +
-      sessions + ' sessions a month', money(P.as.plans[key]));
+    return row('Pack of ' + sessions + ' · renews on the ' + ordinal(sessions) + ' class',
+      money(P.as.plans[key]), rate(perClass(key)) + ' a class');
   }
 
   /* The registration fee shared by everything that is neither after-school
@@ -227,7 +257,7 @@
     surface: 'console',
     eyebrow: 'how the studio runs',
     title: 'Settings',
-    sub: 'The rules the studio runs on: what it is called, how billing and make-ups work, and the wording of every message that goes out. A price itself is set on the program that charges it.',
+    sub: 'The rules the studio runs on: what it is called, how a pack of sessions renews, and the wording of every message that goes out. A price itself is set on the program that charges it.',
     actions: [
       { label: 'Preview what families see',
         msg: 'Preview opened — prices, policies and message wording exactly as a family sees them' }
@@ -274,24 +304,24 @@
     var times = ui.card({
       title: 'Class times',
       head: link('Open Classes', 'classes'),
-      note: 'Read from the classes that are running, so this card and the schedule cannot drift apart. A time is changed on the class itself. Extra camp hours are charged by the hour — see Pricing.'
+      note: 'Read from the classes that are running, so this card and the schedule cannot drift apart. A time is changed on the class itself. An extra class is a catch-up on top of a weekly place — it spends a session from the pack rather than costing anything extra. Extra camp hours are charged by the hour — see Pricing.'
     }, ui.kv([
       row('Monday', startsOn('as', 'Mon').join(' · ')),
       row('Tuesday', startsOn('as', 'Tue').join(' · ')),
       row('Wednesday', startsOn('as', 'Wed').join(' · ')),
-      row('Thursday', startsOn('as', 'Thu').join(' · ')),
-      row('Friday', '10:00am · 11:00am', 'Make-up hours only', 'mute'),
+      row('Thursday', startsOn('as', 'Thu').join(' · '))
+    ].concat(extraRows()).concat([
       row('Camp day', blockFor('camp')),
       row('No-school day', blockFor('nsd'))
-    ]));
+    ])));
 
     var terms = ui.card({
       title: 'Term dates and closures',
       head: ui.btn({
         label: 'Add a closure', kind: 'quiet', size: 'sm',
-        msg: 'Closure added — no sessions that day, and a make-up credit issued to every child who was booked'
+        msg: 'Closure added — no sessions that day, and nobody who was booked spends one'
       }),
-      note: 'No sessions are generated on these dates. A Monday closure issues a make-up credit to every child booked that day, without anybody asking.'
+      note: 'No sessions are generated on these dates. A child booked that day does not spend a session for it — it stays in their pack, so the pack simply lasts a week longer. Nobody has to ask.'
     }, ui.kv([
       row('Labor Day', '7 Sep 2026', 'Monday'),
       row('Thanksgiving', '26–27 Nov 2026', 'Thursday and Friday'),
@@ -301,7 +331,7 @@
 
     var payments = ui.card({
       title: 'Payments',
-      note: 'ACH costs the studio less than a card on monthly tuition, so families setting up autopay are pointed at it first.'
+      note: 'ACH costs the studio less than a card, and a pack renews on the method the family has saved, so families setting up autopay are pointed at it first.'
     }, ui.kv([
       row('Processor', 'Connected'),
       row('Methods accepted', methodsInUse().join(' · ')),
@@ -322,13 +352,12 @@
      grace period that triggers them. */
 
   function pricingTab() {
-    var plans = ui.card({
-      title: 'After-school plans',
-      note: 'The ' + PLAN_KEYS.length + ' tiers a family chooses from, priced a month at a time. One session is one hour, so the rate per hour falls from ' +
-        rate(P.as.extraClassRate.p4) + ' to ' + rate(P.as.extraClassRate.p16) +
-        ' as the plan grows. A new price applies to new enrollments at once; a family already enrolled keeps their agreed rate until you move them, with ' +
-        NOTICE_DAYS + ' days’ notice.'
-    }, ui.kv(PLAN_KEYS.map(planRow)));
+    var packs = ui.card({
+      title: 'After-school packs',
+      note: 'The ' + PACK_KEYS.length + ' packs a family buys from. A pack belongs to one child, not to the family, so a family with two children holds two packs and they renew at different times. One session is one hour, and the bigger the pack the less a class works out at — from ' +
+        rate(perClass(PACK_KEYS[0])) + ' down to ' + rate(perClass(PACK_KEYS[PACK_KEYS.length - 1])) +
+        '. A new price applies to the next pack bought; a pack already paid for is untouched.'
+    }, ui.kv(PACK_KEYS.map(packRow)));
 
     var fee = sharedRegFee();
 
@@ -367,8 +396,7 @@
        "the first three" and hoping a fourth is never added. */
     var AUTOMATIC = [
       row('Sibling relief · ' + relief.slice(cut + 5), relief.slice(0, cut + 4)),
-      row('Multi-class · a second class in the same week', '10%'),
-      row('Full-term prepay · paid before the term starts', '5%')
+      row('Multi-class · a second class in the same week', '10%')
     ];
     var BY_HAND = [
       row('Staff family', '100%'),
@@ -378,10 +406,10 @@
     var discounts = ui.card({
       title: 'Discounts',
       head: link('Open Billing', 'billing'),
-      note: 'The first ' + AUTOMATIC.length + ' apply themselves at registration and on every billing run, and reach the family as their own line on the invoice rather than as a quietly smaller total. The last is issued against one family from Billing — a scholarship, or putting something right — and is written to the ledger with who applied it, why, and how much came off. There is no other way to reduce a bill, which is how it stays countable at the end of the year.'
+      note: 'The first ' + AUTOMATIC.length + ' apply themselves at registration and again every time a pack renews, and reach the family as their own line on the invoice rather than as a quietly smaller total. The last is issued against one family from Billing — a scholarship, or putting something right — and is written to the ledger with who applied it, why, and how much came off. There is no other way to reduce a bill, which is how it stays countable at the end of the year.'
     }, ui.kv(AUTOMATIC.concat(BY_HAND)));
 
-    return ui.grid(2, [plans, fees, rest, discounts]) +
+    return ui.grid(2, [packs, fees, rest, discounts]) +
       bar(route('Open Programs', 'programs'),
         'A price is set on the program that charges it, so there is one place to change it.');
   }
@@ -400,19 +428,17 @@
   function policiesTab() {
     var billing = ui.card({
       title: 'Billing rules',
-      note: 'Applied to every family, whatever their join date. A failed card is retried on day ' +
-        andList(RETRY_DAYS.map(String)) + ' and then left for you. The cancellation notice sets the final billed month, so a family giving notice today is billed once more. Refunds are credit only, and only you can override that on a family record.'
+      note: 'Applied to every family, whatever their join date. Nothing bills on a date: a pack is charged again the moment its last session is used, so the next charge is a number of classes away. A pack belongs to one child, so a family with two children is charged twice, at two different times. A failed card is retried on day ' +
+        andList(RETRY_DAYS.map(String)) + ' and then left for you. A family that is stopping simply does not renew — they use what they have already paid for, and a session they have paid for is theirs until they use it.'
     }, ui.fields(2, [
       ui.field({
-        label: 'Tuition bills on',
-        control: ui.select({ value: '1st of month', options: ['1st of month', '15th of month'] })
-      }),
-      ui.field({
-        label: 'Cancellation notice',
+        label: 'When the last session is used',
+        span: true,
         control: ui.select({
-          value: NOTICE_DAYS + ' days',
-          options: [NOTICE_DAYS + ' days', '14 days', 'End of term']
-        })
+          value: 'Charge again and start the next pack',
+          options: ['Charge again and start the next pack', 'Ask the family before charging']
+        }),
+        hint: 'The same size pack as the one that just ran out, unless the family asks you to change it.'
       }),
       ui.field({
         label: 'Grace period before a late fee',
@@ -427,42 +453,30 @@
       }),
       ui.field({
         label: 'Late pick-up · after ' + PICKUP_GRACE + ' minutes',
+        span: true,
         control: ui.input({ value: money(PICKUP_RATE) + ' a minute' })
-      }),
-      ui.field({
-        label: 'Refunds',
-        control: ui.select({ value: 'Credit only', options: ['Credit only', 'Back to the card used'] })
       })
     ]));
 
-    var makeups = ui.card({
-      title: 'Make-up rules',
-      note: 'Cancelling inside the window counts as attended. A credit can be booked into any age-appropriate class and stays with the child who earned it. A studio closure issues the credit the same day, without anybody asking.'
-    }, ui.fields(2, [
+    /* One rule, and what it has done. Told in time, the session is not spent;
+       inside the window it is, exactly as if the child had come. There is
+       nothing to issue, approve or expire, so there is nothing else to set. */
+    var cancelling = ui.card({
+      title: 'Cancelling a class',
+      note: 'Tell us in time and the session is not spent — it stays in the child’s pack, so the pack lasts a week longer. Inside the window it is spent, exactly as if they had come. A studio closure never spends a session. To catch the class up, the family books an extra class, and that spends a session like any other.'
+    }, ui.fields(null, [
       ui.field({
         label: 'Tell the studio by',
         control: ui.select({
           value: '24 hours before',
           options: ['24 hours before', '12 hours before', 'Any time before the class']
-        })
-      }),
-      ui.field({
-        label: 'A credit expires',
-        control: ui.select({
-          value: 'End of the billing cycle',
-          options: ['End of the billing cycle', 'End of the term', 'Never']
-        })
-      }),
-      ui.field({
-        label: 'A family asks for a make-up',
-        span: true,
-        control: ui.select({
-          value: 'You approve each one',
-          options: ['You approve each one', 'Booked automatically if there is space']
         }),
-        hint: 'The ones waiting for you are in Requests — ' + waitingMakeups() + ' of them right now.'
+        hint: 'The only rule there is. Everything else follows from it.'
       })
-    ]));
+    ]) + '<div class="card-split">' + ui.kv([
+      row('Sessions returned so far', String(absences(false)), 'told us in time'),
+      row('Sessions spent anyway', String(absences(true)), 'told us too late')
+    ]) + '</div>');
 
     /* The clauses themselves, which is where the wording lives. Which
        programmes carry which is set on the programme; this is the library. */
@@ -510,7 +524,7 @@
       })
     );
 
-    return ui.grid(2, [billing, makeups, docs, form]) +
+    return ui.grid(2, [billing, cancelling, docs, form]) +
       bar(save('Saved — the new rules apply to every family from today'),
         'A rule saved here applies to every family, whatever their join date.');
   }
@@ -526,8 +540,8 @@
     { c: 'Email', n: 'Payment receipt', s: '' },
     { c: 'Email', n: 'Invoice raised', s: '' },
     { c: 'Email', n: 'Payment failed', s: '' },
-    { c: 'Email', n: 'Make-up approved', s: '' },
-    { c: 'Email', n: 'Make-up declined', s: '' },
+    { c: 'Email', n: 'Last class in the pack', s: 'The next class renews the pack, and what it will cost' },
+    { c: 'Email', n: 'Pack renewed', s: 'The charge, the new pack, and the class it runs to' },
     { c: 'Email', n: 'Schedule change', s: '' },
     { c: 'Email', n: 'Waitlist place offered', s: 'Includes the 24-hour acceptance window', onAsk: true },
     { c: 'Text', n: 'Studio closed today', s: 'Weather, power, anything urgent' },
@@ -580,16 +594,17 @@
     );
 
     /* One group per thing a template writes about, so every template in the
-       list above has the fields it needs — the make-up pair, the waitlist
-       offer and the three billing emails included. */
+       list above has the fields it needs — the two pack emails, the waitlist
+       offer and the three billing emails included. A pack field counts classes
+       rather than days, because that is what the next charge is measured in. */
     var merge = ui.card({
       title: 'Merge fields',
       note: 'Available in every template, on email and text alike.'
     }, ui.kv([
       row('Family', '{{family_name}} · {{contact_first}} · {{balance}}'),
       row('Child', '{{child_first}} · {{child_class}} · {{next_session}}'),
+      row('Pack', '{{pack_size}} · {{sessions_left}} · {{renews_in}}'),
       row('Billing', '{{invoice_total}} · {{due_date}} · {{pay_link}}'),
-      row('Make-up', '{{credit_count}} · {{credit_expiry}}'),
       row('Waitlist', '{{waitlist_position}} · {{offer_expires}}'),
       row('Studio', '{{studio_name}} · {{studio_phone}} · {{portal_link}}')
     ]));

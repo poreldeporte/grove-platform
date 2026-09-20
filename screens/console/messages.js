@@ -320,7 +320,10 @@
     var end = '';
     if (waiting) end = ui.pill('Waitlist', 'warn');
     else if (s.flag) end = ui.pill(s.flag, s.flagKind === 'bad' ? 'bad' : 'warn');
-    else if (s.mk) end = ui.mute(s.mk === 1 ? '1 make-up credit' : s.mk + ' make-up credits');
+    else if (D.pack(s).isPack) {
+      var pk = D.pack(s);
+      end = ui.mute(pk.left === 1 ? 'Pack renews next class' : pk.left + ' of ' + pk.size + ' left');
+    }
 
     return {
       title: esc(s.name),

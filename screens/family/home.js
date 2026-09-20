@@ -1,48 +1,59 @@
 /* Family → Home. The parent's landing page, in the order a parent reads it:
-   what is waiting on you, what is happening tomorrow, what is coming, and
-   what the studio has said.
+   what is waiting on you, what is happening tomorrow, what is coming, where
+   each child's sessions stand, and what the studio has said.
 
    Reworked for the person this portal is for — a parent or grandparent who is
    busy, wary of getting something wrong online, and who rings the studio
    rather than hunt for a control.
 
-     - the page answers its three questions in order. The studio's noticeboard
-       used to sit second, above the family's own day; it is last now, because
-       it is the one block nobody has to act on
+   THE BILLING MODEL. A family buys a pack of sessions for a child. The child
+   attends, and when the last session in the pack is used the pack renews: it
+   charges again and grants another pack the same size. There is no billing
+   date, so nothing on this page says one. What this cost the file:
+
+     - the make-up machinery is gone from the parent's side entirely. There is
+       no credit to hold, book, chase or lose, so the "Emma has a class to make
+       up" notice, the booked-make-up rows under Coming up and the link to Book
+       a make-up have all been deleted rather than renamed. A session the
+       studio was told about in time is simply not spent — it stays in the
+       child's pack, and the pack lasts a week longer
+     - the "Your next payment · 1 Aug" row under Coming up has gone with it. A
+       charge is a number of classes away, not a day on the calendar, so it
+       cannot sit in a list ordered by date. Where each pack stands, and what
+       happens when it runs out, is now its own card
+     - what the family still owes was folded into that dated payment line. It
+       is a notice of its own now, at the top with the other things to do, and
+       it says plainly that it is not part of a pack
+     - no expiry date anywhere. A pack is paid for, so it is theirs until used
+
+     - the page answers its questions in order. The studio's noticeboard used
+       to sit second, above the family's own day; it is last now, because it is
+       the one block nobody has to act on
      - "Next up" was a five-row table — Child, Class, When, Where, Teacher —
        for one session belonging to one child, and it never mentioned Lucas,
        who is in class tomorrow as well. Tomorrow is now one line per child,
        the hour on the left and "can't come" on the same line
      - every class on this page comes from the child's own enrolment — the
        classes that child is on the roll for — and not from reading the words
-       in their timetable line. The camp week and the Saturday birthday were
-       carried here as fixed class ids; the Johnson children are on neither
-       roll, so neither is on this page any more
-     - "credit" is gone from the parent's side. "Emma has 2 make-up credits:
-       1 booked for Fri 31 Jul · 10:00am, 1 still to use before 31 Jul" is now
-       "Emma missed Monday 13 July — the 3:15pm class", and the hour already
-       booked is a dated line under Coming up, where a parent looks for it
+       in their timetable line
      - the document notice named one unsigned document and ignored the other.
        Documents counts two; so does Home, and when there is one it opens that
        document instead of the list
-     - what the family owes, and the day it goes, was on no page a parent
-       opens first. The 1 August payment is a dated line in Coming up, worked
-       out the way Billing works it out, with the unpaid line named
      - dates are spelled out — "Monday 13 July", not "Mon 13 Jul" — and every
        one is derived from Grove.data.today rather than written down
      - the programme colour pips are gone: a colour with no key is a code, and
        the row already names the programme in words
-     - version numbers, publication dates, expiry counts and make-up tallies
-       are out of the notices. What is left is the thing to do and the day to
-       do it by
+     - version numbers, publication dates and expiry counts are out of the
+       notices. What is left is the thing to do and the day to do it by
      - the two ways to reach a person sit in a bar pinned to the foot of the
        page, so the phone number is never something you have to scroll for
 
    Kept deliberately: the studio's announcements are shown in the studio's own
-   words, dates and all, including the one about the extra make-up hours this
-   Friday. Rewriting a message the studio sent would be a lie, and the notice
-   at the top of the page already says the same thing in the parent's words,
-   with the button on it. */
+   words, dates and all, including the one offering two extra hours this
+   Friday. Rewriting a message the studio sent would be a lie, and under the
+   corrected model that announcement is straightforward — an extra class is a
+   class you book on top of the weekly place, and it spends a session like any
+   other. Emma has taken the 10:00 one, and it is under Coming up saying so. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -50,8 +61,7 @@
   /* The portal is signed in as the Johnson family. */
   var FAMILY = 'johnson';
 
-  /* The studio's own number, the one Schedule → Book a make-up prints, so the
-     two screens cannot name different desks. */
+  /* The studio's own number, so two screens cannot name different desks. */
   var DESK = D.STUDIO.phone;
 
   var DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -106,6 +116,22 @@
     return new Date(t.getFullYear() + (mon < t.getMonth() ? 1 : 0), mon, day);
   }
 
+  /* ---- words and figures --------------------------------------------------- */
+
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+  function ordinal(n) {
+    var tens = n % 100, ones = n % 10;
+    var suffix = 'th';
+    if (tens < 11 || tens > 13) {
+      if (ones === 1) suffix = 'st';
+      else if (ones === 2) suffix = 'nd';
+      else if (ones === 3) suffix = 'rd';
+    }
+    return n + suffix;
+  }
+  /* Cents on a whole number are noise on a page a parent skims. */
+  function price(n) { return Grove.money(n, { cents: n % 1 !== 0 }); }
+
   /* ---- the family --------------------------------------------------------- */
 
   function fam() { return D.family(FAMILY); }
@@ -118,6 +144,8 @@
     if (list.length < 2) return list.join('');
     return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
   }
+  /* 'Visa ···1183 · exp 04/29' → 'Visa ···1183'. The expiry belongs to Billing. */
+  function cardName() { return String(fam().card).split(' · ')[0]; }
 
   /* An After-School record is named by its length ("1 hour · After-School"),
      which is a duration and not a class name, so those rows carry the
@@ -170,48 +198,37 @@
     return String(range).split('–')[0].replace(/(am|pm)/i, '') + ' ' + meridiem(range);
   }
 
+  /* ---- money ------------------------------------------------------------------
+     Nothing here is a date. A pack charges when its last session is used, so
+     the only figure with a day attached is something already owed. */
+
+  function sum(list) { return list.reduce(function (n, l) { return n + l.amt; }, 0); }
+  function unpaid() { return D.LEDGER.filter(function (l) { return !l.paid; }); }
+
   /* ---- what is waiting on the parent ---------------------------------------
-     One notice for each thing to do, each carrying its own button. Nothing
-     here states a version, an expiry code or a running tally: a parent needs
-     the thing to do and the day to do it by. */
+     One notice for each thing to do, each carrying its own button. */
 
   function ours(list) {
     var names = kids().map(function (s) { return s.name; });
     return list.filter(function (m) { return names.indexOf(m.child) !== -1; });
   }
-  function toMakeUp() {
-    return ours(D.MAKEUPS).filter(function (m) { return m.status === 'Available'; });
-  }
-  function bookedMakeUps() {
-    return ours(D.MAKEUPS).filter(function (m) { return m.status === 'Booked' && m.booked; });
-  }
-  /* The class a missed hour came from, which is the room and the teacher the
-     make-up belongs to. Book a make-up reads it the same way. */
-  function missedClass(m) {
-    var bits = String(m.missed).split(' · ');
-    var day = bits[0].split(' ')[0];
-    var start = (bits[1] || '').replace(/(am|pm)/i, '');
-    if (!start) return null;
-    return D.CLASSES.filter(function (c) {
-      return c.day === day && c.time.indexOf(start) === 0;
-    })[0] || null;
-  }
   function unsigned() { return D.DOCUMENTS.filter(function (d) { return !d.signed; }); }
 
-  /* The class to make up leads, because it is the only one with a day to
-     beat. */
+  /* Money leads, because it is the only one with a day already behind it. */
   function todos() {
-    var list = toMakeUp().map(function (m) {
-      var who = firstName(m.child);
-      var bits = String(m.missed).split(' · ');
-      return {
-        kind: 'ok',
-        title: who + ' has a class to make up',
-        text: who + ' missed ' + plainDate(bits[0]) + ' — the ' + bits[1] +
-              ' class. Book the make-up before ' + plainDate(m.expires) + '.',
-        action: { label: 'Book a make-up class', kind: 'primary', to: 'fBookMakeup' }
-      };
-    });
+    var list = [];
+
+    var owing = sum(unpaid());
+    if (owing > 0) {
+      var oldest = unpaid()[0];
+      list.push({
+        kind: 'warn',
+        title: price(owing) + ' is still to pay',
+        text: oldest.what + ', from ' + plainDate(oldest.d) + '. It is not part of a pack, ' +
+              'so it will not be picked up when one renews.',
+        action: { label: 'See billing', kind: 'primary', to: 'fBilling' }
+      });
+    }
 
     var papers = unsigned();
     if (papers.length === 1) {
@@ -231,38 +248,6 @@
       });
     }
     return list;
-  }
-
-  /* ---- money ------------------------------------------------------------------
-     Billing works the next charge out as the monthly run — the opening lines
-     of the ledger — less its discount, plus anything still unpaid. Home reads
-     it the same way, so the two screens cannot disagree, and the studio's run
-     posts on the 1st. */
-
-  function sum(list) { return list.reduce(function (n, l) { return n + l.amt; }, 0); }
-  function unpaid() { return D.LEDGER.filter(function (l) { return !l.paid; }); }
-  function monthlyRun() {
-    var first = D.LEDGER[0].d;
-    return D.LEDGER.filter(function (l) { return l.d === first; });
-  }
-  function nextCharge() { return sum(monthlyRun()) + sum(unpaid()); }
-  function nextRun() {
-    var t = today();
-    return new Date(t.getFullYear(), t.getMonth() + 1, 1);
-  }
-
-  /* ---- the studio's noticeboard ------------------------------------------- */
-
-  function stamp(when) {
-    var p = String(when).split(' ');
-    return Number(p[2]) * 10000 + (MON.indexOf(p[1]) + 1) * 100 + Number(p[0]);
-  }
-  /* A scheduled announcement has not gone out yet, so the family cannot see
-     it. Everything else the studio has published is here, newest first. */
-  function published() {
-    return D.ANNOUNCEMENTS.filter(function (a) {
-      return a.status !== 'Scheduled';
-    }).sort(function (a, b) { return stamp(b.when) - stamp(a.when); });
   }
 
   /* ---- tomorrow -----------------------------------------------------------
@@ -294,7 +279,11 @@
 
     return ui.card({
       title: 'Tomorrow · ' + longDate(when),
-      flush: true
+      flush: true,
+      note: rows.length
+        ? 'Tell us more than 24 hours before a class and the session stays in the pack. ' +
+          'Inside 24 hours it is spent, the same as if they had come.'
+        : null
     }, rows.length
       ? ui.rows(rows)
       : ui.empty('Nothing tomorrow',
@@ -304,39 +293,26 @@
 
   /* ---- coming up ------------------------------------------------------------
      Dates a person recognises, in order, with a button on anything that can be
-     changed. The 1 August payment is here because what is owed and when it
-     goes is the other thing a parent comes to this page for, and it was on no
-     page they open first. */
+     changed. An extra class — one booked on top of the weekly place — is here
+     because it is the one entry a parent might not be expecting, and because
+     it spends a session like any other class. */
 
   function comingCard() {
     var items = [];
+    var extras = ours(D.EXTRA_CLASSES);
 
-    bookedMakeUps().forEach(function (m) {
-      var bits = String(m.booked).split(' · ');
+    extras.forEach(function (x) {
+      var bits = String(x.when).split(' · ');
       var at = dateFrom(bits[0]);
-      if (!at) return;                 /* a request the studio has not dated yet */
-      var c = missedClass(m);
+      if (!at) return;                 /* a booking the studio has not dated yet */
       items.push({
         at: at,
         lead: shortDate(at),
-        title: esc(firstName(m.child) + ' · make-up class'),
-        sub: esc(bits[1] + (c ? ' · ' + c.room + ' · with ' + c.staff : '') +
+        title: esc(firstName(x.child) + ' · extra class'),
+        sub: esc(bits[1] + ' · ' + x.room + ' · with ' + x.staff +
                  ' — already booked, nothing to do'),
         end: ui.btn({ label: 'Change', kind: 'quiet', size: 'sm', to: 'fMessages' })
       });
-    });
-
-    var run = nextRun();
-    var owing = sum(unpaid());
-    var oldest = unpaid()[0];
-    items.push({
-      at: run,
-      lead: shortDate(run),
-      title: esc('Your next payment · ' + Grove.money(nextCharge())),
-      sub: esc('Taken from ' + String(fam().card).split(' · ')[0] + ' automatically' +
-        (owing ? '. It includes ' + Grove.money(owing) + ' still to pay from ' +
-                 plainDate(oldest.d) : '') + '.'),
-      end: ui.btn({ label: 'See billing', kind: 'quiet', size: 'sm', to: 'fBilling' })
     });
 
     week().forEach(function (s) {
@@ -359,12 +335,98 @@
       title: 'Coming up',
       head: ui.btn({ label: 'See your schedule', kind: 'quiet', size: 'sm', to: 'fSchedule' }),
       flush: true,
-      note: 'If a child cannot come, tell us at least 24 hours ahead and you can take the ' +
-            'class another time. Nothing is charged for a make-up class.'
-    }, ui.rows(items));
+      note: extras.length
+        ? 'An extra class spends a session from the pack, the same as a weekly class.'
+        : null
+    }, items.length
+      ? ui.rows(items)
+      : ui.empty('Nothing booked yet', 'Your schedule will fill in as classes are booked.'));
+  }
+
+  /* ---- sessions ---------------------------------------------------------------
+     Where each child's pack stands, and what happens when it runs out. A pack
+     belongs to one child, so two children renew separately and at different
+     times — which is the whole reason this is a row per child and not one line
+     about the family. Every figure is read off the child's own record and the
+     studio's price list. */
+
+  function sessionRows() {
+    var stopping = String(fam().plan).indexOf('not renewing') !== -1;
+
+    return kids().map(function (s) {
+      var p = D.pack(s);
+      var who = firstName(s.name);
+      var end = ui.btn({ label: 'See ' + who, kind: 'quiet', size: 'sm', to: 'fChild', id: s.id });
+
+      if (!p.isPack) {
+        return {
+          lead: ui.mute('—'),
+          title: esc(who + ' · no pack'),
+          sub: esc('Camp weeks and one-off classes are paid for when you book them, ' +
+                   'so there is nothing to renew.'),
+          end: end
+        };
+      }
+
+      var cost = D.PRICING.as.plans['p' + p.size];
+      var pays = fam().autopay
+        ? ' from ' + cardName()
+        : ', and we will ask you for it then';
+
+      var text;
+      if (stopping) {
+        text = plural(p.left, 'class', 'classes') + ' left. When the last one is used the pack will ' +
+               'not renew, and nothing more is charged.';
+      } else if (p.left === 0) {
+        text = 'The pack is used up. The next class renews it — another ' +
+               plural(p.size, 'session') + (cost ? ', ' + price(cost) : '') + pays + '.';
+      } else {
+        text = plural(p.left, 'class', 'classes') + ' left. On the ' + ordinal(p.size) +
+               ' class it renews — another ' + plural(p.size, 'session') +
+               (cost ? ', ' + price(cost) : '') + pays + '.';
+      }
+
+      var kept = D.absencesFor(s.name).filter(function (a) { return !a.spent; });
+      if (kept.length) {
+        text += ' ' + plural(kept.length, 'missed class', 'missed classes') +
+                ' stayed in the pack because you told us in time.';
+      }
+
+      return {
+        lead: ui.timechip(p.left + ' left', p.left <= 1 ? 'amber' : null),
+        title: esc(who + ' · ' + p.used + ' of ' + p.size + ' used'),
+        sub: esc(text),
+        end: end
+      };
+    });
+  }
+
+  function sessionsCard() {
+    var rows = sessionRows();
+    return ui.card({
+      title: 'Sessions',
+      head: ui.btn({ label: 'See billing', kind: 'quiet', size: 'sm', to: 'fBilling' }),
+      flush: true,
+      note: 'There is no billing date. A pack renews when its last session is used, and ' +
+            'sessions never expire — they are yours until you use them.'
+    }, rows.length
+      ? ui.rows(rows)
+      : ui.empty('No sessions yet', 'Book a class and the pack will show here.'));
   }
 
   /* ---- the studio's news --------------------------------------------------- */
+
+  function stamp(when) {
+    var p = String(when).split(' ');
+    return Number(p[2]) * 10000 + (MON.indexOf(p[1]) + 1) * 100 + Number(p[0]);
+  }
+  /* A scheduled announcement has not gone out yet, so the family cannot see
+     it. Everything else the studio has published is here, newest first. */
+  function published() {
+    return D.ANNOUNCEMENTS.filter(function (a) {
+      return a.status !== 'Scheduled';
+    }).sort(function (a, b) { return stamp(b.when) - stamp(a.when); });
+  }
 
   function newsCard() {
     return ui.card({
@@ -405,7 +467,7 @@
         : ui.notice({
             kind: 'ok',
             title: 'Nothing needs you today',
-            text: 'Nothing to sign and nothing to book. Here is what is coming up.'
+            text: 'Nothing to sign and nothing to pay. Here is what is coming up.'
           });
 
       var hint = list.length === 1
@@ -418,6 +480,7 @@
         <div class="section">${raw(waiting)}</div>
         <div class="section">${raw(tomorrowCard())}</div>
         <div class="section">${raw(comingCard())}</div>
+        <div class="section">${raw(sessionsCard())}</div>
         <div class="section">${raw(newsCard())}</div>
         ${raw(ui.formActions([
           { label: 'Message the studio', kind: 'primary', to: 'fMessages' },

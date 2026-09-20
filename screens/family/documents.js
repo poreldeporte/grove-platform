@@ -30,11 +30,28 @@
        thank you" as an equal second button rather than leaving refusing as
        something a parent has to work out for themselves. The three documents
        nobody can decline offer "Not now" and the desk number instead
-     - both screens carry an "If you are not sure" card with the desk number,
-       the same card the make-up booking screen carries. The number is the one
-       Console → Settings says families see; the make-up card
-       in screens/family/schedule.js printed a different one, so one of the two
+     - both screens carry an "If you are not sure" card with the desk number.
+       The number is the one Console → Settings says families see;
+       screens/family/schedule.js printed a different one, so one of the two
        is wrong and it is not this file's to change
+
+   Rewritten again for the corrected billing model. The studio does not bill by
+   the calendar: a family buys a pack of sessions for one child, the child
+   attends, and when the last session in the pack is used the pack renews — it
+   charges again and grants another pack the same size. So:
+     - the payment clauses no longer say tuition is billed on the 1st, or that
+       a payment holds a place for the month. They say what a pack costs, that
+       a pack belongs to one child, and that it renews on the last session.
+       The prices are read from PRICING and the pack sizes from the family's
+       own children, so the document quotes the same figures the studio keeps
+     - the make-up credit is deleted, not renamed. A session cancelled more
+       than 24 hours ahead is simply not spent, so there is nothing to issue,
+       nothing to approve and nothing to expire. A family that wants to catch
+       a class up books an extra class, which spends a session like any other
+     - sessions do not expire, so the clause about classes left over at the end
+       of a paid month has gone, and with it the 30 days written notice. A
+       family is not a member and does not cancel: they use the sessions they
+       have paid for and the pack does not renew
 
    Removed, and why a parent does not need it:
      - version numbers everywhere. "Version 4" is how the studio files its
@@ -47,8 +64,9 @@
        document is in says the same thing in words
      - the Signature card's Status and Signed by rows. The page already says
        both, in a sentence, at the top
-     - "credit" is gone from the clause text as well as the screen furniture.
-       A parent is owed a class; the credit is the studio's bookkeeping
+     - every make-up, credit and expiry from the clause text as well as the
+       screen furniture. A session a parent told us about in time was never
+       spent, so there is nothing to keep a record of
 
    Kept although it looks like clutter:
      - the full clause text of every document, including the ones already
@@ -82,7 +100,6 @@
   var LATE_FEE = 25;           // "a $25 late fee"
   var PICKUP_GRACE = 10;       // "10 minutes grace"
   var PICKUP_RATE = 1;         // "a late fee of $1 per minute"
-  var NOTICE_DAYS = 30;        // "30 days written notice"
   var CANCEL_HOURS = 24;       // "at least 24 hours before the class"
 
   var P = D.PRICING;
@@ -113,6 +130,26 @@
     return D.FAMILIES.filter(function (f) { return f.name === FAMILY; })[0] || D.FAMILIES[0];
   }
   function first(s) { return String(s.name).split(' ')[0]; }
+
+  /* What the household's packs cost, said as a sentence. The size comes from
+     the child's own record and the price from the studio's rate card, so the
+     document cannot quote a figure the studio does not charge. A child who
+     only does camp and one-off bookings holds no pack and is left out. */
+  function packPrice(size) {
+    return P.as.plans['p' + size];
+  }
+  function packKids() {
+    return kids().filter(function (s) {
+      var p = D.pack(s);
+      return p.isPack && packPrice(p.size);
+    });
+  }
+  function packPrices() {
+    return andList(packKids().map(function (s) {
+      var p = D.pack(s);
+      return first(s) + '’s pack of ' + p.size + ' is ' + money(packPrice(p.size));
+    }));
+  }
 
   /* Who a document is about: the child it names, or every child on the
      family record when it names nobody. */
@@ -153,37 +190,41 @@
     var f = household();
 
     if (d.id === 'd1') {
+      var prices = packPrices();
       return {
-        line: 'How and when the studio bills you, and what happens if a payment is late.',
-        summary: 'The studio has rewritten this one. Four things are different: a ' +
-          money(LATE_FEE) + ' late fee once the ' + GRACE_DAYS + ' days are up, how many ' +
-          'times we try a card that has failed, ' + NOTICE_DAYS + ' days notice if you leave, ' +
-          'and what happens to classes you have paid for but not yet taken.',
+        line: 'What a pack of sessions costs, when it renews, and what happens if a payment ' +
+          'is late.',
+        summary: 'The studio has rewritten this one. What is different: a ' + money(LATE_FEE) +
+          ' late fee once the ' + GRACE_DAYS + ' days are up, how many times we try a card ' +
+          'that has failed, that sessions you have paid for never expire, and that stopping ' +
+          'is simply a pack not renewing.',
         optional: false,
         clauses: [
-          { h: 'When you are billed',
-            p: 'Tuition is billed automatically on the 1st of each month, whatever date you ' +
-               'enrolled. It holds your child’s place for that month rather than paying for a ' +
-               'set number of classes.' },
+          { h: 'What you buy, and when it renews',
+            p: 'You buy a pack of sessions for a child, and the pack is charged when you buy ' +
+               'it. ' + (prices ? prices + '. ' : '') + 'There is no billing date: when the ' +
+               'last session in a pack is used, the pack renews — it charges again and gives ' +
+               'you another pack the same size. A pack belongs to one child, so each child’s ' +
+               'pack renews on their own last session and is charged on its own.' },
           { h: 'If a payment is late',
             p: 'Payment is due within ' + GRACE_DAYS + ' days. After that a ' + money(LATE_FEE) +
                ' late fee is added to your account. A child is not admitted to class before ' +
-               'the month is paid.' },
+               'the pack is paid for.' },
           { h: 'If a card fails',
             p: 'We try the card again on day 1, day 3 and day 7. After the third try someone ' +
                'rings you — your child’s place is never cancelled silently.' },
-          { h: 'Refunds',
-            p: 'Payments are not refundable. They can be put towards the same kind of class ' +
-               'within an agreed window. If your last paid month holds fewer classes than a ' +
-               'standard one, the classes you are still owed are given back to you as classes ' +
-               'to make up.' },
+          { h: 'Refunds, and sessions you have not used',
+            p: 'Payments are not refundable. Sessions do not expire: a pack is paid for, so ' +
+               'every session in it stays with your child until it is used, however long that ' +
+               'takes. Sessions cannot be passed to a brother or sister.' },
           { h: 'The registration fee',
             p: 'A one-time registration fee of ' + money(P.as.regFee) + ' per child covers ' +
                'materials and software, and it is not refundable. Siblings get ' +
                P.as.siblingRelief + '.' },
-          { h: 'If you leave',
-            p: NOTICE_DAYS + ' days written notice, by message in the portal or by email. ' +
-               'Without that notice the account is billed to the end of the school year.' }
+          { h: 'If you stop',
+            p: 'Tell us, by message in the portal or by email, and the pack does not renew. ' +
+               'You take the sessions you have already paid for and nothing further is ' +
+               'charged. There is no notice period and nothing to cancel.' }
         ]
       };
     }
@@ -192,19 +233,21 @@
       return {
         line: 'Cancelling a class, drop-off and pick-up, and when to keep a poorly child at home.',
         summary: 'The rules that come up most: how much notice we need when a class is going ' +
-          'to be missed, how long you have to take it another time, and the few minutes grace ' +
-          'at the door. The last paragraph is the one about accidents and lost belongings.',
+          'to be missed, what happens to the session when you tell us in time, and the few ' +
+          'minutes grace at the door. The last paragraph is the one about accidents and lost ' +
+          'belongings.',
         optional: false,
         clauses: [
           { h: 'Cancelling a class',
             p: 'Tell us at least ' + CANCEL_HOURS + ' hours before the class, in the portal, ' +
-               'and we give the class back to you to take another time. Inside ' + CANCEL_HOURS +
-               ' hours it counts as attended and no make-up is given.' },
-          { h: 'Making up a missed class',
-            p: 'A class you are owed is used within the same month, in any class that suits ' +
-               'your child’s age and has room. It cannot be carried into the next month, it ' +
-               'cannot be passed to a brother or sister, and a make-up that is booked and then ' +
-               'missed counts as taken.' },
+               'and the session stays in your child’s pack — the pack simply lasts a week ' +
+               'longer. Inside ' + CANCEL_HOURS + ' hours the session is spent, exactly as if ' +
+               'they had come.' },
+          { h: 'Catching a class up',
+            p: 'If you would rather catch the class up than let the pack run on a week, book ' +
+               'an extra class in the portal, in any class that suits your child’s age and has ' +
+               'room. It spends a session from their pack like any other class, and a booked ' +
+               'extra class that is then missed is spent in the same way.' },
           { h: 'Drop-off and pick-up',
             p: 'Children are dropped off and collected at the studio door by a parent or ' +
                'guardian. There are ' + PICKUP_GRACE + ' minutes grace at both ends; after ' +
@@ -212,8 +255,9 @@
                'arrival joins for the remaining time only.' },
           { h: 'Health',
             p: 'Children with a cough, a runny nose or any other sign of illness stay home — ' +
-               'tell us and we give you the class back. The studio is cleaned and disinfected ' +
-               'before, during and after every class.' },
+               'tell us as soon as you know, and if that is more than ' + CANCEL_HOURS +
+               ' hours before the class the session stays in their pack. The studio is cleaned ' +
+               'and disinfected before, during and after every class.' },
           { h: 'Accidents and lost belongings',
             p: 'You release The Grove Art Studio LLC, its owners, staff and instructors from ' +
                'liability for injuries, accidents or lost belongings during studio activities, ' +

@@ -14,6 +14,15 @@
    office's own screens carry the ones she will not meet yet.
 
    What this pass changed
+     - the make-up credit is gone, because the thing it counted never existed.
+       A family buys a pack of sessions for one child, and the pack renews when
+       the last session in it is used. Tell the studio more than 24 hours ahead
+       and the session simply stays in the pack. So there is no credit to hold,
+       none to book, none to approve and none to expire, and the card that
+       pilled four credit states has gone with them. What replaces it is the
+       two facts a teacher can act on: the classes a child has missed, and any
+       extra class booked on top of their weekly place — which is a child
+       arriving in an hour that is not theirs.
      - the roster is the join. Nothing here reads the free-text class sentence
        on a child any more. The list, the register button, the safety lines,
        the record and the note picker all go through D.roster and
@@ -44,8 +53,6 @@
        with a sticky Save; opened with nobody chosen it asks who first.
      - a note's "Visible to" select stays dropped. Every note goes to the
        assigned staff and the office, which the screen says once, in words.
-     - make-ups are counted off the D.MAKEUPS rows this screen lists, never
-       off STUDENTS.mk, so a booked credit is not mistaken for a spare one.
 
    Written here, because Grove.data does not carry it
      - a condition carries no action plan, so every medical alert gets the
@@ -62,15 +69,6 @@
   var Grove = window.Grove, ui = Grove.ui, esc = Grove.esc, D = Grove.data;
 
   var SAFETY_NOTE = 'You see this because you need it to teach safely. It goes no further than assigned staff.';
-
-  /* The four make-up states, pilled the way Console → Requests pills them, so
-     a credit looks the same in the studio as it does in the office. */
-  var MAKEUP_PILL = {
-    'Awaiting approval': 'warn',
-    'Available': 'ok',
-    'Booked': null,
-    'Expiring': 'bad'
-  };
 
   /* Small numbers read better as words in a sentence: "Five children have a
      medical alert" is a fact, "5" is a statistic. */
@@ -200,10 +198,14 @@
     })[0];
   }
 
-  /* Every make-up this child holds. Counted off these rows rather than taken
-     from STUDENTS.mk: a credit already booked is not one still to spend. */
-  function credits(s) {
-    return D.MAKEUPS.filter(function (m) { return m.child === s.name; });
+  /* What the child has missed, and any class booked on top of their weekly
+     place. Both are read off the rows this screen lists, never off STUDENTS.mk,
+     which still carries a count of a thing that no longer exists. */
+  function missedBy(s) {
+    return D.absencesFor(s.name);
+  }
+  function extrasFor(s) {
+    return D.EXTRA_CLASSES.filter(function (x) { return x.child === s.name; });
   }
 
   /* The other instructor who teaches, for the second note on the record. */
@@ -364,7 +366,7 @@
       ? ui.card({
           title: 'Medical alerts',
           head: ui.pill(plural(urgent.length, 'child', 'children'), 'bad'),
-          note: 'Read this before the doors open, not when something happens. An allergy, a condition or a medication travels with the child to camp and to any make-up class.'
+          note: 'Read this before the doors open, not when something happens. An allergy, a condition or a medication travels with the child to camp and to any extra class.'
         }, urgent.map(function (s) {
           return ui.notice({
             kind: 'bad',
@@ -513,34 +515,47 @@
         }
       ]));
 
-      /* Only where there is something to show. A make-up matters to a teacher
-         for one reason: a child turning up in an hour that is not theirs. */
-      var missed = credits(s);
-      var booked = missed.filter(function (m) { return m.status === 'Booked' && m.booked; });
+      /* Only where there is something to show. An absence is just an absence
+         now — nothing is issued and nothing is owed — so it is recorded and left
+         alone. An extra class is the one that changes her afternoon: a child
+         arriving in an hour that is not theirs. */
+      var missed = missedBy(s);
+      var extras = extrasFor(s);
 
-      var makeups = missed.length
+      var missedCard = missed.length
         ? ui.card({
             title: 'Classes missed',
+            head: ui.pill(plural(missed.length, 'class', 'classes')),
             flush: true,
-            note: booked.length
-              ? 'Expect ' + firstName(s.name) + ' on ' +
-                booked.map(function (m) { return m.booked; }).join(' and ') + ', making one of these up.'
-              : 'A class missed with more than 24 hours notice becomes a make-up. The office books it.'
-          }, ui.rows(missed.map(function (m) {
-            var isBooked = m.status === 'Booked' && m.booked;
+            note: 'There is nothing to issue and nothing to book back. A family catching up books an extra class, and it shows beside this.'
+          }, ui.rows(missed.map(function (a) {
+            return { title: esc(a.date), sub: esc(a.reason) };
+          })))
+        : '';
+
+      var extraCard = extras.length
+        ? ui.card({
+            title: 'Extra classes',
+            head: ui.pill(plural(extras.length, 'class', 'classes')),
+            flush: true,
+            note: 'Booked on top of the weekly place, so ' + firstName(s.name) +
+              ' turns up in a room that is not usually theirs.'
+          }, ui.rows(extras.map(function (x) {
             return {
-              title: esc(isBooked ? 'Making it up on ' + m.booked : 'Missed ' + m.missed),
-              sub: esc(isBooked
-                ? 'Missed ' + m.missed + ' · ' + m.reason
-                : m.reason + ' · lapses ' + m.expires),
-              end: ui.pill(m.status, MAKEUP_PILL[m.status])
+              title: esc(x.when),
+              sub: esc(x.room + ' · ' + x.staff),
+              end: x.staff === me ? ui.pill('In your hour', 'ok') : ''
             };
           })))
         : '';
 
+      var sessions = [missedCard, extraCard].filter(Boolean);
+
       return safety +
         '<div class="section">' + ui.grid(2, [about, notes]) + '</div>' +
-        (makeups ? '<div class="section">' + ui.grid(null, [makeups]) + '</div>' : '');
+        (sessions.length
+          ? '<div class="section">' + ui.grid(sessions.length > 1 ? 2 : null, sessions) + '</div>'
+          : '');
     }
   });
 
@@ -572,7 +587,7 @@
         ? ui.notice({
             kind: s.flagKind,
             title: s.name + ' — ' + s.flag,
-            text: 'Anything medical belongs on the safety record, where it travels with the child to camp and to any make-up class. A note does not travel.'
+            text: 'Anything medical belongs on the safety record, where it travels with the child to camp and to any extra class. A note does not travel.'
           })
         : '';
 

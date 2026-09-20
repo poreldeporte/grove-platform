@@ -5,6 +5,31 @@
    registration page say about it. Everything else on these screens is read
    from somewhere that already owns it.
 
+   THIS PASS — THE BILLING MODEL
+
+   A price on this page used to buy a month. It buys a pack of sessions: the
+   family pays once, the child attends, and when the last session in the pack
+   is used the pack renews and charges again. There is no billing date, so
+   nothing on this page names one.
+     - "$280 to $960 a month" in the Price column now reads as pack prices,
+       and the ladder is four packs rather than four monthly allowances.
+       "4 sessions a month" is "A pack of 4", and what a pack covers is the
+       class it renews on plus what one session works out at — $960 for 16 is
+       $60 a session, taken off the price in that same row. PRICING.as
+       .extraClassRate holds those same four numbers and is no longer quoted
+       as a separate charge: a catch-up class spends a session from the pack
+       like any other class, so there is nothing extra to bill
+     - the standing rules lost "Recurring monthly, on the 1st", the 30-day
+       cancellation notice and the make-up credit line. A pack is charged
+       again on its last session; a class cancelled more than 24 hours ahead
+       simply is not spent, so there is no credit to issue, approve or expire;
+       and a family who is finished lets the pack not renew rather than
+       giving notice
+     - sessions do not expire, and the rules say so where the expiry rule
+       used to be
+     - the After-School sentence families read no longer says "billed month
+       to month. Four to sixteen sessions a month"
+
    THIS PASS
 
    The list
@@ -29,14 +54,13 @@
        three could change a class, so all three are stated in "How it runs",
        which is where the rest of the class facts already were
      - what she actually opens this page to change was not editable at all:
-       the price. The plan prices and the registration fee are now inputs, so
+       the price. The pack prices and the registration fee are now inputs, so
        the page can keep the promise the list makes
-     - the plans table lost its "Sessions" column, which restated the plan
-       name ("8 sessions / month" → 8), and its "Extra class" column, which is
-       a rate that follows the plan and now reads on the plan's own line. One
-       table shape — what families pay, the price, what it covers — serves all
-       six programs instead of one shape for After-School and nothing for the
-       other five
+     - the price table lost its "Sessions" column, which restated the pack
+       name, and its "Extra class" column, which was really the per-session
+       rate and now reads as one on the pack's own line. One table shape —
+       what families pay, the price, what it covers — serves all six programs
+       instead of one shape for After-School and nothing for the other five
      - "Add a plan" is gone. It admitted in its own toast that it did nothing,
        and the four-step ladder has not changed in years
      - "Save changes" moved out of the header into a bar pinned to the foot of
@@ -55,11 +79,10 @@
        opens its own program, and the price table is built from that
        program's own pricing shape
      - once six programs share this page the standing rules had to stop being
-       After-School Art's. "Recurring monthly, on the 1st", a 30-day
-       cancellation notice and the make-up rules were being stated over a
-       birthday party and a pop-up ticket, where none of them are true. A
-       program with a plan ladder shows all of them; a program bought once
-       shows the three that still apply
+       After-School Art's. Renewal, missed classes, catching up and not
+       renewing were being stated over a birthday party and a pop-up ticket,
+       where none of them are true. A program sold as packs shows all of
+       them; a program bought once shows the three that still apply
      - "Classes: 5" left the How it runs card: the note under it already
        counts them, and the two cards on that row now end within a line of
        each other
@@ -70,16 +93,18 @@
        start date for classes that had been running since spring
      - the badge PNGs stay out. A program is marked with ui.dot(color), the
        way it is marked everywhere else
-     - the blurbs are the registration copy, character for character */
+     - the blurbs are the registration copy, word for word. The After-School
+       one is the exception this pass: its old sentence sold a month, so it
+       now says what a pack is and when it renews */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
   /* What each program is, in the same words families are shown at
-     registration. Kept character-for-character identical to the copy in
-     screens/registration/pick.js on purpose. */
+     registration, so screens/registration/pick.js and this page cannot
+     describe the same program differently. */
   var BLURB = {
-    as: 'A fixed weekly place across the school year, billed month to month. Four to sixteen sessions a month, split how you like.',
+    as: 'A fixed weekly place across the school year. You buy a pack of sessions — four, eight, twelve or sixteen — and it renews when the last one is used.',
     camp: 'Full days of making through the summer and school breaks. Take a whole week or pick individual days.',
     nsd: 'For teacher workdays and county holidays. Three hours as standard, extend by the hour if you need to.',
     priv: 'One-to-one time with an instructor, on a subject your child chooses. Up to three hours in a session.',
@@ -87,16 +112,11 @@
     pop: 'One-off evenings for a single project. Clay Night is the next one, and it is nearly gone.'
   };
 
-  var PLAN_KEYS = ['p4', 'p8', 'p12', 'p16'];
-
-  /* How a family may spread the sessions they have bought. One session is one
-     hour, which is what the plan keys count. */
-  var PLAN_PATTERN = {
-    p4: 'One 1-hour class per week',
-    p8: 'One 2-hour, or two 1-hour',
-    p12: 'Three 1-hour, or 2-hour + 1-hour',
-    p16: 'Four 1-hour, two 2-hour, or mixed'
-  };
+  /* The four packs the studio sells. The key counts the sessions in the pack:
+     p8 is eight sessions, bought together and renewed together. Nothing here
+     is a monthly allowance — how fast a pack is used is how often the child
+     comes. */
+  var PACK_KEYS = ['p4', 'p8', 'p12', 'p16'];
 
   Grove.on('togglePolicy', function (d) {
     var id = Grove.state.params.id || 'as';
@@ -119,6 +139,21 @@
 
   function plural(n, one, many) {
     return n + ' ' + (n === 1 ? one : many);
+  }
+
+  /* 'p8' → 8. The pack key is the number of sessions in the pack. */
+  function packSize(key) { return parseInt(key.slice(1), 10); }
+
+  /* 8 → '8th'. A pack renews on a class, never on a date, so the next charge
+     is always said as a class. */
+  function ordinal(n) {
+    var tens = n % 100, unit = n % 10, suffix = 'th';
+    if (tens < 11 || tens > 13) {
+      if (unit === 1) suffix = 'st';
+      else if (unit === 2) suffix = 'nd';
+      else if (unit === 3) suffix = 'rd';
+    }
+    return n + suffix;
   }
 
   function classesOf(id) {
@@ -202,7 +237,9 @@
     var p = D.PRICING[id];
     if (p.quoteOnly) return 'Quoted per party';
     if (id === 'as') {
-      return money(p.plans.p4) + ' to ' + money(p.plans.p16) + ' a month';
+      var first = PACK_KEYS[0], last = PACK_KEYS[PACK_KEYS.length - 1];
+      return money(p.plans[first]) + ' for a pack of ' + packSize(first) +
+        ', up to ' + money(p.plans[last]) + ' for ' + packSize(last);
     }
     if (id === 'camp') {
       return money(p.week) + ' a week, or ' + money(p.day) + ' a day';
@@ -340,13 +377,18 @@
     var rows = [];
 
     if (id === 'as') {
-      PLAN_KEYS.forEach(function (k) {
+      PACK_KEYS.forEach(function (k) {
+        var size = packSize(k);
         rows.push(priceRow(
-          k.slice(1) + ' sessions a month',
+          'A pack of ' + size,
           p.plans[k],
-          /* The ladder is quoted to the cent so $60.00 and $67.50 line up as
-             one rate card rather than two ways of writing money. */
-          PLAN_PATTERN[k] + ' · an extra class is ' + Grove.money(p.extraClassRate[k])
+          /* What a session works out at, divided out of the price in this same
+             row, so the four packs can be compared. PRICING.as.extraClassRate
+             carries the same four numbers; it is not quoted as a charge,
+             because a catch-up class spends a session rather than costing
+             extra. */
+          'Renews when the ' + ordinal(size) + ' session is used · ' +
+            money(p.plans[k] / size) + ' a session'
         ));
       });
     } else if (id === 'camp') {
@@ -372,10 +414,10 @@
     );
   }
 
-  /* A program billed month after month is the only one where a price change
-     reaches a family who has already signed up; everything else is bought
-     once, at the price of the day. */
-  function recurring(id) {
+  /* A program sold as packs charges again every time a pack renews, so a new
+     price reaches a family who has already signed up. Everything else is
+     bought once, at the price of the day. */
+  function renews(id) {
     return !!D.PRICING[id].plans;
   }
 
@@ -388,29 +430,34 @@
     var en = enrolled(classesOf(id));
     if (!en) return 'Nobody is enrolled yet, so a new price applies to new bookings only';
     var who = en === 1 ? '1 child is' : en + ' children are';
-    return recurring(id)
-      ? who + ' enrolled — a new price is what they are billed from the next invoice'
+    return renews(id)
+      ? who + ' enrolled — a new price is what they pay the next time a pack renews'
       : who + ' already booked at the old price — a new price applies from here on';
   }
 
   /* The rules are the studio's, not the program's, but not every one of them
-     touches every program: a party is not billed on the 1st and a ticket to
-     Clay Night cannot be made up. Listing the six that suit After-School Art
-     on all six programs would state five things that are not true. */
+     touches every program: a party does not renew and a ticket to Clay Night
+     is not a session out of a pack. Listing all eight that suit After-School
+     Art on all six programs would state four things that are not true. */
   function ruleRows(id) {
     var p = D.PRICING[id];
     var rows = [];
 
-    rows.push(['Billing', p.quoteOnly
+    rows.push(['Paying', p.quoteOnly
       ? 'Quoted by hand, then invoiced'
-      : (recurring(id) ? 'Recurring monthly, on the 1st' : 'Paid when the family books')]);
+      : (renews(id)
+        ? 'A pack is charged when it is bought, and again when its last session is used'
+        : 'Paid when the family books')]);
     rows.push(['Grace period', '7 days, then a $25 late fee']);
-    rows.push(['Refunds', 'Non-refundable, credit only']);
+    rows.push(['Refunds', renews(id)
+      ? 'A pack is not refunded — the sessions stay with the child until they are used'
+      : 'Non-refundable once the place is held']);
 
-    if (recurring(id)) {
-      rows.push(['Cancellation notice', '30 days']);
-      rows.push(['Make-up credits', 'Cancel 24 hours ahead; the credit expires at the end of the billing cycle']);
-      rows.push(['Bookable into', 'Any age-appropriate class']);
+    if (renews(id)) {
+      rows.push(['Sessions', 'They do not expire. The pack is paid for, so it is theirs until used']);
+      rows.push(['Missing a class', 'More than 24 hours notice and the session stays in the pack; inside 24 hours it is spent']);
+      rows.push(['Catching up', 'Book an extra class in any age-appropriate class; it spends a session like any other']);
+      rows.push(['Not renewing', 'The family uses the sessions they have paid for and the pack does not renew']);
     }
     if (!p.quoteOnly) {
       rows.push(['When a class is full', 'The family joins the waitlist, and registration shows the places left']);
@@ -527,7 +574,7 @@
       },
       {
         title: 'The standing rules already apply',
-        sub: 'Billing, cancellation and make-ups come from Settings, the same as every ' +
+        sub: 'Paying, renewal and missed classes come from Settings, the same as every ' +
           'other program, and the required policies follow the program type.'
       },
       {
