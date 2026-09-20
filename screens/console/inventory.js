@@ -34,13 +34,31 @@
        quantity, the supplier or the amount. It is a sticky bar that says all
        three before she presses it
 
-   Kept dense on purpose: this is a desk, a keyboard and a table of numbers.
-   Nothing here became a large friendly card, and ui.choice is not used —
-   nothing on this screen is picked with a finger.
+   Kept dense on purpose: the shelf and the record are a desk, a keyboard and
+   a table of numbers. Nothing there became a large friendly card, and nothing
+   on either is picked with a finger.
 
    Every figure is derived from the rows printed under it: the order quantity,
-   the per-supplier split, the totals in both card feet and both sticky hints.
-   Nothing on this screen is typed in. */
+   the per-supplier split, the totals in both card feet and every sticky hint.
+   Nothing in this file is typed in.
+
+   NEW IN THIS PASS — Adjust the count
+
+   "Adjust count" raised a toast and changed nothing. It is a screen now, and
+   it asks one question: what is actually on the shelf. It opens on the number
+   the system holds, she steps that number to what she counted, and the
+   difference stands as a figure of its own beside the two it is drawn from.
+
+   A reason is asked for only when the difference is larger than a fifth of
+   the item's own minimum — two brushes out of a box of twenty-four is a
+   miscount, two pots of clay out is a quarter of the shelf — and the reasons
+   offered follow the direction of the difference, because paint does not
+   un-spoil and a delivery nobody booked in cannot explain a shortfall. That
+   is the one follow-up on the page, and the only place a note earns itself.
+
+   The sticky bar names the level it is about to write and whether that level
+   is under the minimum. Nothing is bought by counting: the order is still
+   raised from Inventory, and it re-reads whatever the count leaves behind. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -153,9 +171,10 @@
     return 'Short by ' + units(gap);
   }
 
-  function statePill(i) {
-    return orderQty(i) ? ui.pill('On the order', 'bad') : ui.pill('OK', 'ok');
+  function pillFor(qty) {
+    return qty ? ui.pill('On the order', 'bad') : ui.pill('OK', 'ok');
   }
+  function statePill(i) { return pillFor(orderQty(i)); }
 
   function item(ctx) {
     var id = ctx.params.id;
@@ -323,9 +342,9 @@
       return 'Where this item stands, what the instructors have asked for, and what the next order with ' +
         item(ctx).supplier + ' covers.';
     },
-    actions: [
-      { label: 'Adjust count', msg: 'Stock count adjusted' }
-    ],
+    actions: function (ctx) {
+      return [{ label: 'Adjust count', to: 'adjustStock', id: item(ctx).id }];
+    },
 
     body: function (ctx) {
       var i = item(ctx);
@@ -478,4 +497,283 @@
   });
 
   Grove.screen('inventoryItem', recordDef);
+
+  /* ---- counting the shelf ---------------------------------------------------
+     What "Adjust count" used to raise a toast for. One question — what is
+     actually in the room — asked as a step away from the number on file,
+     because a count is a correction of a figure that already exists rather
+     than a figure typed from nothing. The difference is what she is really
+     looking at, so it stands beside the two numbers it is drawn from.
+
+     A reason is asked for only when the difference is large, and large is read
+     off the item rather than fixed: more than a fifth of its own minimum.
+     Being two brushes out of a box of twenty-four is a miscount; being two
+     pots of clay out is a quarter of the shelf. The reasons offered follow the
+     direction of the difference — paint does not un-spoil, and a delivery
+     nobody booked in cannot explain a shortfall. */
+
+  var STEP = 'stockCount';
+  var WHY = 'stockWhy';
+
+  function countKey(id) { return 'stock-count-' + id; }
+  function whyKey(id) { return 'stock-why-' + id; }
+  function currentItem() { return item({ params: Grove.state.params }); }
+
+  Grove.on(STEP, function (d) {
+    Grove.setFilter(countKey(currentItem().id), Math.max(0, Number(d.n) || 0));
+  });
+  Grove.on(WHY, function (d) {
+    Grove.setFilter(whyKey(currentItem().id), d.id);
+  });
+
+  /* The count starts where the shelf already is, so the page opens saying
+     nothing has changed rather than guessing at a number nobody has counted. */
+  function countedOn(i) { return Number(Grove.filter(countKey(i.id), i.on)); }
+
+  /* A fifth of the item's own minimum, never less than one. */
+  function bigGap(i) { return Math.max(1, Math.round(i.min / 5)); }
+
+  function signed(n) { return n > 0 ? '+' + n : (n < 0 ? '−' + Math.abs(n) : '0'); }
+
+  var REASONS_DOWN = [
+    { id: 'used', title: 'Used up in class', sub: 'Spent faster than the lesson plans assumed' },
+    { id: 'spoiled', title: 'Broken, dried out or spoiled', sub: 'Thrown away rather than used' },
+    { id: 'miscount', title: 'The number on file was wrong', sub: 'Nothing left the room — the last count was out' }
+  ];
+  var REASONS_UP = [
+    { id: 'delivery', title: 'A delivery was never booked in', sub: 'It arrived and the shelf was never raised' },
+    { id: 'returned', title: 'Came back from a class', sub: 'Taken out for a class and returned unused' },
+    { id: 'miscount', title: 'The number on file was wrong', sub: 'Nothing arrived — the last count was out' }
+  ];
+
+  function reasonsFor(diff) { return diff < 0 ? REASONS_DOWN : REASONS_UP; }
+
+  /* A reason picked while the count was short does not survive the count
+     turning long, so the label is looked up against the current direction and
+     an answer that no longer explains anything reads as no answer. */
+  function reasonLabel(id, diff) {
+    var out = '';
+    reasonsFor(diff).forEach(function (r) { if (r.id === id) out = r.title; });
+    return out;
+  }
+
+  Grove.screen('adjustStock', {
+    surface: 'console',
+    crumbs: [{ label: 'Inventory', to: 'inventory' }],
+    crumbTitle: 'Adjust the count',
+    eyebrow: function (ctx) { return 'counting ' + item(ctx).item; },
+    title: 'Adjust the count',
+    sub: function (ctx) {
+      var i = item(ctx);
+      return 'The shelf says there are ' + i.on + '. Put in what is actually in the room and that becomes the ' +
+        'new level. Nothing is bought here — the order is raised from Inventory, and it reads whatever this leaves behind.';
+    },
+    actions: [
+      { label: 'See supply requests', to: 'requests' }
+    ],
+
+    body: function (ctx) {
+      var i = item(ctx);
+      var counted = countedOn(i);
+      var diff = counted - i.on;
+
+      var newShort = Math.max(0, i.min - counted);
+      var newSpare = Math.max(0, counted - i.min);
+      var asked = askedFor(i);
+      var wasQty = orderQty(i);
+      var newQty = Math.max(newShort, asked);
+      var newCost = newQty * unitCost(i);
+
+      var gap = bigGap(i);
+      var needWhy = Math.abs(diff) > gap;
+      var whyPicked = Grove.filter(whyKey(i.id), '');
+      var whyLabel = needWhy ? reasonLabel(whyPicked, diff) : '';
+
+      /* The three numbers, in the order she reads them: what the system
+         thinks, what she counted, and the only one she is really weighing. */
+      var stats = ui.statbar([
+        {
+          label: 'On file',
+          value: String(i.on),
+          sub: 'what the shelf says today'
+        },
+        {
+          label: 'Counted',
+          value: String(counted),
+          sub: diff ? 'what is in the room' : 'nothing stepped yet'
+        },
+        {
+          label: 'Difference',
+          value: signed(diff),
+          tone: diff < 0 ? 'clay' : (diff > 0 ? 'grove' : null),
+          sub: diff
+            ? (diff < 0
+                ? units(-diff) + ' fewer than the shelf says'
+                : units(diff) + ' more than the shelf says')
+            : 'the count matches the shelf'
+        }
+      ]);
+
+      var stepper = ui.btns([
+        { label: '−5', act: STEP, n: String(Math.max(0, counted - 5)) },
+        { label: '−1', act: STEP, n: String(Math.max(0, counted - 1)) },
+        { label: '+1', act: STEP, n: String(counted + 1) },
+        { label: '+5', act: STEP, n: String(counted + 5) }
+      ]);
+
+      /* Two jumps worth a button: back to where she started, and the one
+         number stepping will not reach quickly — an item that has run out. */
+      var quick = [];
+      if (diff) quick.push({ label: 'Back to the ' + i.on + ' on file', kind: 'quiet', size: 'sm', act: STEP, n: String(i.on) });
+      if (counted) quick.push({ label: 'Nothing left on the shelf', kind: 'quiet', size: 'sm', act: STEP, n: '0' });
+
+      var question = ui.card(
+        {
+          title: 'What did you count?',
+          note: 'A count is a correction, not a purchase. It moves the shelf and nothing else.'
+        },
+        ui.field({
+          label: 'What is on the shelf',
+          hint: diff
+            ? 'Counted ' + counted + ' against the ' + i.on + ' on file — ' + signed(diff) + '.'
+            : 'The shelf says ' + i.on + '. Step it to the number in the room.',
+          control: stepper
+        }) +
+        (quick.length ? '<div class="card-split">' + ui.btns(quick) + '</div>' : '')
+      );
+
+      /* The one follow-up, and only when the difference has earned it. */
+      var whyCard = needWhy
+        ? ui.card(
+            {
+              title: diff < 0
+                ? 'Why are ' + units(-diff) + ' missing?'
+                : 'Where did the extra ' + units(diff) + ' come from?',
+              note: 'Anything up to ' + units(gap) + ' — a fifth of this item’s minimum — is a normal miscount and goes ' +
+                'on without a word. This is further out than that, so the next person to count it should know why.'
+            },
+            ui.choices(null, reasonsFor(diff).map(function (r) {
+              return ui.choice({
+                id: r.id,
+                size: 'lg',
+                act: WHY,
+                title: r.title,
+                sub: r.sub,
+                on: r.id === whyPicked
+              });
+            }))
+          )
+        : '';
+
+      var orderLine, orderTone;
+      if (newQty && !wasQty) {
+        orderLine = 'Joins the ' + i.supplier + ' order — ' + units(newQty) + ' · ' + Grove.money(newCost);
+        orderTone = 'clay';
+      } else if (!newQty && wasQty) {
+        orderLine = 'Comes off the order';
+        orderTone = 'grove';
+      } else if (newQty) {
+        orderLine = 'Stays on the ' + i.supplier + ' order — ' + units(newQty) + ' · ' + Grove.money(newCost);
+        orderTone = null;
+      } else {
+        orderLine = 'Stays off the order';
+        orderTone = 'mute';
+      }
+
+      var changes = ui.card(
+        {
+          title: 'Where this leaves the shelf',
+          head: pillFor(newQty),
+          note: 'The minimum is the point at which this item joins the next purchase order, and an order still covers the larger of the shortfall and the units instructors have asked for.'
+        },
+        ui.kv([
+          ['Minimum', String(i.min)],
+          counted < i.min
+            ? { k: 'After this count', v: esc(units(newShort) + ' under the minimum'), tone: 'clay' }
+            : { k: 'After this count', v: esc(units(newSpare) + ' above the minimum') },
+          { k: 'The next order', v: esc(orderLine), tone: orderTone },
+          asked
+            ? ['Asked for by instructors', esc(units(asked) + ' from ' + joinWords(requesters(i)))]
+            : { k: 'Asked for by instructors', v: 'Nothing outstanding', tone: 'mute' },
+          ['Unit cost', esc(i.cost)]
+        ])
+      );
+
+      var saved = ui.card({ title: 'What happens when you save', flush: true }, ui.rows([
+        {
+          title: esc('The shelf reads ' + counted + ' from now on'),
+          sub: esc('Inventory, this item and the studio request screen all read the one number.')
+        },
+        {
+          title: esc(newQty
+            ? (wasQty ? 'It stays on the next order' : 'It joins the next order')
+            : (wasQty ? 'It comes off the next order' : 'It stays off the next order')),
+          sub: esc(newQty
+            ? units(newQty) + ' from ' + i.supplier + ' · ' + Grove.money(newCost)
+            : 'Nothing to order at this level'),
+          end: ui.btn({ label: 'Open inventory', kind: 'quiet', size: 'sm', to: 'inventory' })
+        },
+        {
+          title: 'Nothing is bought by counting',
+          sub: esc('The purchase order is raised from Inventory, and it will read this new level.')
+        }
+      ]));
+
+      var filed = ui.card(
+        {
+          title: 'Filled in for you',
+          note: 'A count is never edited once saved. A second count corrects it, and both lines stay on the item.'
+        },
+        ui.kv([
+          ['Date', esc(D.today)],
+          ['Counted by', esc(Grove.persona('console').name)],
+          ['Replaces', esc(units(i.on) + ' on file')],
+          needWhy
+            ? (whyLabel
+                ? ['Reason', esc(whyLabel)]
+                : { k: 'Reason', v: 'Not given yet', tone: 'clay' })
+            : { k: 'Reason', v: 'Not needed at this size', tone: 'mute' }
+        ])
+      );
+
+      /* The bar says the level it is about to write and whether that level is
+         under the minimum, because that is the part she will be asked about. */
+      var level = 'The shelf becomes ' + counted + ' — ' +
+        (counted < i.min
+          ? units(newShort) + ' under its minimum of ' + i.min
+          : units(newSpare) + ' above its minimum of ' + i.min);
+      var consequence = newQty
+        ? (wasQty ? ', so it stays on the ' + i.supplier + ' order' : ', so it joins the ' + i.supplier + ' order')
+        : (wasQty ? ', which takes it off the order' : ', and it stays off the order');
+
+      var bar = diff
+        ? ui.formActions([
+            {
+              label: 'Set the count to ' + counted,
+              kind: 'primary',
+              msg: i.item + ' counted at ' + counted + ' · ' + signed(diff) + ' against the ' + i.on +
+                ' on file' + (whyLabel ? ' · ' + whyLabel.toLowerCase() : '')
+            },
+            { label: 'Cancel', to: 'inventoryItem', id: i.id }
+          ], {
+            sticky: true,
+            hint: needWhy && !whyLabel
+              ? 'That is ' + units(Math.abs(diff)) + ' out — say why above before you save. ' + level + consequence + '.'
+              : level + consequence + '.'
+          })
+        : ui.formActions([
+            { label: 'Back to ' + i.item, to: 'inventoryItem', id: i.id }
+          ], {
+            sticky: true,
+            hint: 'Nothing has changed yet — step the number above to what you counted.'
+          });
+
+      return h`
+        ${raw(stats)}
+        ${raw(ui.grid(null, needWhy ? [question, whyCard] : [question]))}
+        <div class="section">${raw(ui.grid(2, [ui.col([changes]), ui.col([saved, filed])]))}</div>
+        ${raw(bar)}
+      `;
+    }
+  });
 })();

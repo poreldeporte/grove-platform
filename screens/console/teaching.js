@@ -465,10 +465,10 @@
       var bar = ui.formActions(draft
         ? [
             { label: 'Mark ready to teach', kind: 'primary', msg: 'Marked ready to teach · the draft warning is gone from the Studio portal' },
-            { label: 'Edit plan', msg: 'Prototype — no form yet' }
+            { label: 'Edit plan', to: 'editLessonPlan', id: p.id }
           ]
         : [
-            { label: 'Edit plan', kind: 'primary', msg: 'Prototype — no form yet' },
+            { label: 'Edit plan', kind: 'primary', to: 'editLessonPlan', id: p.id },
             { label: 'Move back to draft', msg: 'Moved back to draft · staff now see a warning not to teach from it' }
           ], {
         sticky: true,
@@ -629,4 +629,88 @@
     Grove.setTab(TAB_KEY, T_TUTS);
     Grove.go('teaching');
   });
+
+  /* ---- editing a plan --------------------------------------------------------
+     The last action in this file that raised a toast instead of opening a
+     screen. A plan is what an instructor reads before a session, so the form
+     asks for what the class makes, what it needs and which tutorial goes with
+     it — and nothing about billing, because a plan carries no price. */
+
+  Grove.screen('editLessonPlan', {
+    surface: 'console',
+    crumbs: [{ label: 'Teaching', to: 'teaching' }],
+    crumbTitle: 'Edit plan',
+    title: function (ctx) { return plan(ctx).lesson; },
+    sub: function (ctx) {
+      var p = plan(ctx);
+      return p.cls + ' \u00b7 ' + p.date + ' \u00b7 ' + p.room +
+        (p.teacher === 'Unassigned' ? ' \u00b7 nobody assigned yet' : ' \u00b7 ' + p.teacher);
+    },
+
+    body: function (ctx) {
+      var p = plan(ctx);
+      var draft = p.status === 'Draft';
+      var classes = D.CLASSES.map(function (c) {
+        return c.name + ' \u00b7 ' + c.day + ' ' + c.time.split('\u2013')[0];
+      });
+      var tutorials = ['None'].concat(D.TUTORIALS.map(function (t) { return t.name; }));
+      var teachers = ['Unassigned'].concat(D.STAFF
+        .filter(function (x) { return x.role === 'Instructor' && x.status !== 'Invitation sent'; })
+        .map(function (x) { return x.name; }));
+
+      var what = ui.card({
+        title: 'The lesson',
+        note: 'This is the wording an instructor reads in the Studio portal, so write it as an instruction.'
+      }, ui.fields(null, [
+        ui.field({ label: 'What the class makes', control: ui.input({ value: p.lesson }) }),
+        ui.field({
+          label: 'How the session runs',
+          hint: 'What to set out, what to demonstrate, and what to do with the work at the end.',
+          control: ui.textarea({ placeholder: 'Set out the boards and the water pots before the doors open\u2026' })
+        })
+      ]));
+
+      var where = ui.card({ title: 'When and who' }, ui.fields(2, [
+        ui.field({ label: 'Class', control: ui.select({ value: p.cls, options: classes }) }),
+        ui.field({ label: 'Date', control: ui.input({ value: p.date }) }),
+        ui.field({ label: 'Room', control: ui.select({ value: p.room, options: rooms() }) }),
+        ui.field({
+          label: 'Instructor',
+          hint: p.teacher === 'Unassigned' ? 'Nobody is assigned, so nobody sees this plan yet.' : '',
+          control: ui.select({ value: p.teacher, options: teachers })
+        })
+      ]));
+
+      var extras = ui.card({
+        title: 'What it needs',
+        note: 'A tutorial is optional. Attaching one puts it beside the plan in the Studio portal.'
+      }, ui.fields(null, [
+        ui.field({
+          label: 'Tutorial',
+          control: ui.select({ value: p.tut === 'None' ? 'None' : p.tut, options: tutorials })
+        }),
+        ui.field({
+          label: 'Materials',
+          hint: 'The studio does not keep a materials list against a plan, so write what this session needs.',
+          control: ui.textarea({ placeholder: 'Air-dry clay, boards, water pots, wire tools\u2026' })
+        })
+      ]));
+
+      return ui.grid('sidebar', [ui.col([what, extras]), where]) +
+        ui.formActions([
+          { label: 'Save the plan', kind: 'primary', msg: 'Saved \u00b7 ' +
+            (p.teacher === 'Unassigned' ? 'nobody is assigned, so nobody sees it yet' : p.teacher + ' sees it in the Studio portal') },
+          { label: 'Cancel', to: 'lessonPlan', id: p.id }
+        ], {
+          sticky: true,
+          hint: draft ? DRAFT_LINE : 'This plan is live \u2014 a change shows in the Studio portal straight away.'
+        });
+    }
+  });
+
+  function rooms() {
+    var out = [];
+    D.CLASSES.forEach(function (c) { if (out.indexOf(c.room) === -1) out.push(c.room); });
+    return out;
+  }
 })();

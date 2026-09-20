@@ -1,4 +1,38 @@
-/* Console → Families: the list, one family's record, one child's record.
+/* Console → Families: the list, one family's record, one child's record, plus
+   Add family and Enroll a child.
+
+   THIS PASS — TWO BUTTONS THAT WERE A TOAST ARE SCREENS
+
+   "Add family" and "Enroll a child" both raised "Prototype — no form yet". A
+   button that raises a toast is a table nobody remembers to build, so both are
+   screens now and between them they name every field the two records need.
+
+     - newFamily asks for the household, the first guardian, an optional second,
+       and how they heard about us — that last list read off the heardVia values
+       the families on the books already carry, ordered by how often it is the
+       answer, and the one that points at another household then asks which. It
+       does not ask for a child: a child needs a programme, a class, hours and a
+       price, and that is the other screen. Three answers the studio already has
+       are stated rather than asked — the day they joined is today, the plan year
+       is D.PLAN_YEAR, and there is no card on file until the first invoice is
+       paid
+     - enrollChild asks for the child, the programme, the class and then the
+       price — and the price question is whatever the programme's PRICING MODEL
+       says it is. That is the answer to the owner's question about why some
+       prices are "an hour" and some are "4 hours a month": she picks how a
+       programme is priced when she builds it, and the enrolment then asks for
+       that and nothing else. A plan asks for a tier in hours a month, a camp for
+       nothing beyond the week it already holds, a private for the hours its own
+       class record runs, a pop-up for the event on it, and a party for nothing
+       at all because a party is quoted by hand. Classes are filtered to the
+       child's age band, places left are counted off the roster, and a full class
+       is never refused — it says it is full and offers the waitlist, which
+       charges nothing
+
+   A child's record no longer dead-ends either: "Not enrolled" now carries the
+   button that fixes it, opened on that child.
+
+   Console → Families: the list, one family's record, one child's record.
 
    Written for Sabrina, who owns the studio. She is at a desk with a real
    keyboard and she reads a table faster than she reads a card, so the list
@@ -546,7 +580,7 @@
     },
     actions: [
       { label: 'Export', msg: 'Exported to CSV' },
-      { label: 'Add family', kind: 'primary', msg: 'Prototype — no form yet' }
+      { label: 'Add family', kind: 'primary', to: 'newFamily' }
     ],
 
     body: function () {
@@ -723,7 +757,7 @@
         kind: inv.kind === 'bad' ? 'bad' : 'warn',
         title: inv.status + ' · ' + money(inv.amt) + ' owing',
         text: inv.id + ' · due ' + dueLine(inv.due) + ' · ' + inv.note,
-        action: { label: 'Record a payment', msg: 'Payment recorded · receipt emailed to ' + f.email }
+        action: { label: 'Record a payment', to: 'recordPayment', id: f.id }
       });
     }
 
@@ -732,7 +766,7 @@
         kind: 'bad',
         title: money(f.balance) + ' owing',
         text: 'No open invoice covers it. Raise one in billing.',
-        action: { label: 'Record a payment', msg: 'Payment recorded · receipt emailed to ' + f.email }
+        action: { label: 'Record a payment', to: 'recordPayment', id: f.id }
       });
     }
 
@@ -952,7 +986,7 @@
       var children = ui.card({
         title: 'Children',
         flush: true,
-        head: ui.btn({ label: 'Enroll a child', kind: 'quiet', size: 'sm', msg: 'Prototype — no form yet' }),
+        head: ui.btn({ label: 'Enroll a child', kind: 'quiet', size: 'sm', to: 'enrollChild', id: f.id }),
         foot: h`<span class="mute">Next invoice</span><span class="strong">${nextInvoiceFoot(f)}</span>`,
         note: 'A plan belongs to the child it was bought for, so each child holds their own hours and is invoiced on their own last class of the cycle.'
       }, kids.length
@@ -1122,6 +1156,16 @@
             ? ui.pill('Waitlist · ' + ord(wait.pos) + ' of ' + waitlistDepth(wait), 'warn')
             : ui.pill('Not enrolled', 'warn'));
 
+      /* A child with no place was a dead end: the pill said "Not enrolled" and
+         nothing on the page did anything about it. The way out is the enrolment
+         screen, opened on this child. */
+      if (!placed) {
+        state = h`<span class="inline">${raw(state)}${raw(ui.btn({
+          label: 'Enroll ' + firstName(s.name), kind: 'quiet', size: 'sm',
+          to: 'enrollChild', id: s.id
+        }))}</span>`;
+      }
+
       /* One row per place the child holds, with the teacher who has them and the
          ages the class takes, because a child can be in an after-school hour, a
          camp week and a party at once. */
@@ -1143,7 +1187,8 @@
                 ord(wait.pos) + ' of ' + waitlistDepth(wait) + ' in line, on the list since ' +
                 wait.joined + '. The place is not held.')
             : ui.empty('Not in a class',
-                'On the books with nothing booked. Enroll from the family record.')));
+                'On the books with nothing booked. Enroll them above and pick the programme, ' +
+                'the class and what it costs.')));
 
       var safety = ui.card({
         title: 'Safety',
@@ -1254,5 +1299,818 @@
     var s = stu({ params: Grove.state.params });
     var f = famByName(s.family);
     Grove.go('familyRecord', { id: f.id });
+  });
+
+  /* ==========================================================================
+     TWO SCREENS THAT USED TO BE A TOAST
+
+     "Add family" and "Enroll a child" both raised "Prototype — no form yet".
+     A button that raises a toast is a table nobody remembers to build, so both
+     are screens now, and between them they name every field the two records
+     need. Neither invents a figure: the fee, the relief, the plans, the week,
+     the hour and the event price are all PRICING's, and which of those a screen
+     asks for at all is the programme's pricing model.
+     ========================================================================== */
+
+  /* ---- add a family ---------------------------------------------------------
+     The household, the people we ring and how they found us. No child is asked
+     for: a child needs a programme, a class and a price, and that is the next
+     screen. Three answers the studio already has are stated rather than asked —
+     the day they joined is today, the plan year is D.PLAN_YEAR, and there is no
+     card on file until the first invoice is paid. */
+
+  /* The one vocabulary on these two screens the dataset does not carry. */
+  var RELATIONSHIPS = ['Mother', 'Father', 'Grandparent', 'Guardian', 'Someone else'];
+
+  Grove.on('nfSecond', function (d) { Grove.setFilter('nfSecond', d.id); });
+  Grove.on('nfHeard', function (d) { Grove.setFilter('nfHeard', d.id); });
+
+  function heardCount(label) {
+    return D.FAMILIES.filter(function (f) { return f.heardVia === label; }).length;
+  }
+
+  /* The list the studio actually uses, read off the families already on the
+     books and ordered by how often it is the answer. */
+  function heardOptions() {
+    var seen = {}, out = [];
+    D.FAMILIES.forEach(function (f) {
+      if (!f.heardVia || seen[f.heardVia]) return;
+      seen[f.heardVia] = true;
+      out.push(f.heardVia);
+    });
+    return out.sort(function (a, b) { return heardCount(b) - heardCount(a); });
+  }
+
+  /* One of those answers points at another household, so it asks which. */
+  function heardSibling() {
+    return heardOptions().filter(function (x) { return x.indexOf('Sibling') === 0; })[0] || '';
+  }
+
+  /* "Tuesday, 28 July 2026" → "28 July 2026". */
+  function todayDate() {
+    var bits = String(D.today).split(', ');
+    return bits[bits.length - 1];
+  }
+
+  Grove.screen('newFamily', {
+    surface: 'console',
+    crumbs: [{ label: 'Families', to: 'families' }],
+    crumbTitle: 'Add family',
+    eyebrow: 'a new household',
+    title: 'Add family',
+    sub: 'The household and the people we ring. Children are added once the family exists, and ' +
+         'the programme, the class, the hours and the price are chosen when a child is enrolled.',
+
+    body: function () {
+      var second = Grove.filter('nfSecond', '');
+      var heard = Grove.filter('nfHeard', '');
+      var sibling = heardSibling();
+
+      var household = ui.card({
+        title: 'The household',
+        note: 'The family is the billing unit: one balance, one card and one statement, however ' +
+              'many children are on it.'
+      }, ui.fields(2, [
+        ui.field({
+          label: 'Family name',
+          hint: 'What the studio calls them — the Delgado family.',
+          control: ui.input({ placeholder: 'Surname' })
+        }),
+        ui.field({
+          label: 'With us since',
+          hint: 'Today. Change it only if they started earlier.',
+          control: ui.input({ value: todayDate() })
+        })
+      ]));
+
+      var guardian = ui.card({
+        title: 'The first guardian',
+        note: 'This is the name on the invoice, the login to the family portal and the address ' +
+              'every receipt and reminder goes to.'
+      }, ui.fields(2, [
+        ui.field({
+          label: 'Their name',
+          control: ui.input({ placeholder: 'First and last name' })
+        }),
+        ui.field({
+          label: 'Relationship to the children',
+          control: ui.select({ options: RELATIONSHIPS, value: RELATIONSHIPS[0] })
+        }),
+        ui.field({
+          label: 'Email',
+          hint: 'Where the payment link and every receipt is sent.',
+          control: ui.input({ type: 'email', placeholder: 'name@email.com' })
+        }),
+        ui.field({
+          label: 'Phone',
+          hint: 'The number staff ring first if something happens in class.',
+          control: ui.input({ type: 'tel', placeholder: '(000) 000-0000' })
+        })
+      ]));
+
+      /* The second guardian is a yes or no before it is four more boxes. */
+      var secondCard = ui.card({
+        title: 'Is there a second guardian?',
+        note: 'A second guardian gets their own login and sees the same children. The balance, ' +
+              'the card and the statement stay on the family.'
+      }, ui.choices(null, [
+        ui.choice({
+          id: 'one', size: 'lg', act: 'nfSecond',
+          title: 'No, one guardian for now',
+          sub: 'You can add another at any time',
+          on: second === 'one'
+        }),
+        ui.choice({
+          id: 'two', size: 'lg', act: 'nfSecond',
+          title: 'Yes, add a second',
+          sub: 'A second name, email and number',
+          on: second === 'two'
+        })
+      ]) + (second === 'two'
+        ? h`<div class="card-split">${raw(ui.fields(2, [
+            ui.field({
+              label: 'Their name',
+              control: ui.input({ placeholder: 'First and last name' })
+            }),
+            ui.field({
+              label: 'Relationship to the children',
+              control: ui.select({ options: RELATIONSHIPS, value: RELATIONSHIPS[1] })
+            }),
+            ui.field({
+              label: 'Email',
+              hint: 'Their own login. Both guardians see the same children.',
+              control: ui.input({ type: 'email', placeholder: 'name@email.com' })
+            }),
+            ui.field({
+              label: 'Phone',
+              control: ui.input({ type: 'tel', placeholder: '(000) 000-0000' })
+            })
+          ]))}</div>`
+        : ''));
+
+      var heardCard = ui.card({
+        title: 'How did they hear about the studio?',
+        note: 'The only reason it is asked: it is the one number that says which flyer, which ' +
+              'post and which family is worth the next one.'
+      }, ui.choices(3, heardOptions().map(function (label) {
+        return ui.choice({
+          id: label, act: 'nfHeard',
+          title: label,
+          sub: heardCount(label) + ' families came this way',
+          on: heard === label
+        });
+      })) + (sibling && heard === sibling
+        ? h`<div class="card-split">${raw(ui.field({
+            label: 'Which family sent them?',
+            hint: 'It joins the two households, so the referral shows on both records.',
+            control: ui.select({
+              options: D.FAMILIES.map(function (f) { return f.name + ' family'; })
+            })
+          }))}</div>`
+        : ''));
+
+      var after = ui.card({
+        title: 'What happens when you save',
+        flush: true
+      }, ui.rows([
+        {
+          title: 'The family appears on Families straight away',
+          sub: 'With no child and no plan, so no invoice is raised and nothing is charged.'
+        },
+        {
+          title: 'Children are added once the family exists',
+          sub: 'Add each child, then enroll them. That is where the programme, the class, the ' +
+               'hours and the price are chosen.'
+        },
+        {
+          title: 'The registration fee is charged with the first enrolment',
+          sub: esc(regFeeLine() + '. ' + siblingRelief() + '.'),
+          end: ui.pill(money0(D.PRICING.as.regFee))
+        },
+        {
+          title: 'No card is held yet',
+          sub: 'The first invoice is emailed as a secure payment link, and the card they pay ' +
+               'with becomes the card on file.'
+        }
+      ]));
+
+      var base = D.POLICY_BASE;
+      var welcome = ui.card({
+        title: 'What the family gets',
+        flush: true
+      }, ui.rows([
+        {
+          title: 'A login to the family portal',
+          sub: 'Their children, the schedule, the invoices and a way to message the studio.'
+        },
+        {
+          title: esc('A registration form of ' + base.length + ' clauses to sign'),
+          sub: esc('Starting with ' + listOf(base.slice(0, 3).map(lowerFirst)) + '. A programme ' +
+            'adds or drops its own when a child is enrolled.'),
+          end: ui.btn({ label: 'Read the clauses', kind: 'quiet', size: 'sm', to: 'settings' })
+        },
+        {
+          title: esc('A plan year that ends ' + D.PLAN_YEAR.ends),
+          sub: esc(D.PLAN_YEAR.note)
+        }
+      ]));
+
+      /* Each question waits on the one above it, so the hint names whichever is
+         still open rather than letting the form be saved half answered. */
+      var missing = !second
+        ? 'whether there is a second guardian'
+        : (!heard ? 'how they heard about the studio' : '');
+
+      return h`
+        ${raw(ui.grid(null, [household, guardian, secondCard, heardCard]))}
+        <div class="section">${raw(ui.grid(2, [after, welcome]))}</div>
+        ${raw(ui.formActions([
+          {
+            label: 'Save the family',
+            kind: 'primary',
+            msg: 'Saved — the family is on the books. Add their children next.'
+          },
+          { label: 'Cancel', to: 'families' }
+        ], {
+          sticky: true,
+          hint: missing
+            ? 'Answer ' + missing + ' above, then save'
+            : 'Nothing is charged by saving — the registration fee lands with the first enrolment'
+        }))}
+      `;
+    }
+  });
+
+  /* ---- enroll a child --------------------------------------------------------
+     The child, the programme, the class, then what it costs — and what it costs
+     is asked in whatever terms the programme is priced in. That is the answer to
+     the question the owner asked about price fields: she picks HOW a programme
+     is priced when she builds it, and the enrolment then asks for that and only
+     that. A class priced by the hour is never asked for a week. */
+
+  Grove.on('enKid', function (d) { Grove.setFilter('enKid', d.id); });
+  Grove.on('enProg', function (d) { Grove.setFilter('enProg', d.id); });
+  Grove.on('enClass', function (d) { Grove.setFilter('enClass', d.id); });
+  Grove.on('enTier', function (d) { Grove.setFilter('enTier', d.id); });
+
+  function classesFor(prog) {
+    return D.CLASSES.filter(function (c) { return c.prog === prog; });
+  }
+
+  /* Places left are counted off the roster, never written down, so this screen
+     cannot offer a place the register does not have. */
+  function placesLeft(c) {
+    var n = c.cap - D.roster(c.id).length;
+    return n > 0 ? n : 0;
+  }
+  function placeLabel(c) {
+    var n = placesLeft(c);
+    return n ? placeWord(n) + ' left' : 'Full · waitlist';
+  }
+
+  /* "5–7" and "8–11" are ranges, "8+" is a floor, "All" and "—" take anybody. */
+  function bandRange(band) {
+    var b = String(band);
+    if (b === 'All' || b === '—') return { lo: 0, hi: 99 };
+    if (b.charAt(b.length - 1) === '+') return { lo: Number(b.slice(0, -1)), hi: 99 };
+    var p = b.split('–');
+    return { lo: Number(p[0]), hi: Number(p[1] || p[0]) };
+  }
+  function fitsAge(c, s) {
+    var r = bandRange(c.band);
+    return s.age >= r.lo && s.age <= r.hi;
+  }
+
+  /* The classes in a programme this child could actually take: their age band,
+     and not one they already hold. */
+  function openTo(s, prog) {
+    var held = D.classesOf(s);
+    return classesFor(prog).filter(function (c) {
+      if (!fitsAge(c, s)) return false;
+      for (var i = 0; i < held.length; i++) if (held[i].id === c.id) return false;
+      return true;
+    });
+  }
+
+  /* How long a class runs, read off the time on its own record. Written for the
+     afternoon classes it is used on — after-school hours and privates — where a
+     bare hour before noon is a pm hour. Camp, no-school days and pop-ups are
+     priced by the week, the day or the event and never ask. */
+  function hourAt(t) {
+    var mm = /(\d+):(\d+)/.exec(String(t));
+    if (!mm) return 0;
+    var hr = Number(mm[1]), min = Number(mm[2]);
+    if (hr < 12) hr += 12;
+    return hr + min / 60;
+  }
+  function classHours(c) {
+    var p = String(c.time).split('–');
+    var n = hourAt(p[1]) - hourAt(p[0]);
+    return n > 0 ? n : 1;
+  }
+
+  /* ---- the tiers of a plan --------------------------------------------------- */
+
+  function planTiers() { return Object.keys(D.PRICING.as.plans); }
+  function planHoursOf(key) { return Number(String(key).slice(1)); }
+  function lowestPlan() {
+    var plans = D.PRICING.as.plans, lo = null;
+    planTiers().forEach(function (k) { if (lo === null || plans[k] < lo) lo = plans[k]; });
+    return lo;
+  }
+  /* The rate falls as the plan grows, so it is divided out rather than held. */
+  function rateWords(price, hours) {
+    var r = price / hours;
+    return money(r, { cents: r !== Math.round(r) });
+  }
+
+  /* ---- what a programme costs, in its own terms ------------------------------- */
+
+  /* The headline figure for a programme, in whatever unit it is priced in. */
+  function headlinePrice(id) {
+    var p = D.PRICING[id] || {};
+    var model = D.pricingModel(id).id;
+    if (model === 'plan') return 'from ' + money0(lowestPlan()) + ' a month';
+    if (model === 'perWeek') return money0(p.week) + ' a week';
+    if (model === 'perHour') return p.hourly ? money0(p.hourly) + ' an hour' : money0(p.base) + ' a day';
+    if (model === 'perEvent') return money0(p.events[0].amount) + ' a child';
+    return 'Quoted';
+  }
+
+  /* A pop-up class carries its event's name, which is how the two are joined. */
+  function eventFor(c) {
+    return (D.PRICING.pop.events || []).filter(function (e) {
+      return String(c.name).indexOf(e.label) !== -1;
+    })[0];
+  }
+
+  function kvRow(k, v, tone) { return { k: k, v: esc(v), tone: tone || null }; }
+
+  /* A child who already holds a place has paid this year's registration fee. */
+  function alreadyRegistered(s) {
+    return D.classesOf(s).length > 0 || planOf(s).isPlan;
+  }
+  function regFeeOf(prog) { return (D.PRICING[prog] || {}).regFee || 0; }
+
+  /* Relief is read against the second and third child on the family, in roster
+     order — the same order the record's "Applies to" row names. */
+  function siblingIndex(f, s) {
+    var kids = kidsOf(f.name);
+    for (var i = 0; i < kids.length; i++) if (kids[i].id === s.id) return i;
+    return 0;
+  }
+
+  /* The whole charge, itemised. The tuition lines are whatever the programme's
+     pricing model has: a tier, a week, an hour, an event, or nothing at all. */
+  function chargeOf(f, s, prog, c, tier) {
+    var p = D.PRICING[prog] || {};
+    var model = D.pricingModel(prog).id;
+    var rows = [], tuition = null, cur, next, hrs, ev;
+
+    if (model === 'plan') {
+      cur = planOf(s);
+      next = p.plans[tier];
+      tuition = next - (cur.isPlan ? cur.price : 0);
+      rows.push(kvRow('Plan', hoursWord(planHoursOf(tier)) + ' a month · ' + money0(next)));
+      rows.push(kvRow('Rate', rateWords(next, planHoursOf(tier)) + ' an hour'));
+      rows.push(kvRow('This class spends', hoursWord(classHours(c)) + ' each time it runs'));
+      if (cur.isPlan) {
+        rows.push(kvRow('Already holds', hoursWord(cur.hours) + ' a month · ' + money0(cur.price), 'mute'));
+        rows.push(tuition === 0
+          ? kvRow('Tuition', 'No change — the hours come out of the plan already held', 'mute')
+          : kvRow(tuition > 0 ? 'More tuition a month' : 'Less tuition a month', money(Math.abs(tuition))));
+      } else {
+        rows.push(kvRow('Tuition a month', money(next)));
+      }
+
+    } else if (model === 'perWeek') {
+      tuition = p.week;
+      rows.push(kvRow('Camp week', money(p.week)));
+      rows.push(kvRow('If they come for part of it', money0(p.day) + ' a day', 'mute'));
+      rows.push(kvRow('Extra hour', money0(p.extraHour) + ' an hour, per day', 'mute'));
+
+    } else if (model === 'perHour' && p.hourly) {
+      hrs = classHours(c);
+      tuition = p.hourly * hrs;
+      rows.push(kvRow(hoursWord(hrs) + ' at ' + money0(p.hourly) + ' an hour', money(tuition)));
+      rows.push(kvRow('Longest booking', hoursWord(p.maxHours), 'mute'));
+
+    } else if (model === 'perHour') {
+      tuition = p.base;
+      rows.push(kvRow('Day rate', money(p.base)));
+      rows.push(kvRow('Each hour beyond it', money0(p.extraHour), 'mute'));
+      rows.push(kvRow('Longest day', hoursWord(p.maxHours), 'mute'));
+
+    } else if (model === 'perEvent') {
+      ev = eventFor(c);
+      tuition = ev ? ev.amount : null;
+      rows.push(ev
+        ? kvRow('Ticket', ev.label + ' · ' + money(ev.amount))
+        : kvRow('Ticket', 'Priced on the programme', 'mute'));
+
+    } else {
+      rows.push(kvRow('Price fields', D.PRICING_MODELS.quoted.asks, 'mute'));
+      rows.push(kvRow('What we send', 'A written quote, by email', 'mute'));
+    }
+
+    /* The fee, its relief, and the one case where neither is owed. */
+    var fee = 0, relief = 0, idx = siblingIndex(f, s);
+    if (alreadyRegistered(s)) {
+      rows.push(kvRow('Registration fee', 'Already paid this program year', 'mute'));
+    } else {
+      fee = regFeeOf(prog);
+      relief = (prog === 'as' && idx > 0 && idx < 3) ? fee * D.PRICING.as.siblingFeeRelief : 0;
+      rows.push(kvRow('Registration fee', money(fee)));
+      if (relief) {
+        rows.push(kvRow('Sibling relief', '−' + money(relief), 'grove'));
+        rows.push(kvRow('Because', firstName(s.name) + ' is the ' + ord(idx + 1) + ' child registered', 'mute'));
+      }
+    }
+
+    var total = tuition === null ? null : tuition + fee - relief;
+    return { rows: rows, tuition: tuition, fee: fee - relief, total: total, model: model };
+  }
+
+  /* ---- reading the screen's own state ------------------------------------------
+     The screen opens on a family, from its record, or on one child, from theirs.
+     Everything below it is validated against what that child can actually take,
+     so switching child cannot leave a class from the other one selected. */
+
+  function enrollFamily(ctx) {
+    var f = D.family(ctx.params.id);
+    if (f) return f;
+    var s = D.student(ctx.params.id);
+    return s ? famByName(s.family) : fam(ctx);
+  }
+
+  function enrollKid(ctx) {
+    var f = enrollFamily(ctx);
+    var kids = kidsOf(f.name);
+    if (!kids.length) return null;
+    var given = D.student(ctx.params.id);
+    if (given && given.family === f.name) return given;
+    if (kids.length === 1) return kids[0];
+    var picked = Grove.filter('enKid', '');
+    return kids.filter(function (k) { return k.id === picked; })[0] || null;
+  }
+
+  function enrollProg() {
+    var id = Grove.filter('enProg', '');
+    return D.PROGRAMS[id] ? id : '';
+  }
+
+  function enrollClass(s, prog) {
+    var id = Grove.filter('enClass', '');
+    return openTo(s, prog).filter(function (c) { return c.id === id; })[0] || null;
+  }
+
+  /* A child already on a plan has an answer to this one, so it starts on theirs. */
+  function enrollTier(s) {
+    var picked = Grove.filter('enTier', '');
+    if (planTiers().indexOf(picked) !== -1) return picked;
+    var cur = planOf(s);
+    return cur.isPlan ? 'p' + cur.hours : '';
+  }
+
+  /* ---- the cards ---------------------------------------------------------------- */
+
+  /* How many classes in a programme have a place for this child, said in the
+     same breath as how that programme is priced. */
+  function progSub(s, id) {
+    var open = openTo(s, id).filter(function (c) { return placesLeft(c) > 0; }).length;
+    return D.pricingModel(id).name + ' · ' +
+      (open ? open + (open === 1 ? ' class with a place' : ' classes with a place')
+            : 'nothing with a place right now');
+  }
+
+  /* Written out of the programmes themselves, so the line cannot drift from what
+     the price table actually asks for. */
+  function pricingNote() {
+    return Object.keys(D.PROGRAMS).map(function (id) {
+      return D.PROGRAMS[id].short + ' — ' + lowerFirst(D.pricingModel(id).name);
+    }).join(' · ');
+  }
+
+  /* Where a full class would put them. A child already queueing for that class
+     keeps the place they have rather than being counted in twice. */
+  function waitPos(c, s, f) {
+    var mine = waitlistEntry(s.name);
+    if (mine && String(mine.cls).indexOf(classKey(c)) === 0) {
+      return { pos: mine.pos, already: true };
+    }
+    return { pos: waitingOn(c, f.name).length + 1, already: false };
+  }
+
+  function afterRows(f, s, prog, c, full, charge, wait) {
+    var rows = [];
+    var clauses = Grove.policiesFor(prog);
+
+    if (full && wait.already) {
+      rows.push({
+        title: esc(firstName(s.name) + ' is already ' + ord(wait.pos) + ' in line for ' +
+          classShort(c)),
+        sub: 'Nothing changes and nothing is charged. The place is offered the moment one ' +
+             'comes free.'
+      });
+    } else if (full) {
+      rows.push({
+        title: esc(firstName(s.name) + ' joins the waitlist for ' + classShort(c)),
+        sub: esc(ord(wait.pos) + ' in line. The place is not held, and nothing is charged ' +
+          'until one is offered.')
+      });
+    } else {
+      rows.push({
+        title: 'The place comes off the roll',
+        sub: esc(classShort(c) + ' goes to ' + (D.roster(c.id).length + 1) + ' of ' + c.cap +
+          ', leaving ' + placeWord(placesLeft(c) - 1) + '.'),
+        end: ui.btn({ label: 'Open the class', kind: 'quiet', size: 'sm', to: 'classRecord', id: c.id })
+      });
+    }
+
+    rows.push(clauses.length
+      ? {
+          title: esc(clauses.length + ' clauses to sign'),
+          sub: esc(listOf(clauses.slice(0, 3)) +
+            (clauses.length > 3 ? ', and ' + (clauses.length - 3) + ' more' : '') +
+            ' — the ' + D.PROGRAMS[prog].name + ' form.')
+        }
+      : {
+          title: 'Nothing to sign',
+          sub: esc(D.PROGRAMS[prog].name + ' carries no clauses, so there is no form to send.')
+        });
+
+    if (full) {
+      rows.push({
+        title: 'Nothing is charged today',
+        sub: esc(charge.total === null
+          ? 'If a place is offered we send a written quote to ' + f.email + '.'
+          : 'If a place is offered, ' + money(charge.total) +
+            ' is emailed as a secure payment link to ' + f.email + '.')
+      });
+    } else if (charge.total === null) {
+      rows.push({
+        title: 'A written quote, not an invoice',
+        sub: esc('We price a party by hand and email the quote to ' + f.email + '.')
+      });
+    } else {
+      rows.push({
+        title: esc(money(charge.total) + ' invoiced'),
+        sub: esc(f.autopay
+          ? 'Charged to the card on file — ' + String(f.card).split(' · ')[0] + '.'
+          : 'Emailed to ' + f.email + ' as a secure payment link. The card they pay with ' +
+            'becomes the card on file.'),
+        end: ui.pill(money(charge.total))
+      });
+    }
+
+    if (charge.model === 'plan') {
+      rows.push({
+        title: esc('The plan runs to ' + D.PLAN_YEAR.ends),
+        sub: esc(D.PLAN_YEAR.note + ' ' + D.RULES.unusedHours)
+      });
+    }
+
+    return rows;
+  }
+
+  Grove.screen('enrollChild', {
+    surface: 'console',
+    crumbs: [{ label: 'Families', to: 'families' }],
+    crumbTitle: 'Enroll a child',
+    eyebrow: 'a place on the register',
+    title: 'Enroll a child',
+    sub: 'The child, the programme, then the class. What the price asks for follows the ' +
+         'programme: a plan in hours a month for After-School, a one-off price for everything else.',
+    actions: function (ctx) {
+      var f = enrollFamily(ctx);
+      return [{ label: 'Open the family', to: 'familyRecord', id: f.id }];
+    },
+
+    body: function (ctx) {
+      var f = enrollFamily(ctx);
+      var kids = kidsOf(f.name);
+
+      if (!kids.length) {
+        return ui.card({ title: 'The ' + f.name + ' family' },
+          ui.empty('No child on the register',
+            'The family has an account but nobody on the books. Add the child first, then ' +
+            'come back and enroll them.')) +
+          ui.formActions([
+            { label: 'Open the family', kind: 'primary', to: 'familyRecord', id: f.id }
+          ], { sticky: true, hint: 'There is nothing to enroll until a child is on the family' });
+      }
+
+      var s = enrollKid(ctx);
+      var prog = s ? enrollProg() : '';
+      var c = prog ? enrollClass(s, prog) : null;
+      var model = prog ? D.pricingModel(prog).id : '';
+      var tier = (c && model === 'plan') ? enrollTier(s) : '';
+      var full = !!c && placesLeft(c) === 0;
+      var wait = full ? waitPos(c, s, f) : null;
+      var cards = [];
+
+      /* One child on the family, or a record that named one: the studio already
+         knows the answer, so it is stated rather than asked. */
+      if (kids.length === 1 || (s && s.id === ctx.params.id)) {
+        cards.push(ui.card({
+          title: 'The child',
+          flush: true,
+          head: ui.pill(kids.length === 1 ? 'The only child on this family' : 'From their record')
+        }, ui.rows([childRow(s)])));
+      } else {
+        cards.push(ui.card({
+          title: 'Which child?',
+          note: 'A plan belongs to the child it was bought for, so each child is enrolled and ' +
+                'invoiced on their own.'
+        }, ui.choices(2, kids.map(function (k) {
+          var kp = planOf(k);
+          return ui.choice({
+            id: k.id, act: 'enKid',
+            title: k.name,
+            sub: 'Age ' + k.age + ' · ' + whereLine(k),
+            price: kp.isPlan ? hoursWord(kp.hours) + ' a month' : '',
+            on: !!(s && s.id === k.id)
+          });
+        }))));
+      }
+
+      if (s) {
+        cards.push(ui.card({
+          title: 'Which programme?',
+          head: ui.btn({ label: 'Open Programs', kind: 'quiet', size: 'sm', to: 'programs' }),
+          note: 'How a programme is priced is set on the programme itself, and that is what ' +
+                'decides the price fields below. ' + pricingNote() + '.'
+        }, ui.choices(3, Object.keys(D.PROGRAMS).map(function (id) {
+          return ui.choice({
+            id: id, act: 'enProg',
+            title: D.PROGRAMS[id].name,
+            sub: progSub(s, id),
+            price: headlinePrice(id),
+            on: prog === id
+          });
+        }))));
+      }
+
+      if (s && prog) {
+        var open = openTo(s, prog);
+        var held = D.classesOf(s).filter(function (x) { return x.prog === prog; }).length;
+        cards.push(ui.card({
+          title: 'Which class?',
+          head: open.length
+            ? ui.pill('Age ' + s.age + ' · ages ' + s.band)
+            : h`<span class="inline">${raw(ui.pill('Age ' + s.age + ' · ages ' + s.band))}${raw(
+                ui.btn({ label: 'Open Classes', kind: 'quiet', size: 'sm', to: 'classes' })
+              )}</span>`,
+          note: 'Only classes that take a child of ' + s.age + ' are listed' +
+            (held ? ', and the ' + (held === 1 ? 'one' : held) + ' ' +
+              firstName(s.name) + ' already holds ' + (held === 1 ? 'is' : 'are') + ' not.' : '.') +
+            (open.length
+              ? ' Places left are counted off the roster. A full class is not refused — it ' +
+                'offers the waitlist instead.'
+              : '')
+        }, open.length
+          ? ui.choices(2, open.map(function (x) {
+              return ui.choice({
+                id: x.id, act: 'enClass',
+                title: classShort(x),
+                sub: classSub(x) + ' · ' + D.roster(x.id).length + ' of ' + x.cap + ' on the roll',
+                price: placeLabel(x),
+                on: !!(c && c.id === x.id)
+              });
+            }))
+          : ui.empty('Nothing on the books for ' + firstName(s.name),
+              'No ' + D.PROGRAMS[prog].short + ' class takes a child of ' + s.age +
+              ' that they do not already hold. Create one in Classes and come back.')));
+      }
+
+      /* The plan question, and only for a programme that is priced as a plan. */
+      if (c && model === 'plan') {
+        var cur = planOf(s);
+        cards.push(ui.card({
+          title: 'How many hours a month?',
+          head: ui.pill(D.PRICING_MODELS.plan.name),
+          note: cur.isPlan
+            ? firstName(s.name) + ' holds ' + hoursWord(cur.hours) + ' a month already. This ' +
+              'class spends ' + hoursWord(classHours(c)) + ' each time it runs, out of those ' +
+              'hours — raise the tier only if they no longer cover it.'
+            : 'A plan is hours a month, not classes: this one spends ' + hoursWord(classHours(c)) +
+              ' each time it runs. The rate per hour falls as the plan grows.'
+        }, ui.choices(2, planTiers().map(function (k) {
+          var amt = D.PRICING.as.plans[k];
+          return ui.choice({
+            id: k, act: 'enTier',
+            title: hoursWord(planHoursOf(k)) + ' a month',
+            sub: rateWords(amt, planHoursOf(k)) + ' an hour' +
+              (cur.isPlan && planHoursOf(k) === cur.hours ? ' · what they hold now' : ''),
+            price: money0(amt),
+            on: tier === k
+          });
+        }))));
+      }
+
+      /* The money, once there is enough to price. */
+      var ready = !!(c && (model !== 'plan' || tier));
+      var charge = ready ? chargeOf(f, s, prog, c, tier) : null;
+
+      if (ready) {
+        /* The fee rule is stated on every enrolment, and the sentence names the
+           programme's own fee before the plan's — a camp week is not charged
+           After-School's $130, and a child who registered earlier in the year
+           is not charged it twice. */
+        var fee = regFeeOf(prog);
+        var feeNote = prog === 'as'
+          ? 'The registration fee is ' + regFeeLine() + ', so a child who registered earlier ' +
+            'in the year pays it once. ' + siblingRelief() + '.'
+          : (fee
+              ? D.PROGRAMS[prog].name + ' carries its own ' + money0(fee) + ' registration fee, ' +
+                (alreadyRegistered(s)
+                  ? 'and ' + firstName(s.name) + ' has already paid it this year.'
+                  : 'charged with this booking.')
+              : D.PROGRAMS[prog].name + ' carries no registration fee.') +
+            ' Only a plan carries the ' + D.PROGRAMS.as.name + ' fee of ' + regFeeLine() +
+            ', and the second and third child get ' + (D.PRICING.as.siblingFeeRelief * 100) +
+            '% off it.';
+
+        var rows = charge.rows.concat([
+          kvRow(full ? 'If a place is offered' : 'Total',
+            charge.total === null ? 'Quoted by hand' : money(charge.total),
+            charge.total === null ? 'mute' : null)
+        ]);
+        if (full) rows.push(kvRow('Due today', money(0), 'mute'));
+
+        cards.push('SPLIT');
+        cards.push(ui.card({
+          title: full
+            ? 'What it would cost'
+            : (charge.total === null ? 'How this is priced' : 'What will be charged'),
+          head: full ? ui.pill('Full · waitlist', 'warn') : ui.pill(D.pricingModel(prog).name),
+          note: feeNote
+        }, ui.kv(rows)));
+        cards.push(ui.card({
+          title: 'What happens when you save',
+          flush: true
+        }, ui.rows(afterRows(f, s, prog, c, full, charge, wait))));
+      }
+
+      /* The bar names whichever question is still open, and once they are all
+         answered it says what saving does. */
+      var next = !s ? 'the child'
+        : (!prog ? 'the programme'
+        : (!c ? 'the class'
+        : (model === 'plan' && !tier ? 'how many hours a month' : '')));
+
+      var label = !s ? 'Enroll the child'
+        : (full
+            ? (wait.already ? 'Already on the waitlist' : 'Add ' + firstName(s.name) + ' to the waitlist')
+            : 'Enroll ' + firstName(s.name));
+
+      var msg;
+      if (!ready) {
+        msg = 'Pick ' + next + ' first';
+      } else if (full && wait.already) {
+        msg = 'No change · ' + firstName(s.name) + ' is already ' + ord(wait.pos) +
+          ' in line for ' + classShort(c);
+      } else if (full) {
+        msg = 'On the waitlist · ' + firstName(s.name) + ' is ' + ord(wait.pos) +
+          ' in line for ' + classShort(c) + ' · nothing charged';
+      } else if (charge.total === null) {
+        msg = 'Booking saved · a written quote goes to ' + f.email;
+      } else {
+        msg = 'Enrolled · ' + firstName(s.name) + ' is on ' + classShort(c) + ' · ' +
+          money(charge.total) + ' invoiced to ' + f.email;
+      }
+
+      var hint;
+      if (!ready) {
+        hint = 'Pick ' + next + ' above, then enroll';
+      } else if (full && wait.already) {
+        hint = firstName(s.name) + ' is already on this list, so there is nothing to add';
+      } else if (full) {
+        hint = 'Nothing is charged while they wait — we ring the moment a place comes free';
+      } else if (charge.total === null) {
+        hint = 'A party is priced by hand, so saving sends a written quote and charges nothing';
+      } else {
+        hint = money(charge.total) + (f.autopay
+          ? ' is charged to the card on file'
+          : ' is emailed to ' + f.email + ' as a secure payment link');
+      }
+
+      /* Everything above the money runs down the page one question at a time;
+         the money and its consequences sit two abreast under it. */
+      var stack = [], pair = [], seen = false;
+      cards.forEach(function (x) {
+        if (x === 'SPLIT') { seen = true; return; }
+        (seen ? pair : stack).push(x);
+      });
+
+      return h`
+        ${raw(ui.grid(null, stack))}
+        ${raw(pair.length ? '<div class="section">' + ui.grid(2, pair) + '</div>' : '')}
+        ${raw(ui.formActions([
+          { label: label, kind: 'primary', msg: msg },
+          { label: 'Cancel', to: 'familyRecord', id: f.id }
+        ], { sticky: true, hint: hint }))}
+      `;
+    }
   });
 })();

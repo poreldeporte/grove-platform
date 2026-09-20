@@ -1,10 +1,21 @@
 /* Console → Billing: the money screens for the owner.
 
-   Five screens in one file, because they are one subject: every charge the
+   Six screens in one file, because they are one subject: every charge the
    studio has raised (Billing), the family ledger behind it, the one form that
    reduces what a family owes (Adjust a balance), the one form that charges for
-   anything outside a plan (Post a sale), and the cycles that are about to
-   raise an invoice (Cycles ahead).
+   anything outside a plan (Post a sale), the one form that writes down money
+   arriving (Record a payment), and the cycles that are about to raise an
+   invoice (Cycles ahead).
+
+   MONEY MOVES THREE WAYS, AND EACH WAY IS ONE SCREEN
+     Post a sale charges a family and what they owe goes up. Record a payment
+     writes down money that has come in and what they owe goes down. Adjust a
+     balance takes money off, either back to a card or as credit. They are
+     neighbours now, so each one says which direction it moves money in rather
+     than leaving three near-identical forms to be told apart by their titles.
+     Record a payment was a toast until this pass — on the ledger, on the
+     attention tab and on every family record — which is exactly the kind of
+     button that leaves no table behind when this is mapped onto a database.
 
    THE PRICING MODEL, AS THE OWNER SETTLED IT
      A plan is HOURS A MONTH, and only After-School has one: 4h $280, 8h $540,
@@ -530,7 +541,7 @@
       flush: true,
       note: 'A charge is raised the day it happens: a plan on the last class of its cycle, a camp week or a pop-up when it is booked, an extra class or a private the moment it is posted as a sale. Nothing is raised on a fixed date in the month. ' +
         count(soon.length, 'invoice lands', 'invoices land') +
-        ' on a child’s very next class, and anything charged outside a plan is on Post a sale.'
+        ' on a child’s very next class, anything charged outside a plan is on Post a sale, and money arriving against any of these — cash, a cheque, a transfer — is on Record a payment.'
     }, table);
   }
 
@@ -591,6 +602,7 @@
         ' no card saved, so ' + (manual.length === 1 ? 'that one is a message' : 'those are messages') +
         ', not a retry.';
     }
+    hint += ' Money already in — cash, a cheque, a transfer — is recorded rather than retried.';
 
     var buttons = [];
     if (retry.length) {
@@ -606,6 +618,9 @@
       kind: retry.length ? undefined : 'primary',
       msg: 'Recovery email queued to ' + count(familyCount(owed), 'family', 'families')
     });
+    /* Some of what is owed has already been paid at the desk and only needs
+       writing down. That is the opposite of a retry, so it is its own button. */
+    buttons.push({ label: 'Record a payment', to: 'recordPayment' });
 
     return ui.toolbar({
       tabs: billingTabs(),
@@ -739,7 +754,10 @@
     crumbTitle: 'Post a sale',
     eyebrow: 'one charge, any reason',
     title: 'Post a sale',
-    sub: 'One charge on the card a family already has on file — a class or two when their school finishes later than the programme, a private class that came up, an event, any other service. It is the only way an exception gets billed, so there is no separate rule for each one.',
+    sub: 'One charge on the card a family already has on file — a class or two when their school finishes later than the programme, a private class that came up, an event, any other service. It is the only way an exception gets billed, so there is no separate rule for each one. This is money going out to a family; money arriving is Record a payment.',
+    actions: [
+      { label: 'Record a payment', to: 'recordPayment' }
+    ],
 
     body: function () {
       var f = pickedFamily('saleFam');
@@ -859,6 +877,295 @@
         }))}
         ${raw(ui.grid('sidebar', [form, ui.col([stands, prices, assumed])]))}
         <div class="section">${raw(register)}</div>
+        ${raw(ui.formActions([
+          { label: label, kind: 'primary', msg: done },
+          { label: 'Cancel', to: 'billing' }
+        ], { sticky: true, hint: hint }))}
+      `;
+    }
+  });
+
+  /* ---- Record a payment --------------------------------------------------------------
+     Money ARRIVING, which is the opposite of the screen above it. Post a sale
+     charges a family and what they owe goes up; this is the money coming back
+     — cash at the desk, a cheque, a bank transfer, or the card on file charged
+     by hand — and it ends with an invoice that is no longer owed.
+
+     It used to be a toast on the ledger and on every family record, which is
+     exactly the kind of button that leaves no table behind when this is mapped
+     onto a database. It is a screen now, and the two neighbours say in their
+     own words which direction they move money in.
+
+     TICKED, NOT TYPED
+     The family's unpaid invoices are read out of D.INVOICES with their amounts
+     and every one of them starts ticked, so the amount is what they owe before
+     anybody types anything. Untick a line and the figure falls with it. The
+     amount box appears only when the ticks cannot answer the question — a part
+     payment, or a family with nothing outstanding — and everything else the
+     studio already knows is stated rather than asked: the date, who took it,
+     the card, and the address the receipt goes to. */
+
+  Grove.on('payFam', function (d) {
+    /* Picking here replaces whoever the screen was opened for, so a payment
+       started from a family record can still be moved to another household. */
+    Grove.state.params = {};
+    Grove.setFilter('payFam', d.id);
+  });
+  Grove.on('payHow', function (d) { Grove.setFilter('payHow', d.id); });
+
+  var PART_PAY = 'pay-part';
+
+  /* Opened against a named family from a ledger or a family record, otherwise
+     whoever was picked last. */
+  function payFamily(ctx) {
+    var want = ctx && ctx.params ? ctx.params.id : '';
+    if (want && D.family(want)) return D.family(want);
+    return D.family(Grove.filter('payFam', LEDGER_FAMILY)) || D.family(LEDGER_FAMILY);
+  }
+
+  function owedBy(f) {
+    return owedInvoices().filter(function (i) { return i.fam === f.name; });
+  }
+  function settleKey(inv) { return 'pay-' + inv.id; }
+  function ticked(f) {
+    return owedBy(f).filter(function (i) { return Grove.toggle(settleKey(i), true); });
+  }
+
+  /* "8 Jul 2026" reads as a date, "On receipt" reads as a sentence. */
+  function dueText(inv) {
+    var d = String(inv.due);
+    return /^\d/.test(d) ? 'due ' + d : d.charAt(0).toLowerCase() + d.slice(1);
+  }
+
+  function lastSettled(f) {
+    return paidInvoices().filter(function (i) { return i.fam === f.name; })
+      .sort(function (a, b) {
+        return parseInt(b.id.replace(/\D/g, ''), 10) - parseInt(a.id.replace(/\D/g, ''), 10);
+      })[0] || null;
+  }
+
+  /* How the money arrived. The card is only an answer when there is a card on
+     file, so a family with none is never offered a way that cannot work. */
+  function payWays(f) {
+    var ways = [];
+    if (hasCard(f)) {
+      ways.push({ id: 'card', title: 'The card on file', sub: 'Charged by hand now, on ' + cardOf(f) });
+    }
+    ways.push({ id: 'cash',   title: 'Cash at the desk', sub: 'Counted into the till and written down here' });
+    ways.push({ id: 'cheque', title: 'A cheque',         sub: 'Recorded today, banked when it clears' });
+    ways.push({ id: 'bank',   title: 'A bank transfer',  sub: 'Already sitting in the studio account' });
+    return ways;
+  }
+  function payWay(f) {
+    var want = Grove.filter('payHow', hasCard(f) ? 'card' : 'cash');
+    var ways = payWays(f);
+    return ways.filter(function (w) { return w.id === want; })[0] || ways[0];
+  }
+  function howDone(f, way) {
+    if (way.id === 'card') return 'charged to ' + cardOf(f);
+    if (way.id === 'cash') return 'taken in cash';
+    if (way.id === 'cheque') return 'taken by cheque';
+    return 'received by bank transfer';
+  }
+
+  Grove.screen('recordPayment', {
+    surface: 'console',
+    crumbs: [{ label: 'Billing', to: 'billing' }],
+    crumbTitle: 'Record a payment',
+    eyebrow: 'money coming in',
+    title: 'Record a payment',
+    sub: 'Money arriving — cash at the desk, a cheque, a bank transfer, or the card on file charged by hand. Tick the invoices it settles and the amount fills itself in, so the money lands against a charge rather than floating on the account. Post a sale is the other direction: a charge going out.',
+    actions: [
+      { label: 'Post a sale', to: 'postSale' }
+    ],
+
+    body: function (ctx) {
+      var f = payFamily(ctx);
+      var open = owedBy(f);
+      var t = ticked(f);
+      var ids = t.map(function (i) { return i.id; });
+      var due = total(t);
+      var part = Grove.toggle(PART_PAY, false);
+      /* A figure has to be typed when the ticks cannot supply one. */
+      var typed = part || !open.length;
+      var after = f.balance - due;
+      var way = payWay(f);
+      var last = lastSettled(f);
+
+      var who = ui.card({
+        title: 'Which family paid',
+        note: 'Search above by family, guardian, child or card. Every tile carries their balance and their card, so the money cannot land on the wrong household.'
+      }, h`<div class="card-split">${raw(familyPicker('payFam', 'payFam', f))}</div>`);
+
+      /* One tile per unpaid invoice, amounts and all, so the answer is a tick
+         rather than a number somebody has to look up and retype. */
+      var tiles = ui.choices(null, open.map(function (i) {
+        return ui.choice({
+          id: settleKey(i),
+          size: 'lg',
+          title: i.id + ' · ' + i.status,
+          sub: 'Raised ' + i.date + ' · ' + dueText(i) + (i.note ? ' · ' + i.note : ''),
+          price: Grove.money(i.amt),
+          on: Grove.toggle(settleKey(i), true)
+        });
+      }));
+
+      var sums = ui.kv([
+        { k: 'Ticked', v: esc(t.length + ' of ' + count(open.length, 'invoice', 'invoices')) },
+        { k: 'Coming in', v: esc(typed ? 'The amount below' : Grove.money(due)), tone: due > 0 && !typed ? 'grove' : 'mute' },
+        part
+          ? { k: 'Left owing after it', v: 'Whatever the amount below does not cover', tone: 'mute' }
+          : { k: 'Left owing after it', v: after > 0 ? esc(Grove.money(after)) : 'Nothing', tone: after > 0 ? 'clay' : 'mute' }
+      ]);
+
+      var partSwitch = open.length
+        ? ui.toggleRow({
+            id: PART_PAY,
+            title: 'They paid a different amount',
+            sub: 'Off, the payment is ' + Grove.money(due) + ' — what the ticked invoices come to. ' +
+              'On, you type what actually came in and the rest stays owing.',
+            on: false
+          })
+        : '';
+
+      var box = typed
+        ? ui.field({
+            label: open.length ? 'What they actually handed over' : 'How much came in',
+            hint: open.length
+              ? 'Anything under ' + Grove.money(due) + ' leaves the rest of the invoice open.'
+              : 'It sits as credit on the account and comes off their next charge.',
+            control: ui.input(open.length ? { value: due.toFixed(2) } : { placeholder: '0.00' })
+          })
+        : '';
+
+      var settles = ui.card({
+        title: 'What the payment settles',
+        note: open.length
+          ? 'A payment is recorded against an invoice rather than against the family, so the ledger says what the money bought. A ticked invoice closes; an unticked one carries on being chased on Needs attention.'
+          : 'A payment with no invoice to settle sits as credit on the account and comes off the next charge, so nothing is lost and nothing is invented.'
+      }, open.length
+        ? tiles +
+          h`<div class="card-split">${raw(sums)}</div>` +
+          h`<div class="card-split">${raw(partSwitch)}</div>` +
+          (box ? h`<div class="card-split">${raw(box)}</div>` : '')
+        : ui.empty('Nothing is outstanding on this account',
+            'There is no invoice to settle, so say what came in and it sits as credit.') +
+          h`<div class="card-split">${raw(box)}</div>`);
+
+      var extra = '';
+      if (way.id === 'cheque') {
+        extra = h`<div class="card-split">${raw(ui.field({
+          label: 'Cheque number',
+          hint: 'It goes on the ledger line and on the receipt, so the bank statement can be matched to it later.',
+          control: ui.input({ placeholder: '0000' })
+        }))}</div>`;
+      } else if (way.id === 'bank') {
+        extra = h`<div class="card-split">${raw(ui.field({
+          label: 'Reference on the transfer',
+          hint: 'Whatever appears on the studio statement, so the two can be matched.',
+          control: ui.input({ placeholder: f.name.toUpperCase() })
+        }))}</div>`;
+      }
+
+      var how = ui.card({
+        title: 'How the money arrived',
+        note: 'Cash and cheques taken at the desk are money the studio already holds — recording them here is what stops the family being chased for it.'
+      }, ui.choices(null, payWays(f).map(function (w) {
+        return ui.choice({
+          id: w.id, size: 'lg', act: 'payHow',
+          title: w.title, sub: w.sub,
+          on: w.id === way.id
+        });
+      })) + extra);
+
+      var consequence = ui.card({
+        title: 'What recording it does',
+        flush: true,
+        note: 'A payment is never edited once recorded. If it was taken in error it is reversed with a second line, so both stay on the record.'
+      }, ui.rows([
+        {
+          title: t.length
+            ? esc(listOf(ids)) + (t.length === 1 ? ' is marked paid' : ' are marked paid')
+            : 'No invoice is marked paid',
+          sub: t.length
+            ? esc(Grove.money(due) + ' · they come off Needs attention the same minute')
+            : 'Tick an invoice above and it closes the moment you record this'
+        },
+        {
+          title: esc('The ' + f.name + ' family balance ' +
+            (typed ? 'falls by whatever came in' : 'goes to ' + (after > 0 ? Grove.money(after) : 'nothing'))),
+          sub: esc('It stands at ' + (f.balance > 0 ? Grove.money(f.balance) : 'nothing') + ' right now')
+        },
+        {
+          title: esc('A receipt goes to ' + f.email),
+          sub: esc('Dated ' + D.today + ' · ' + howDone(f, way))
+        }
+      ]));
+
+      var stands = ui.card({ title: 'Where the ' + f.name + ' family stands' }, ui.kv([
+        f.balance > 0
+          ? { k: 'Owes now', v: esc(Grove.money(f.balance)), tone: 'clay' }
+          : { k: 'Owes now', v: 'Nothing', tone: 'mute' },
+        open.length
+          ? ['Unpaid invoices', esc(listOf(open.map(function (i) { return i.id; })) + ' · ' +
+              Grove.money(total(open)))]
+          : { k: 'Unpaid invoices', v: 'None', tone: 'mute' },
+        ['Card on file', hasCard(f) ? esc(cardOf(f)) : '<span class="mute">None saved</span>'],
+        ['Payments are taken', f.autopay ? 'Automatically, on the card above' : 'By hand, at the desk'],
+        last
+          ? ['Last one settled', esc(last.id + ' · ' + Grove.money(last.amt) + ' · ' + last.method)]
+          : { k: 'Last one settled', v: 'Nothing settled yet', tone: 'mute' }
+      ]));
+
+      var assumed = ui.card({
+        title: 'Filled in for you',
+        note: 'Four things the old dialog asked for that have one answer each. They are stated here rather than typed again.'
+      }, ui.kv([
+        ['Date', esc(D.today)],
+        ['Taken by', esc(Grove.persona('console').name)],
+        ['Posted against', esc(f.name + ' family')],
+        ['Receipt goes to', esc(f.email)],
+        ['The family sees it', 'On their ledger and in the portal, in the words above']
+      ]));
+
+      var direction = ui.card({
+        title: 'Which of the three this is',
+        note: 'Three neighbouring screens move money three ways. This is the only one where money comes in.',
+        foot: ui.btn({ label: 'Post a sale', kind: 'quiet', size: 'sm', to: 'postSale' }) +
+          ui.btn({ label: 'Adjust a balance', kind: 'quiet', size: 'sm', to: 'adjust' })
+      }, ui.kv([
+        ['Record a payment', 'Money in. What the family owes goes down.'],
+        ['Post a sale', 'Money charged. What the family owes goes up.'],
+        ['Adjust a balance', 'Money off. Back to their card, or credit on the account.']
+      ]));
+
+      var hint;
+      if (!open.length) {
+        hint = 'The ' + f.name + ' family owe nothing, so this sits as credit on their account until their next charge.';
+      } else if (part) {
+        hint = 'Whatever you type comes off the ' + Grove.money(f.balance) + ' the ' + f.name +
+          ' family owe, and anything left over keeps its invoice open.';
+      } else if (!t.length) {
+        hint = 'Nothing is ticked, so there is nothing to record. Tick an invoice above, or say they paid a different amount.';
+      } else {
+        hint = 'The ' + f.name + ' family’s balance goes from ' + Grove.money(f.balance) + ' to ' +
+          (after > 0 ? Grove.money(after) : 'nothing') + ', and ' + listOf(ids) +
+          (t.length === 1 ? ' closes.' : ' close.');
+      }
+
+      var label = (!typed && due > 0) ? 'Record ' + Grove.money(due) : 'Record the payment';
+      var done = ((!typed && due > 0) ? Grove.money(due) + ' recorded' : 'Payment recorded') +
+        ' against the ' + f.name + ' family · ' + howDone(f, way) + ' · receipt emailed to ' + f.email;
+
+      return h`
+        ${raw(ui.toolbar({
+          search: { key: 'payFam', placeholder: 'Search family, guardian, child…' },
+          count: pickerCount('payFam')
+        }))}
+        ${raw(ui.grid('sidebar', [
+          ui.col([who, settles, how, consequence]),
+          ui.col([stands, assumed, direction])
+        ]))}
         ${raw(ui.formActions([
           { label: label, kind: 'primary', msg: done },
           { label: 'Cancel', to: 'billing' }
@@ -1175,17 +1482,13 @@
     sub: 'Charges and payments against this family, newest first. A charge is never edited once posted — corrections are posted as adjustments, so both lines stay on the record.',
     actions: function () {
       var f = ledgerFamily();
-      var owing = D.LEDGER.reduce(function (n, l) { return l.paid ? n : n + l.amt; }, 0);
       return [
         { label: 'Statement', msg: 'Statement emailed to ' + f.email },
         { label: 'Post a sale', to: 'postSale' },
-        {
-          label: 'Record a payment',
-          kind: 'primary',
-          msg: owing > 0
-            ? Grove.money(owing) + ' recorded against the ' + f.name + ' family · receipt emailed to ' + f.email
-            : 'Payment recorded against the ' + f.name + ' family · receipt emailed to ' + f.email
-        }
+        /* This was a toast that claimed a payment had been taken. It opens the
+           form now, on this family, with the invoice behind their balance
+           already ticked. */
+        { label: 'Record a payment', kind: 'primary', to: 'recordPayment', id: f.id }
       ];
     },
 

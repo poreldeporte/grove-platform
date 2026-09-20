@@ -43,6 +43,21 @@
        columns or given a band of its own. Access appears on every record,
        so it is simply dealt with the rest
 
+   Added in this pass
+     - `inviteStaff`. 'Invite a teacher' was a toast that said "Invitation
+       sent" and left nothing behind, which is a table nobody would remember
+       to build. It is a form now: name, email, role, pay rate, in one card
+       under a sticky Send. The rate is a follow-up to the role rather than a
+       question of its own — pick the role and the rate arrives pre-filled
+       with what the studio already pays somebody in it, counted off the rows
+       on the list. Before a role is picked there is no rate box at all
+     - the form says what the invitation does rather than leaving her to
+       guess: the email, the password they set themselves, and the fact that
+       once in they see only the classes carrying their own name and the
+       children on those rolls. That last is not a promise this file invents —
+       it is the rule the Studio portal enforces, which filters D.CLASSES by
+       `c.staff === persona.name` on every screen it draws
+
    Consequences made legible
      - Revoke access is the one control here that removes a person, and she
        has nobody to undo it for her. It now names what stays behind: the
@@ -235,7 +250,7 @@
           label: 'Export timesheet',
           msg: 'Timesheet exported — ' + pay.hours + ' hours, ' + pay.people + ' people'
         },
-        { label: 'Invite a teacher', kind: 'primary', msg: 'Invitation sent' }
+        { label: 'Invite a teacher', kind: 'primary', to: 'inviteStaff' }
       ];
     },
 
@@ -272,6 +287,171 @@
           ' people, which is what Export timesheet sends. A class that runs Monday to Friday ' +
           'counts as five sessions; a party or a pop-up is a single date rather than a weekly commitment.'
       }, table);
+    }
+  });
+
+  /* ---- invite ---------------------------------------------------------------
+     'Invite a teacher' used to raise a toast that said "Invitation sent" and
+     leave nothing behind. It is a form now, and a short one: who they are,
+     where to send it, what they will do, and what they are paid.
+
+     The pay rate is not a question she has to remember the answer to. She
+     picks the role; the rate fills itself in with what the studio already
+     pays somebody in that role, counted off the rows on the list. Until she
+     picks one there is no rate box, because there is nothing truthful to put
+     in it.
+
+     The roles offered are the roles the team already holds, less her own —
+     there is one owner and she is the one sending the invitation. */
+
+  Grove.on('inviteRole', function (d) { Grove.setFilter('inviteRole', d.id); });
+
+  function inRole(role) {
+    return D.STAFF.filter(function (s) { return s.role === role; });
+  }
+
+  /* Commonest role first, so the one she almost always picks leads. */
+  function rolesToOffer(ctx) {
+    var hers = ((ctx && ctx.persona) || Grove.persona('console') || {}).role;
+    var seen = {}, out = [];
+    D.STAFF.forEach(function (s) {
+      if (s.role === hers || seen[s.role]) return;
+      seen[s.role] = true;
+      out.push(s.role);
+    });
+    return out.sort(function (a, b) { return inRole(b).length - inRole(a).length; });
+  }
+
+  /* What the studio already pays a person in this role, commonest rate first,
+     with the head count that rate is on so the hint can say how settled it is.
+     The owner's em dash is not a rate and is left out of the count. */
+  function ratesIn(role) {
+    var count = {}, order = [], people = inRole(role);
+    people.forEach(function (s) {
+      if (s.rate === '—') return;
+      if (count[s.rate] === undefined) { count[s.rate] = 0; order.push(s.rate); }
+      count[s.rate] += 1;
+    });
+    order.sort(function (a, b) { return count[b] - count[a]; });
+    return { going: order[0] || '', on: count[order[0]] || 0, of: people.length };
+  }
+
+  function classesIn(role) {
+    var n = 0;
+    inRole(role).forEach(function (s) { n += assigned(s).length; });
+    return n;
+  }
+
+  function peopleLabel(n) { return n + (n === 1 ? ' person' : ' people'); }
+
+  /* Whoever is sitting in the invited state right now, read off the same
+     status the table prints, so the form cannot name somebody the list does
+     not show. */
+  function pending() {
+    return D.STAFF.filter(function (s) { return s.status === 'Invitation sent'; });
+  }
+  function nameList(list) {
+    var names = list.map(function (s) { return s.name; });
+    if (names.length < 2) return names.join('');
+    return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+  }
+
+  Grove.screen('inviteStaff', {
+    surface: 'console',
+    crumbs: [{ label: 'Staff', to: 'staff' }],
+    crumbTitle: 'Invite a teacher',
+    eyebrow: 'a new name on the rota',
+    title: 'Invite a teacher',
+    sub: 'A name, an address to send it to, and what they are paid. They set their own ' +
+         'password, and they see only their own classes.',
+
+    body: function (ctx) {
+      var offered = rolesToOffer(ctx);
+      var chosen = Grove.filter('inviteRole', '');
+      if (offered.indexOf(chosen) === -1) chosen = '';
+
+      var who = ui.fields(2, [
+        ui.field({
+          label: 'Their name',
+          hint: 'A class carries its teacher by name, so this is the name that will appear ' +
+                'on their timetable.',
+          control: ui.input({ placeholder: 'First and last name' })
+        }),
+        ui.field({
+          label: 'Their email',
+          hint: 'Where the invitation goes, and how they sign in afterwards.',
+          control: ui.input({ type: 'email', placeholder: 'name@email.com' })
+        })
+      ]);
+
+      var role = h`<div class="card-split">${raw(ui.field({
+        label: 'What will they do?',
+        hint: 'The roles somebody on the team already holds.',
+        control: ui.choices(2, offered.map(function (r) {
+          var held = classesIn(r), n = inRole(r).length;
+          return ui.choice({
+            id: r,
+            act: 'inviteRole',
+            title: r,
+            sub: peopleLabel(n) + ' on the team · ' +
+              (held ? classLabel(held) + (n > 1 ? ' between them' : '') : 'no classes'),
+            on: r === chosen
+          });
+        }))
+      }))}</div>`;
+
+      /* The follow-up, and only once the answer that fills it in has been
+         given. */
+      var pay = '';
+      if (chosen) {
+        var r = ratesIn(chosen);
+        var settled = r.on === r.of
+          ? (r.of === 1 ? 'the one person' : 'all ' + peopleLabel(r.of))
+          : r.on + ' of the ' + peopleLabel(r.of);
+        pay = h`<div class="card-split">${raw(ui.field({
+          label: 'Pay rate',
+          hint: r.going
+            ? 'Filled in with ' + r.going + ', which is what the studio pays ' + settled +
+              ' in this role. Change it if this one is different.'
+            : 'No rate is recorded against this role, so there is nothing to fill in.',
+          control: ui.input({ value: r.going, placeholder: 'e.g. $28/hr' })
+        }))}</div>`;
+      }
+
+      var waiting = pending();
+      var teaches_ = chosen ? classesIn(chosen) : -1;
+
+      var what = h`<div class="card-split"><div class="stack stack--sm">
+        <p>We email the invitation to that address. They set their own password — you never see
+        it, and you cannot set it for them.</p>
+        <p>Until they accept it they sit on Staff as <span class="strong">Invitation sent</span>:
+        they cannot sign in, nothing is assigned to them and no hours are counted.${raw(
+          waiting.length
+            ? ' ' + esc(nameList(waiting)) + (waiting.length === 1 ? ' is' : ' are') + ' there now.'
+            : ''
+        )}</p>
+        <p>Once they are in, they see the classes with their own name on them and the children
+        on those rolls, and nothing else — not another teacher’s class, not what a family pays,
+        not a child they do not teach.${raw(teaches_ === 0
+          ? ' Nobody in this role holds a class today, so there is nothing of their own to see ' +
+            'until you assign one.'
+          : ''
+        )}</p>
+      </div></div>`;
+
+      return ui.card({}, who + role + pay + what) + ui.formActions([
+        {
+          label: 'Send the invitation',
+          kind: 'primary',
+          msg: 'Invitation sent — nothing is assigned and no hours count until they accept'
+        },
+        { label: 'Cancel', to: 'staff' }
+      ], {
+        sticky: true,
+        hint: chosen
+          ? 'Sending emails the invitation and puts them on Staff as Invitation sent'
+          : 'Choose what they will do and the pay rate fills itself in'
+      });
     }
   });
 

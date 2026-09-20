@@ -32,12 +32,24 @@
 
   /* Prices the studio maintains. The registration flow never sets a rate of
      its own — it reads everything from here. */
+  /* The five ways a programme can be priced. A programme picks one, and that
+     choice decides what the price table asks for — which is how the owner sets
+     prices when she creates a programme. Nothing else needs to know how a
+     price was arrived at. */
+  var PRICING_MODELS = {
+    plan:     { id: 'plan',     name: 'A plan, in hours a month', asks: 'A row per tier: hours a month, and what that tier costs.',   unit: 'hours a month' },
+    perWeek:  { id: 'perWeek',  name: 'By the week or the day',   asks: 'A full week, a single day, and an extra hour.',              unit: 'a week' },
+    perHour:  { id: 'perHour',  name: 'By the hour',              asks: 'An hourly rate, plus the shortest and longest booking.',     unit: 'an hour' },
+    perEvent: { id: 'perEvent', name: 'A price per event',        asks: 'Each event carries its own name, date, places and price.',   unit: 'a child' },
+    quoted:   { id: 'quoted',   name: 'Quoted by hand',           asks: 'Nothing. The studio prices each enquiry itself.',            unit: 'quoted' }
+  };
+
   var PRICING = {
     /* After-School is the only programme with a plan. A plan is HOURS A MONTH,
        not classes: a child on 16 hours taking two-hour classes comes eight
        times, a child on 16 hours taking one-hour classes comes sixteen. The
        rate per hour falls as the plan grows. Everything else is a one-off. */
-    as: {
+    as: { model: 'plan',
       plans: { p4: 280, p8: 540, p12: 780, p16: 960 },
       regFee: 130,
       regFeePer: 'child, once a year',
@@ -45,17 +57,17 @@
       siblingRelief: '50% off the registration fee for the second and third child',
       extraClassRate: { p4: 70, p8: 67.5, p12: 65, p16: 60 }
     },
-    camp: { week: 400, day: 100, extraHour: 28, regFee: 15 },
-    nsd:  { base: 100, extraHour: 28, maxHours: 6, regFee: 15 },
-    priv: { hourly: 90, maxHours: 3, regFee: 15 },
-    pop:  {
+    camp: { model: 'perWeek', week: 400, day: 100, extraHour: 28, regFee: 15 },
+    nsd:  { model: 'perHour', base: 100, extraHour: 28, maxHours: 6, regFee: 15 },
+    priv: { model: 'perHour', hourly: 90, maxHours: 3, regFee: 15 },
+    pop:  { model: 'perEvent',
       regFee: 15,
       events: [
         { id: 'clay',  label: 'Clay Night',     amount: 45, sub: 'Tue 28 July, 4:00–6:00pm · ages 8+ · 4 places left' },
         { id: 'print', label: 'Print & Poster', amount: 45, sub: 'Fri 14 Aug, 4:00–6:00pm · ages 8+ · 18 places' }
       ]
     },
-    bday: { quoteOnly: true, regFee: 0 }
+    bday: { model: 'quoted', quoteOnly: true, regFee: 0 }
   };
 
   var FAMILIES = [
@@ -827,6 +839,7 @@
     LEDGER: LEDGER,
     DOCUMENTS: DOCUMENTS,
 
+    PRICING_MODELS: PRICING_MODELS,
     PLAN_YEAR: PLAN_YEAR,
     RULES: RULES,
     SALES: SALES,
@@ -873,6 +886,12 @@
     },
 
     /* The policies attached to one programme, in signing order. */
+    /* How this programme is priced, and what the builder asks for. */
+    pricingModel: function (programId) {
+      var m = (PRICING[programId] || {}).model || 'quoted';
+      return PRICING_MODELS[m];
+    },
+
     policiesFor: function (programId) {
       var rule = POLICY_BY_PROGRAM[programId];
       if (!rule || rule.none) return [];

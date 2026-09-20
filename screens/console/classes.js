@@ -1,5 +1,33 @@
-/* Console → Classes (list + week calendar), one class record, and cancelling
-   one dated session.
+/* Console → Classes (list + week calendar), one class record, a new class, an
+   edited class, and cancelling one dated session.
+
+   THIS PASS — EVERY ACTION OPENS A REAL SCREEN
+
+   'New class', 'Edit class' and 'Assign an instructor' were toasts. A class is
+   a row the studio will keep in a table, so each is now a form that asks for
+   exactly the columns that row carries: program, day, start and end time, room,
+   age band, places, instructor. Assigning an instructor is the instructor field
+   on the edit form rather than a screen of its own, and the record's action
+   opens that form with everything else already answered.
+
+   Neither form asks for a price. The program decides how a place in it is paid
+   for — one of the five models in D.PRICING_MODELS — and the form states which
+   one this program uses and what it charges, read from D.PRICING, beside a
+   button to the program where those figures are set. That is the whole answer
+   to why one program reads "4 hours a month", another "a week" and another
+   "Clay Night": the owner picks how a program is priced, and the price table
+   follows. A class priced by the hour is never asked for a week price because
+   no class is asked for a price at all.
+
+   Simplified while writing them, and said here so nothing looks lost:
+     - no class name field where the program names its classes by their length.
+       '1 hour · After-School' names itself; a camp week, a dated no-school day,
+       a pop-up and a birthday do not, so only those are asked
+     - no age band on a program booked one child or one party at a time
+     - no empty form. Choosing the program fills the day, the hour, the room,
+       the places and the band with what that program already runs, and each
+       field says what it ran into — which class already holds that room at that
+       hour, which days the program has nothing on
 
    Fitted to Sabrina, the owner. She is at a desk with a keyboard, she reads
    tables, and she comes here for two things: who is in a room, and whether a
@@ -146,10 +174,13 @@
 
   /* How long one class runs, read off the same When column the table prints:
      '4:30–6:30pm' is two hours, and two hours is what it takes off a plan. */
-  function classHours(c) {
-    var a = minutesOf(startTime(c)), b = minutesOf(endTime(c));
+  function spanHours(from, to) {
+    var a = minutesOf(from), b = minutesOf(to);
     if (a === null || b === null || b <= a) return 0;
     return Math.round(((b - a) / 60) * 10) / 10;
+  }
+  function classHours(c) {
+    return spanHours(startTime(c), endTime(c));
   }
   function hoursPhrase(n) { return plural(n, 'hour', 'hours'); }
 
@@ -328,7 +359,7 @@
     },
     actions: [
       { label: 'Export', msg: 'CSV exported' },
-      { label: 'New class', kind: 'primary', msg: 'Class created · no sessions yet, nobody enrolled' }
+      { label: 'New class', kind: 'primary', to: 'newClass' }
     ],
 
     body: function () {
@@ -469,15 +500,17 @@
       return c.day + ' · ' + c.time + ' · ' + c.room + '. ' + priceLine(c);
     },
 
-    /* The class already has an instructor on almost every record, so asking
-       for one is only the primary action when there is nobody teaching it. */
+    /* The class already has an instructor on almost every record, so asking for
+       one is only the primary action when there is nobody teaching it. Both
+       open the same form — assigning an instructor is one field on it, not a
+       screen of its own. */
     actions: function (ctx) {
       var c = cls(ctx);
       return [
         { label: 'Cancel a session', kind: 'danger', to: 'classCancel', id: c.id },
         c.staff === 'Unassigned'
-          ? { label: 'Assign an instructor', kind: 'primary', msg: 'Assigned · the instructor sees the class now' }
-          : { label: 'Edit class', kind: 'primary', msg: 'Saved · the change shows on the schedule and on every roster' }
+          ? { label: 'Assign an instructor', kind: 'primary', to: 'editClass', id: c.id }
+          : { label: 'Edit class', kind: 'primary', to: 'editClass', id: c.id }
       ];
     },
 
@@ -677,6 +710,777 @@
       to: 'requests'
     };
   }
+
+  /* ---- new class, and editing one -------------------------------------------
+     'New class', 'Edit class' and 'Assign an instructor' were three toasts. A
+     class is a row the studio will keep in a table, so each of them is now a
+     screen that asks for exactly what that row carries: the program it belongs
+     to, the day, the start and end time, the room, the age band, how many
+     places, and who teaches it.
+
+     Assigning an instructor is not a screen of its own. It is the instructor
+     field on this form, and the record's 'Assign an instructor' action opens the
+     form with everything else already filled in.
+
+     What the form does not ask for, and why:
+       - a price. The program decides how a place in it is paid for — one of the
+         five ways in D.PRICING_MODELS — and the card states which one this
+         program uses and what it charges, read from D.PRICING, with a button to
+         the program where those figures are set. A class priced by the hour is
+         never asked for a week price, because no class is asked for a price
+       - a name, where the program names its classes by their length. An
+         After-School class is '1 hour · After-School'. A camp week, a no-school
+         day, a pop-up and a birthday each carry something a length cannot say,
+         so only those are asked for a name
+       - an age band on a program booked one child at a time
+       - anything the program already answers. Choosing the program fills in the
+         day, the time, the room, the places and the band with what that program
+         already runs, so the owner changes what differs instead of typing a
+         class out from nothing
+
+     Every option comes off the rows: the rooms and the clock are the ones the
+     studio already uses, the instructors are D.STAFF, and an instructor who has
+     not accepted their invitation is not on the list. */
+
+  var PROG_KEY = 'newClassProg';
+  var NOBODY = 'Nobody yet';
+
+  Grove.on('pickClassProg', function (d) { Grove.setFilter(PROG_KEY, d.id); });
+
+  function uniq(list) {
+    var out = [];
+    list.forEach(function (v) {
+      if (v === '' || v === null || v === undefined) return;
+      if (out.indexOf(v) === -1) out.push(v);
+    });
+    return out;
+  }
+
+  /* The value a set of rows holds most often — how every default on this form
+     is arrived at, so a suggestion is always something the studio already does. */
+  function modeOf(list, get) {
+    var counts = {}, order = [], best = '', top = 0;
+    list.forEach(function (x) {
+      var v = get(x);
+      if (v === '' || v === null || v === undefined) return;
+      if (counts[v] === undefined) { counts[v] = 0; order.push(v); }
+      counts[v] += 1;
+    });
+    order.forEach(function (v) { if (counts[v] > top) { top = counts[v]; best = v; } });
+    return best;
+  }
+
+  function classesIn(progId) {
+    return D.CLASSES.filter(function (c) { return c.prog === progId; });
+  }
+  function classesInRoom(room) {
+    return D.CLASSES.filter(function (c) { return c.room === room; });
+  }
+  function money(n) {
+    return Grove.money(n, { cents: n !== Math.round(n) });
+  }
+
+  /* ---- the lists every field chooses from --------------------------------- */
+
+  function roomOptions() {
+    return uniq(D.CLASSES.map(function (c) { return c.room; }));
+  }
+  function bandOptions() {
+    return uniq(D.CLASSES.map(function (c) { return c.band; })).filter(function (b) {
+      return b !== '—';
+    });
+  }
+  /* The studio's own clock: every hour a class already starts or ends at. */
+  function timeOptions() {
+    var all = [];
+    D.CLASSES.forEach(function (c) { all.push(startTime(c)); all.push(endTime(c)); });
+    return uniq(all).sort(function (a, b) { return minutesOf(a) - minutesOf(b); });
+  }
+  function dayOptions() {
+    return WEEK.concat(uniq(D.CLASSES.map(function (c) { return c.day; })).filter(function (d) {
+      return WEEK.indexOf(d) === -1;
+    }));
+  }
+  function teaches(s) {
+    return s.role === 'Instructor' && s.status !== 'Invitation sent';
+  }
+  function invitedStaff() {
+    return D.STAFF.filter(function (s) {
+      return s.role === 'Instructor' && s.status === 'Invitation sent';
+    });
+  }
+  function staffOptions() {
+    return [NOBODY].concat(D.STAFF.filter(teaches).map(function (s) { return s.name; }));
+  }
+  function staffValue(c) {
+    return !c || c.staff === 'Unassigned' ? NOBODY : c.staff;
+  }
+
+  function dayWord(day) {
+    var i = WEEK.indexOf(day);
+    return i === -1 ? day : 'a ' + WEEK_LONG[i];
+  }
+
+  /* ---- what the program already answers ------------------------------------ */
+
+  /* runsOn answers for one day. A class being written may carry a pattern —
+     'Mon–Fri' — so these two spread that pattern back out into its days and ask
+     whether an existing class stands on any of them. */
+  function daysOf(pattern) {
+    var t = String(pattern).split(/[^A-Za-z]+/).filter(Boolean);
+    if (t.length < 2) return t;
+    var from = WEEK.indexOf(t[0]), to = WEEK.indexOf(t[t.length - 1]);
+    if (from === -1 || to === -1) return t;
+    return WEEK.slice(from, to + 1);
+  }
+  function sharesADay(c, pattern) {
+    return daysOf(pattern).some(function (d) { return runsOn(c, d); });
+  }
+
+  /* Two classes in one room at one hour is the one thing a suggestion must not
+     walk into, so the hour a class is offered is checked against the room. */
+  function overlaps(from, to, otherFrom, otherTo) {
+    var a = minutesOf(from), b = minutesOf(to);
+    var x = minutesOf(otherFrom), y = minutesOf(otherTo);
+    if (a === null || b === null || x === null || y === null) return false;
+    return a < y && x < b;
+  }
+  function firstFreeDay(list) {
+    var free = WEEK.filter(function (d) {
+      return !list.some(function (c) { return runsOn(c, d); });
+    });
+    return free.length ? free[0] : '';
+  }
+
+  /* A program whose classes all run one multi-day pattern keeps it. A program
+     with one class copies that class. Anything else is offered the first day of
+     the week it has nothing on. */
+  function suggestedDay(list) {
+    var patterns = uniq(list.map(function (c) { return c.day; }));
+    if (patterns.length === 1 && dayTokens({ day: patterns[0] }).length > 1) return patterns[0];
+    if (list.length < 2) return patterns[0] || WEEK[0];
+    return firstFreeDay(list) || modeOf(list, function (c) { return c.day; }) || WEEK[0];
+  }
+
+  /* A program booked one child at a time writes its band as '—', so it is never
+     asked for one. */
+  function oneToOne(progId) {
+    var list = classesIn(progId);
+    return !!list.length && list.every(function (c) { return c.band === '—'; });
+  }
+
+  /* An After-School class is named by its length. A camp week, a dated
+     no-school day, a pop-up and a birthday are not, so those are asked. */
+  function namedByLength(c) {
+    var hrs = classHours(c);
+    return !!hrs && String(c.name).indexOf(hrs + ' hour') === 0;
+  }
+  function needsName(progId) {
+    var list = classesIn(progId);
+    return !list.length || !list.every(namedByLength);
+  }
+
+  function suggested(progId) {
+    var list = classesIn(progId);
+    var times = timeOptions();
+    var room = modeOf(list, function (c) { return c.room; }) || roomOptions()[0];
+    var band = modeOf(list, function (c) { return c.band; });
+    var day = suggestedDay(list);
+    var from = modeOf(list, startTime) || times[0];
+    var to = modeOf(list, endTime) || times[times.length - 1];
+
+    /* Copying the program's own hour into its own room would hand her the class
+       she already has, so where that happens the day moves to one the program
+       has free. */
+    var taken = daysOf(day).length === 1 && classesInRoom(room).some(function (x) {
+      return sharesADay(x, day) && overlaps(from, to, startTime(x), endTime(x));
+    });
+    if (taken) day = firstFreeDay(list) || day;
+
+    return {
+      prog: progId,
+      name: '',
+      day: day,
+      from: from,
+      to: to,
+      room: room,
+      band: band && band !== '—' ? band : bandOptions()[0],
+      cap: modeOf(list, function (c) { return String(c.cap); }) ||
+           modeOf(classesInRoom(room), function (c) { return String(c.cap); }) ||
+           modeOf(D.CLASSES, function (c) { return String(c.cap); }),
+      staff: NOBODY
+    };
+  }
+
+  function held(c) {
+    return {
+      prog: c.prog,
+      name: c.name,
+      day: c.day,
+      from: startTime(c),
+      to: endTime(c),
+      room: c.room,
+      band: c.band,
+      cap: String(c.cap),
+      staff: staffValue(c)
+    };
+  }
+
+  /* ---- what each answer runs into ------------------------------------------ */
+
+  function dayHint(progId, day, skipId) {
+    var name = prog({ prog: progId }).name;
+    var clash = classesIn(progId).filter(function (c) {
+      return c.id !== skipId && sharesADay(c, day);
+    });
+    if (!clash.length) return 'Nothing else in ' + name + ' runs on ' + dayWord(day) + '.';
+    return plural(clash.length, 'other class', 'other classes') + ' in ' + name + ' ' +
+      (clash.length === 1 ? 'runs' : 'run') + ' on ' + dayWord(day) + ', at ' +
+      uniq(clash.map(startTime)).join(' and ') + '.';
+  }
+
+  /* What else is in that room on that day, and whether any of it is at this
+     hour — stated as a fact, because two camp weeks share a room legitimately
+     and only the calendar knows which week is which. */
+  function roomHint(v, skipId) {
+    var sameDay = classesInRoom(v.room).filter(function (c) {
+      return c.id !== skipId && sharesADay(c, v.day);
+    });
+    if (!sameDay.length) return v.room + ' has nothing else on ' + dayWord(v.day) + '.';
+    var at = sameDay.filter(function (c) {
+      return overlaps(v.from, v.to, startTime(c), endTime(c));
+    });
+    var times = uniq((at.length ? at : sameDay).map(function (c) { return c.time; })).join(', ');
+    return v.room + ' already holds ' + times + ' on ' + dayWord(v.day) +
+      (at.length ? ', which is this hour.' : ', none of it at this hour.');
+  }
+
+  function bandHint(progId, skipId) {
+    var bands = uniq(classesIn(progId).filter(function (c) {
+      return c.id !== skipId;
+    }).map(function (c) { return c.band; })).filter(function (b) { return b !== '—'; });
+    if (!bands.length) return 'No other class in this program names an age band.';
+    return prog({ prog: progId }).name + ' already covers ' + bands.join(', ') + '.';
+  }
+
+  /* On a new class the room says what it usually holds. On one with children in
+     it, the roll says how far the number can come down. */
+  function placesHint(v, c) {
+    if (!c) {
+      var inProg = classesIn(v.prog);
+      var usual = modeOf(inProg, function (x) { return String(x.cap); });
+      if (usual) {
+        return prog({ prog: v.prog }).name + ' runs ' + usual +
+          (usual === '1' ? ' place a class.' : ' places a class.');
+      }
+      usual = modeOf(classesInRoom(v.room), function (x) { return String(x.cap); });
+      return usual
+        ? v.room + ' is set for ' + usual + (usual === '1' ? ' place' : ' places') +
+          ' on the classes it already holds.'
+        : 'The room decides the number.';
+    }
+    var kids = roster(c), waiting = waitlist(c);
+    var line = kids.length
+      ? plural(kids.length, 'child holds a place', 'children hold a place') +
+        ', so the room cannot go below ' + kids.length + ' without turning somebody away.'
+      : 'Nobody is enrolled, so this number is free to change.';
+    if (waiting.length) {
+      line += ' ' + plural(waiting.length, 'child is waiting', 'children are waiting') +
+        ' — raising it offers the first name on the list a place, at the usual price.';
+    }
+    return line;
+  }
+
+  function staffHint() {
+    var inv = invitedStaff();
+    if (!inv.length) return 'Whoever holds it sees the roster and the safety notes on it.';
+    return inv.map(function (s) { return s.name; }).join(' and ') + ' has not accepted ' +
+      (inv.length === 1 ? 'their invitation' : 'their invitations') +
+      ' yet, so they are not on this list.';
+  }
+
+  /* ---- what a place here costs ---------------------------------------------
+     The program's pricing model decides what the price table holds, which is why
+     this screen has no price field: every class in a program is paid for the
+     same way, and the figures live on the program. */
+
+  function planTiers(p) {
+    return Object.keys(p.plans).map(function (k) {
+      return parseInt(String(k).slice(1), 10);
+    }).sort(function (a, b) { return a - b; });
+  }
+
+  function priceRows(progId) {
+    var p = D.PRICING[progId] || {};
+    var m = D.pricingModel(progId);
+    var rows = [];
+    if (m.id === 'plan') {
+      planTiers(p).forEach(function (hours) {
+        rows.push([plural(hours, 'hour a month', 'hours a month'), esc(money(p.plans['p' + hours]))]);
+      });
+    } else if (m.id === 'perWeek') {
+      rows.push(['A full week', esc(money(p.week))]);
+      rows.push(['A single day', esc(money(p.day))]);
+      rows.push(['An extra hour', esc(money(p.extraHour))]);
+    } else if (m.id === 'perHour') {
+      if (p.hourly) {
+        rows.push(['An hour', esc(money(p.hourly))]);
+      } else {
+        rows.push(['A standard day', esc(money(p.base))]);
+        rows.push(['Each hour after that', esc(money(p.extraHour))]);
+      }
+      if (p.maxHours) rows.push(['Longest booking', esc(plural(p.maxHours, 'hour', 'hours'))]);
+    } else if (m.id === 'perEvent') {
+      (p.events || []).forEach(function (e) {
+        rows.push([e.label, esc(money(e.amount))]);
+      });
+    }
+    rows.push(['Registration fee', p.regFee
+      ? esc(money(p.regFee) + (p.regFeePer ? ' per ' + p.regFeePer : ''))
+      : 'None']);
+    return rows;
+  }
+
+  /* The shortest true statement of a program's price, in its own unit — which is
+     the answer to why these read differently from one program to the next. */
+  function priceSummary(progId) {
+    var p = D.PRICING[progId] || {};
+    var m = D.pricingModel(progId);
+    if (m.id === 'plan') {
+      var tiers = planTiers(p);
+      return money(p.plans['p' + tiers[0]]) + '–' + money(p.plans['p' + tiers[tiers.length - 1]]);
+    }
+    if (m.id === 'perWeek') return money(p.week) + ' ' + m.unit;
+    if (m.id === 'perHour') return money(p.hourly || p.base) + ' ' + (p.hourly ? m.unit : 'a day');
+    if (m.id === 'perEvent') return money((p.events[0] || {}).amount) + ' ' + m.unit;
+    return 'Quoted';
+  }
+
+  function priceCard(progId) {
+    var m = D.pricingModel(progId);
+    var name = prog({ prog: progId }).name;
+    return ui.card({
+      title: 'What a place here costs',
+      head: ui.pill(m.name),
+      note: m.asks + ' Prices belong to the program, so this page never asks for one — every ' +
+        'class in ' + name + ' is paid for the same way.',
+      foot: '<span class="hint">Set under Programs</span>' +
+        ui.btn({ label: 'Open ' + name, kind: 'quiet', size: 'sm', to: 'programBuilder', id: progId })
+    }, m.id === 'quoted' ? ui.empty('Nothing to set', m.asks) : ui.kv(priceRows(progId)));
+  }
+
+  /* ---- the questions -------------------------------------------------------
+     One card, one question, in the order they would be asked at the desk. A
+     class that already exists arrives with every answer filled in. */
+
+  function nameCard(v, progId) {
+    var example = classesIn(progId)[0];
+    return ui.card({
+      title: 'What is it called?',
+      note: 'Families see this name on the schedule and at registration.'
+    }, ui.fields(null, [
+      ui.field({
+        label: 'Class name',
+        hint: example
+          ? 'The others in this program read ' +
+            uniq(classesIn(progId).map(function (c) { return c.name; })).join(', ') + '.'
+          : 'The first class in this program, so the name is yours to pick.',
+        control: ui.input({
+          value: v.name,
+          placeholder: example ? 'For example, ' + example.name : 'What families will see'
+        })
+      })
+    ]));
+  }
+
+  function whenCard(v, c) {
+    var progId = v.prog;
+    var hrs = spanHours(v.from, v.to);
+    var note = needsName(progId)
+      ? 'The schedule, the week calendar and every roster read the day and the hour from here.'
+      : 'Classes in ' + prog({ prog: progId }).name + ' are named by their length — ' +
+        uniq(classesIn(progId).map(function (x) { return x.name; })).join(', ') +
+        ' — so this one takes its name the same way.';
+    return ui.card({
+      title: 'When does it run?',
+      head: hrs ? ui.pill(hoursPhrase(hrs)) : '',
+      note: note
+    }, ui.fields(2, [
+      ui.field({
+        label: 'Day',
+        span: true,
+        hint: dayHint(progId, v.day, c ? c.id : ''),
+        control: ui.select({ options: dayOptions(), value: v.day })
+      }),
+      ui.field({
+        label: 'Starts',
+        control: ui.select({ options: timeOptions(), value: v.from })
+      }),
+      ui.field({
+        label: 'Ends',
+        hint: progId === 'as'
+          ? 'The length is what a class takes off a monthly plan.'
+          : 'The studio’s own hours, as the schedule already reads them.',
+        control: ui.select({ options: timeOptions(), value: v.to })
+      })
+    ]));
+  }
+
+  function whereCard(v, c) {
+    var progId = v.prog;
+    var noBand = c ? c.band === '—' : oneToOne(progId);
+    var list = [
+      ui.field({
+        label: 'Room',
+        hint: roomHint(v, c ? c.id : ''),
+        control: ui.select({ options: roomOptions(), value: v.room })
+      })
+    ];
+    if (!noBand) {
+      list.push(ui.field({
+        label: 'Age band',
+        hint: bandHint(progId, c ? c.id : ''),
+        control: ui.select({ options: bandOptions(), value: v.band })
+      }));
+    }
+    list.push(ui.field({
+      label: 'How many places',
+      hint: placesHint(v, c),
+      control: ui.input({ type: 'number', value: v.cap })
+    }));
+
+    return ui.card({
+      title: noBand ? 'Where it happens' : 'Where it happens, and who it is for',
+      note: noBand
+        ? prog({ prog: progId }).name + ' is booked one child or one party at a time, so it ' +
+          'carries no age band. The places are how many the room takes.'
+        : 'The band is how the room is grouped, and it is what a family is offered at registration.'
+    }, ui.fields(2, list));
+  }
+
+  function whoCard(v, c) {
+    var none = v.staff === NOBODY;
+    var lead = c && none
+      ? ui.notice({
+          kind: 'bad',
+          title: 'Nobody is teaching this class',
+          text: 'It is flagged on the Classes list and on the day it runs until somebody holds it. ' +
+            'Choose an instructor and they see it as soon as you save.'
+        })
+      : '';
+    return ui.card({
+      title: 'Who teaches it?',
+      note: none
+        ? (c ? 'Choose one and the class moves onto their week the moment you save.'
+             : 'A class can be created without one — it reads as unassigned until somebody holds it.')
+        : 'The class goes on their schedule, with the roster and the safety notes on it.',
+      foot: '<span class="hint">' + esc(staffHint()) + '</span>' +
+        ui.btn(invitedStaff().length
+          ? { label: 'Invite a teacher', kind: 'quiet', size: 'sm', to: 'inviteStaff' }
+          : { label: 'Open Staff', kind: 'quiet', size: 'sm', to: 'staff' })
+    }, lead + (lead ? '<div class="card-split">' : '') + ui.fields(null, [
+      ui.field({
+        label: 'Instructor',
+        control: ui.select({ options: staffOptions(), value: v.staff })
+      })
+    ]) + (lead ? '</div>' : ''));
+  }
+
+  /* Only the edit form carries this as a field: on a new class the program is
+     the choice that opens the form, and on an existing one it is a column like
+     any other — one the owner can see, with what moving it would mean. */
+  function programCard(v, c) {
+    var m = D.pricingModel(v.prog);
+    var name = prog({ prog: v.prog }).name;
+    var kids = c ? roster(c) : [];
+    return ui.card({
+      title: 'Which program is it part of?',
+      head: ui.pill(m.name),
+      note: 'The program decides how a place in this class is paid for.' + (kids.length
+        ? ' The ' + plural(kids.length, 'child', 'children') + ' on the roll are paid up on ' +
+          name + '’s terms, so moving the class to another program is something to settle ' +
+          'at the desk first.'
+        : ' Move it and a place here is charged the way that program charges.')
+    }, ui.fields(null, [
+      ui.field({
+        label: 'Program',
+        hint: m.name + ' · ' + priceSummary(v.prog) + '. The figures are on the card below.',
+        control: ui.select({
+          options: Object.keys(D.PROGRAMS).map(function (id) { return D.PROGRAMS[id].name; }),
+          value: name
+        })
+      })
+    ]));
+  }
+
+  function questionCards(v, c) {
+    var cards = [];
+    if (c) cards.push(programCard(v, c));
+    if (needsName(v.prog)) cards.push(nameCard(v, v.prog));
+    cards.push(whenCard(v, c));
+    cards.push(whereCard(v, c));
+    cards.push(whoCard(v, c));
+    return cards;
+  }
+
+  /* ---- new class ------------------------------------------------------------ */
+
+  /* A program can be handed in — Programs opens this with one already chosen —
+     and after that the owner's own pick wins. */
+  function pickedProg(ctx) {
+    var id = ctx && ctx.params ? ctx.params.id : '';
+    var v = Grove.filter(PROG_KEY, D.PROGRAMS[id] ? id : '');
+    return D.PROGRAMS[v] ? v : '';
+  }
+
+  function programChoices(picked) {
+    return ui.choices(3, Object.keys(D.PROGRAMS).map(function (id) {
+      return ui.choice({
+        id: id,
+        act: 'pickClassProg',
+        title: D.PROGRAMS[id].name,
+        sub: D.pricingModel(id).name,
+        price: priceSummary(id),
+        on: id === picked
+      });
+    }));
+  }
+
+  /* The week as she reads it: down the days first, then down the clock. */
+  function byDayTime(a, b) {
+    var d = WEEK.indexOf(dayTokens(a)[0]) - WEEK.indexOf(dayTokens(b)[0]);
+    return d ? d : byTime(a, b);
+  }
+
+  function alreadyCard(progId) {
+    var list = classesIn(progId).slice().sort(byDayTime);
+    var name = prog({ prog: progId }).name;
+    return ui.card({
+      title: 'What ' + name + ' already runs',
+      head: '<span class="mute">' + esc(plural(list.length, 'class', 'classes')) + '</span>',
+      flush: true,
+      note: 'The new one is added to these. Nothing here changes.'
+    }, list.length
+      ? ui.rows(list.map(function (c) {
+          return {
+            title: esc(c.day + ' · ' + c.time),
+            sub: esc(c.room + ' · ' +
+              (c.band === '—' ? 'one at a time' : 'ages ' + c.band) + ' · ' + c.staff),
+            end: ui.pill(c.en + '/' + c.cap, fillKind(c)),
+            to: 'classRecord', id: c.id
+          };
+        }))
+      : ui.empty('No classes yet', 'This will be the first one in ' + name + '.'));
+  }
+
+  function afterCard(v) {
+    var name = prog({ prog: v.prog }).name;
+    return ui.card({ title: 'What happens when you save', flush: true }, ui.rows([
+      {
+        title: 'It goes on the schedule straight away',
+        sub: esc('On the Classes list and on the week calendar: ' + v.day + ' · ' + v.from +
+          '–' + v.to + ' · ' + v.room + '.')
+      },
+      {
+        title: esc(plural(parseInt(v.cap, 10) || 0, 'place opens', 'places open')),
+        sub: esc('Nobody is enrolled and nothing is billed. A family chooses it at registration ' +
+          'and pays on ' + name + '’s terms.')
+      },
+      v.staff === NOBODY
+        ? {
+            title: 'It has no instructor yet',
+            sub: 'It reads as unassigned on Classes, and the day it runs carries the flag, ' +
+              'until somebody holds it.'
+          }
+        : {
+            title: esc(v.staff + ' picks it up'),
+            sub: 'It appears on their day with the roster and the safety notes on it.'
+          }
+    ]));
+  }
+
+  Grove.screen('newClass', {
+    surface: 'console',
+    crumbs: [{ label: 'Classes', to: 'classes' }],
+    crumbTitle: 'New class',
+    eyebrow: 'a room, a day, an hour',
+    title: 'New class',
+    sub: function (ctx) {
+      var id = pickedProg(ctx);
+      if (!id) {
+        return 'A class belongs to a program, and the program decides how a place in it is paid ' +
+          'for. Choose that first and the rest of this page fills in with what the program ' +
+          'already runs.';
+      }
+      return prog({ prog: id }).name + ' · ' + D.pricingModel(id).name.toLowerCase() +
+        '. Everything below is filled in with what this program already runs — change what ' +
+        'differs. No class is asked for a price.';
+    },
+
+    body: function (ctx) {
+      var progId = pickedProg(ctx);
+
+      var pick = ui.card({
+        title: 'Which program is it part of?',
+        note: 'Six programs, and five ways of pricing them. The one you pick decides what a ' +
+          'place in this class costs and how a family is charged for it.'
+      }, programChoices(progId));
+
+      if (!progId) {
+        return ui.grid(null, [pick]) +
+          ui.formActions([
+            { label: 'Create class', kind: 'primary', msg: 'Choose a program first' },
+            { label: 'Cancel', to: 'classes' }
+          ], {
+            sticky: true,
+            hint: 'Choose a program first — it decides how a place here is paid for'
+          });
+      }
+
+      var v = suggested(progId);
+
+      return ui.grid(null, [pick]) +
+        '<div class="section">' + ui.grid(2, [priceCard(progId), alreadyCard(progId)]) + '</div>' +
+        '<div class="section">' + ui.grid(null, questionCards(v, null)) + '</div>' +
+        '<div class="section">' + ui.grid(null, [afterCard(v)]) + '</div>' +
+        ui.formActions([
+          { label: 'Create class', kind: 'primary', msg: 'Class created · no sessions yet, nobody enrolled' },
+          { label: 'Cancel', to: 'classes' }
+        ], {
+          sticky: true,
+          hint: 'It goes on the schedule with nobody enrolled and nothing billed'
+        });
+    }
+  });
+
+  /* ---- edit class -----------------------------------------------------------
+     The same questions, every one of them already answered, and one thing this
+     screen must say that the new one cannot: children are already coming on this
+     day, at this hour, to this room. The roll says how many. */
+
+  function familiesOn(c) {
+    return uniq(roster(c).map(function (k) { return k.family; }));
+  }
+
+  function changesCard(c) {
+    var kids = roster(c);
+    var fams = familiesOn(c);
+    var waiting = waitlist(c);
+    var rows = [];
+
+    rows.push(kids.length
+      ? {
+          title: esc(plural(fams.length, 'family is told', 'families are told')),
+          sub: esc('A message goes out naming the day, the time and the room. ' +
+            plural(kids.length, 'child holds a place', 'children hold a place') +
+            ', and there is nothing for them to do.')
+        }
+      : {
+          title: 'Nobody is enrolled yet',
+          sub: 'No message goes out, and nothing you change here reaches a family.'
+        });
+
+    rows.push({
+      title: 'The schedule follows it',
+      sub: 'The Classes list, the week calendar and every roster read the day, the time and ' +
+        'the room from this record.'
+    });
+
+    rows.push({
+      title: 'No money moves',
+      sub: esc(c.prog === 'as'
+        ? 'A class here uses ' + (classHours(c) ? hoursPhrase(classHours(c)) : 'hours') +
+          ' of a child’s monthly plan, and that does not change with the day or the room.'
+        : 'A place here is a one-off booking that is already paid for. Prices are set under ' +
+          'Programs and nothing on this page changes one.')
+    });
+
+    rows.push(c.staff === 'Unassigned'
+      ? {
+          title: 'Whoever you choose sees it straight away',
+          sub: 'It appears on their day, with the roster and the safety notes on it.'
+        }
+      : {
+          title: esc(c.staff + ' has it on their schedule'),
+          sub: 'Change the instructor and the class moves off their week and onto the new ' +
+            'one’s.'
+        });
+
+    if (waiting.length) {
+      rows.push({
+        title: esc(plural(waiting.length, 'child is waiting', 'children are waiting')),
+        sub: 'Raising the places offers the first name on the list a place, at the usual price.',
+        end: ui.btn({ label: 'Open Requests', kind: 'quiet', size: 'sm', to: 'requests' })
+      });
+    }
+
+    return ui.card({
+      title: 'What saving changes',
+      flush: true,
+      note: 'Calling off one date, rather than changing the class, is a different thing and it ' +
+        'is done from the class record.'
+    }, ui.rows(rows));
+  }
+
+  var editDef = {
+    surface: 'console',
+    crumbs: [{ label: 'Classes', to: 'classes' }],
+    crumbTitle: 'Edit class',
+    eyebrow: function (ctx) { return prog(cls(ctx)).name; },
+    title: 'Edit class',
+    sub: function (ctx) {
+      var c = cls(ctx);
+      var kids = roster(c);
+      return c.name + ' · ' + c.day + ' · ' + c.time + ' · ' + c.room + '. ' +
+        (kids.length
+          ? plural(kids.length, 'child holds a place', 'children hold a place') +
+            ', so changing the day, the hour or the room changes when they come — and their ' +
+            'families are told.'
+          : 'Nobody is enrolled yet, so nothing here reaches a family.');
+    },
+
+    actions: function (ctx) {
+      return [{ label: 'Open the class', to: 'classRecord', id: cls(ctx).id }];
+    },
+
+    body: function (ctx) {
+      var c = cls(ctx);
+      var v = held(c);
+      var kids = roster(c);
+      var fams = familiesOn(c);
+
+      var lead = kids.length
+        ? ui.notice({
+            kind: 'warn',
+            title: plural(fams.length, 'family is told when you save',
+                          'families are told when you save'),
+            text: 'The day, the hour and the room are the ones ' +
+              plural(kids.length, 'child comes', 'children come') +
+              ' to. Nothing they pay changes, and there is nothing for them to do.',
+            action: { label: 'See the roster', to: 'classRecord', id: c.id }
+          })
+        : '';
+
+      var body = ui.grid(null, questionCards(v, c)) +
+        '<div class="section">' + ui.grid(2, [priceCard(c.prog), changesCard(c)]) + '</div>' +
+        ui.formActions([
+          { label: 'Save changes', kind: 'primary',
+            msg: 'Saved · the change shows on the schedule and on every roster' },
+          { label: 'Cancel', to: 'classRecord', id: c.id }
+        ], {
+          sticky: true,
+          hint: c.staff === 'Unassigned'
+            ? 'The instructor you choose sees the class as soon as you save'
+            : (kids.length
+                ? plural(fams.length, 'family is told', 'families are told') + ' · nothing is billed'
+                : 'Nobody is enrolled, so nothing is sent')
+        });
+
+      return lead ? lead + '<div class="section">' + body + '</div>' : body;
+    }
+  };
+
+  Grove.screen('editClass', editDef);
 
   /* ---- cancel one session ---------------------------------------------------
      This was a small red button in a card header that fired a toast. It calls
