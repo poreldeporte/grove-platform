@@ -187,6 +187,23 @@
     return Grove.data.ROLES.filter(function (r) { return r.id === id; })[0] || Grove.role();
   };
 
+  /* Which clauses a programme currently carries. The dataset holds the default
+     for each programme type; the owner attaches or detaches on the programme
+     itself, and both the builder and Settings read the result here so they
+     cannot report different numbers. */
+  Grove.policyKey = function (programId, name) {
+    return 'pol-' + programId + '-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  };
+  Grove.policyOn = function (programId, name) {
+    var def = Grove.data.policiesFor(programId).indexOf(name) !== -1;
+    return Grove.toggle(Grove.policyKey(programId, name), def);
+  };
+  Grove.policiesFor = function (programId) {
+    return Grove.data.POLICY_ALL.filter(function (name) {
+      return Grove.policyOn(programId, name);
+    });
+  };
+
   /* --- text search helper -------------------------------------------------- */
 
   Grove.match = function (q) {

@@ -637,7 +637,66 @@
     };
   }
 
-  /* ---- the eight reports ----------------------------------------------------
+
+  /* ---- where families come from ---------------------------------------------
+     Restored. This was deleted during the rebuild because its headline figure
+     could not be checked and its rows rendered empty — the registration form
+     asks how a family heard about the studio, and Settings said the answers
+     were in Reports, but no field carried the answer. The field exists now
+     (FAMILIES.heardVia), so the report counts real rows. */
+
+  function acquisition() {
+    var tally = {};
+    D.FAMILIES.forEach(function (f) {
+      var k = f.heardVia || 'Not asked';
+      tally[k] = (tally[k] || 0) + 1;
+    });
+    var rows = Object.keys(tally).map(function (k) {
+      return { source: k, n: tally[k] };
+    }).sort(function (a, b) { return b.n - a.n; });
+
+    var total = D.FAMILIES.length;
+    var top = rows[0];
+    var paid = rows.filter(function (r) { return r.source === 'Instagram' || r.source === 'Google'; });
+    var paidN = paid.reduce(function (n, r) { return n + r.n; }, 0);
+
+    var table = ui.table(
+      ['How they found us', { label: 'Families', align: 'right' }, { label: 'Share', align: 'right' }],
+      rows.map(function (r) {
+        return { cells: [
+          '<span class="cell-strong">' + esc(r.source) + '</span>',
+          num(r.n),
+          num(pct(r.n, total))
+        ] };
+      })
+    );
+
+    return {
+      unit: 'families on the books',
+      value: String(total),
+      delta: top.source + ' brought ' + top.n,
+      find: top.source + ' is how ' + top.n + ' of ' + total + ' families found the studio (' +
+        pct(top.n, total) + '), which is more than any other route.',
+      read: paidN
+        ? 'Instagram and Google together brought ' + paidN + ' of ' + total + ' — the only two routes ' +
+          'that cost money, so they are the two worth measuring against what is spent on them.'
+        : 'Nothing here came from a paid route.',
+      act: 'The question is asked at the end of the registration form. It can be switched off under Settings → Policies.',
+      todo: null,
+      todoWhy: '',
+      steady: 'Answers are collected once, at registration, so this grows only when a family joins. ' +
+        'It says nothing about who stays — that is in Who is staying, and how long.',
+      counts: 'Every family on the books, by the answer they gave at registration.',
+      excludes: 'Nobody. All ' + total + ' families answered.',
+      table: table,
+      rows: rows.length,
+      rowNoun: 'routes',
+      footLabel: count(rows.length, 'route', 'routes'),
+      footValue: total + ' families'
+    };
+  }
+
+  /* ---- the reports ----------------------------------------------------
      `open` is the screen where the thing can actually be done, and it is the
      primary button on the report. It is not a menu of related pages. */
 
@@ -649,7 +708,8 @@
     { id: 'makeups',    cat: 'Make-ups',   title: 'Credits, and where they stand', open: { label: 'Open Requests', to: 'requests' }, build: makeups },
     { id: 'collection', cat: 'Payments',   title: 'Collection health',             open: { label: 'Open Billing',  to: 'billing' },  build: collection },
     { id: 'staffcost',  cat: 'Staff',      title: 'Hours and pay across the team', open: { label: 'Open Staff',    to: 'staff' },    build: staffCost },
-    { id: 'programs',   cat: 'Programs',   title: 'Which programs fill',           open: { label: 'Open Programs', to: 'programs' }, build: programs }
+    { id: 'programs',   cat: 'Programs',   title: 'Which programs fill',           open: { label: 'Open Programs', to: 'programs' }, build: programs },
+    { id: 'acquisition', cat: 'Marketing', title: 'Where families come from',      open: { label: 'Open Families', to: 'families' }, build: acquisition }
   ];
 
   function rep(ctx) {

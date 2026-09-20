@@ -53,14 +53,14 @@
   };
 
   var FAMILIES = [
-    { id: 'johnson',  name: 'Johnson',  guardian: 'Sabrina Moore',    email: 'sabrina.j@email.com',   phone: '(786) 340-1182', kids: 'Emma (8), Lucas (10)', balance: 18,  plan: '8 + 4 sessions / month',  status: 'Active',          since: 'Aug 2024',    autopay: true,  card: 'Visa ···1183 · exp 04/29' },
-    { id: 'okafor',   name: 'Okafor',   guardian: 'Ada Okafor',       email: 'ada.okafor@email.com',  phone: '(305) 771-4409', kids: 'Zara (11), Tobi (9)',  balance: 540, plan: '8 sessions / month',      status: 'Payment failed',  since: 'Sep 2025',    autopay: true,  card: 'Visa ···4417 · exp 11/27' },
-    { id: 'chen',     name: 'Chen',     guardian: 'Wei Chen',         email: 'wei.chen@email.com',    phone: '(786) 209-3318', kids: 'Mia (6)',              balance: 0,   plan: 'Summer camp · week 4',    status: 'Active',          since: 'Jun 2026',    autopay: false, card: 'Visa ···0091 · exp 02/28' },
-    { id: 'rivera',   name: 'Rivera',   guardian: 'Diego Rivera',     email: 'diego.rivera@email.com',phone: '(305) 442-8890', kids: 'Noah (7)',             balance: 0,   plan: '4 sessions / month',      status: 'Active',          since: 'Jan 2025',    autopay: true,  card: 'Visa ···7734 · exp 07/29' },
-    { id: 'smith',    name: 'Smith',    guardian: 'Karen Smith',      email: 'karen.smith@email.com', phone: '(786) 553-1207', kids: 'Ava (8)',              balance: 45,  plan: '4 sessions / month',      status: 'Past due',        since: 'Mar 2025',    autopay: true,  card: 'Mastercard ···9902 · exp 01/28' },
-    { id: 'martinez', name: 'Martinez', guardian: 'Isabel Martinez',  email: 'isabel.m@email.com',    phone: '(305) 118-7742', kids: 'Sophia (8)',           balance: 0,   plan: '12 sessions / month',     status: 'Active',          since: 'Aug 2023',    autopay: true,  card: 'ACH ···6620' },
-    { id: 'delgado',  name: 'Delgado',  guardian: 'Paloma Delgado',   email: 'p.delgado@email.com',   phone: '(786) 664-0031', kids: 'Iker (5), Luz (7)',    balance: 200, plan: 'Registered, not yet paid',status: 'Pending payment', since: '27 Jul 2026', autopay: false, card: 'None saved' },
-    { id: 'brennan',  name: 'Brennan',  guardian: 'Nora Brennan',     email: 'nora.b@email.com',      phone: '(305) 900-2214', kids: 'Cillian (12)',         balance: 0,   plan: 'Cancelling · ends 31 Aug',status: 'Cancelling',      since: 'Sep 2024',    autopay: true,  card: 'Amex ···2201 · exp 09/27' }
+    { id: 'johnson',  name: 'Johnson',  guardian: 'Sabrina Moore',    email: 'sabrina.j@email.com',   phone: '(786) 340-1182', kids: 'Emma (8), Lucas (10)', balance: 18,  plan: '8 + 4 sessions / month',  status: 'Active',          since: 'Aug 2024',    autopay: true,  card: 'Visa ···1183 · exp 04/29', heardVia: 'Word of mouth' },
+    { id: 'okafor',   name: 'Okafor',   guardian: 'Ada Okafor',       email: 'ada.okafor@email.com',  phone: '(305) 771-4409', kids: 'Zara (11), Tobi (9)',  balance: 540, plan: '8 sessions / month',      status: 'Payment failed',  since: 'Sep 2025',    autopay: true,  card: 'Visa ···4417 · exp 11/27', heardVia: 'Instagram' },
+    { id: 'chen',     name: 'Chen',     guardian: 'Wei Chen',         email: 'wei.chen@email.com',    phone: '(786) 209-3318', kids: 'Mia (6)',              balance: 0,   plan: 'Summer camp · week 4',    status: 'Active',          since: 'Jun 2026',    autopay: false, card: 'Visa ···0091 · exp 02/28', heardVia: 'Google' },
+    { id: 'rivera',   name: 'Rivera',   guardian: 'Diego Rivera',     email: 'diego.rivera@email.com',phone: '(305) 442-8890', kids: 'Noah (7)',             balance: 0,   plan: '4 sessions / month',      status: 'Active',          since: 'Jan 2025',    autopay: true,  card: 'Visa ···7734 · exp 07/29', heardVia: 'Word of mouth' },
+    { id: 'smith',    name: 'Smith',    guardian: 'Karen Smith',      email: 'karen.smith@email.com', phone: '(786) 553-1207', kids: 'Ava (8)',              balance: 45,  plan: '4 sessions / month',      status: 'Past due',        since: 'Mar 2025',    autopay: true,  card: 'Mastercard ···9902 · exp 01/28', heardVia: 'School flyer' },
+    { id: 'martinez', name: 'Martinez', guardian: 'Isabel Martinez',  email: 'isabel.m@email.com',    phone: '(305) 118-7742', kids: 'Sophia (8)',           balance: 0,   plan: '12 sessions / month',     status: 'Active',          since: 'Aug 2023',    autopay: true,  card: 'ACH ···6620', heardVia: 'Word of mouth' },
+    { id: 'delgado',  name: 'Delgado',  guardian: 'Paloma Delgado',   email: 'p.delgado@email.com',   phone: '(786) 664-0031', kids: 'Iker (5), Luz (7)',    balance: 200, plan: 'Registered, not yet paid',status: 'Pending payment', since: '27 Jul 2026', autopay: false, card: 'None saved', heardVia: 'Instagram' },
+    { id: 'brennan',  name: 'Brennan',  guardian: 'Nora Brennan',     email: 'nora.b@email.com',      phone: '(305) 900-2214', kids: 'Cillian (12)',         balance: 0,   plan: 'Cancelling · ends 31 Aug',status: 'Cancelling',      since: 'Sep 2024',    autopay: true,  card: 'Amex ···2201 · exp 09/27', heardVia: 'Walked past' }
   ];
 
   var STUDENTS = [
@@ -278,6 +278,25 @@
     'Drop-off & pick-up', 'Health & safety', 'Medical emergencies',
     'Payment terms', 'Release of liability', 'Agreement'
   ];
+  /* The wording behind each clause, so the editor has something real to edit
+     and a signature can point at a version. Kept short: a prototype needs
+     plausible text, not a legal review. */
+  var POLICY_TEXT = {
+    'Important facts': { version: 3, updated: '1 Jan 2026', body: 'We are an art studio, not a childcare provider. A child must be collected by an adult on their pick-up list. We are insured for the activities we run and for nothing else.' },
+    'Class scheduling': { version: 2, updated: '1 Jan 2026', body: 'A weekly place is held for the whole term. Days and times change only at the start of a term, and we give four weeks notice. If we have to close, the class comes back to you as a class to make up.' },
+    'Make-ups & cancellations': { version: 4, updated: '1 Jul 2026', body: 'Tell us at least 24 hours before a class and your child can take it another time. Inside 24 hours the class counts as attended. A class to make up expires at the end of the billing cycle and has no cash value.' },
+    'Drop-off & pick-up': { version: 2, updated: '1 Jan 2026', body: 'Doors open five minutes before the hour. We release a child only to an adult you have named. Collection more than ten minutes late is charged by the minute.' },
+    'Health & safety': { version: 3, updated: '3 Feb 2026', body: 'Tell us about every allergy, condition and medicine before the first class. Materials are non-toxic and age-appropriate. Clothes will get paint on them.' },
+    'Medical emergencies': { version: 3, updated: '3 Feb 2026', body: 'In an emergency we call you first, then the second contact on your account, then the emergency services. Staff do not administer medication of any kind. A child who carries an inhaler or an EpiPen keeps it with them.' },
+    'Payment terms': { version: 4, updated: '1 July 2026', body: 'Tuition is billed monthly on the 1st for the month ahead. A failed card is retried on days 1, 3 and 7. After a seven-day grace a $25 late fee applies. Thirty days notice to cancel, and fees are non-refundable — we credit rather than refund.' },
+    'Release of liability': { version: 2, updated: '1 Jan 2026', body: 'You accept the ordinary risks of a working art studio: hot kilns, sharp tools and permanent pigment. This does not limit our liability for our own negligence.' },
+    'Agreement': { version: 2, updated: '1 Jan 2026', body: 'Signing confirms that you have read these clauses, that the details on your account are accurate, and that you will tell us when they change.' },
+    'Food and snacks': { version: 1, updated: '2 Mar 2026', body: 'A full day includes a break. Send a snack and a labelled water bottle. We are a nut-free studio on camp days.' },
+    'Owner approval': { version: 1, updated: '12 May 2026', body: 'A private class is confirmed by the owner rather than booked automatically, so that the right instructor and room are free.' },
+    'Off-site hosting': { version: 1, updated: '12 May 2026', body: 'If we bring a class to you, the space, the tables and the water are yours to provide. Travel is quoted with the booking.' },
+    'Additional participants': { version: 1, updated: '12 May 2026', body: 'A private class is priced for the children named on the booking. Anyone joining on the day is charged at the per-child rate.' }
+  };
+
   var POLICY_BY_PROGRAM = {
     as:   { drop: [], add: [] },
     camp: { drop: ['Make-ups & cancellations', 'Class scheduling'], add: ['Food and snacks'] },
@@ -326,6 +345,23 @@
 
     POLICY_BASE: POLICY_BASE,
     POLICY_BY_PROGRAM: POLICY_BY_PROGRAM,
+    POLICY_TEXT: POLICY_TEXT,
+
+    /* Every clause that exists, base first then the programme-specific ones. */
+    POLICY_ALL: (function () {
+      var out = POLICY_BASE.slice();
+      Object.keys(POLICY_BY_PROGRAM).forEach(function (k) {
+        (POLICY_BY_PROGRAM[k].add || []).forEach(function (n) {
+          if (out.indexOf(n) === -1) out.push(n);
+        });
+      });
+      return out;
+    })(),
+
+    policy: function (name) {
+      var t = POLICY_TEXT[name] || {};
+      return { name: name, version: t.version || 1, updated: t.updated || '', body: t.body || '' };
+    },
 
     /* The policies attached to one programme, in signing order. */
     policiesFor: function (programId) {

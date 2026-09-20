@@ -402,6 +402,14 @@
     </section>`;
   };
 
+  /** A pill that can be switched on and off. @param {{label, on, act, id}} o */
+  C.pillToggle = function (o) {
+    return h`<button type="button" class="pill-toggle" aria-pressed="${!!o.on}"
+      data-act="${o.act}" data-id="${o.id}">
+      <span class="pill-toggle__mark">${raw(Grove.icon('check'))}</span>${o.label}
+    </button>`;
+  };
+
   /* --- empty ------------------------------------------------------------------------ */
 
   C.empty = function (title, text) {

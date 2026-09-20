@@ -98,6 +98,11 @@
     p16: 'Four 1-hour, two 2-hour, or mixed'
   };
 
+  Grove.on('togglePolicy', function (d) {
+    var id = Grove.state.params.id || 'as';
+    Grove.flip(Grove.policyKey(id, d.id), D.policiesFor(id).indexOf(d.id) !== -1);
+  });
+
   /* ---- small helpers ------------------------------------------------------- */
 
   function ids() { return Object.keys(D.PROGRAMS); }
@@ -473,21 +478,27 @@
       note: 'Written once in Settings. Only the rules that touch this program are listed.'
     }, ui.kv(ruleRows(id)));
 
-    /* This programme's own set, not a universal list. A camp leaves out the
-       two class-scheduling clauses and adds one; a private class adds three;
-       a birthday party is quoted from the enquiry and signs nothing. */
-    var attached = D.policiesFor(id);
+    /* Attach and detach on the programme itself. Every clause the studio has
+       is listed; the ones this programme carries are switched on. The default
+       comes from the programme type, so a camp starts without the two
+       class-scheduling clauses and a private class starts with three extra. */
+    var attached = Grove.policiesFor(id);
     var policies = ui.card({
       title: 'Required policies',
+      head: h`<span class="mute">${attached.length + ' of ' + D.POLICY_ALL.length + ' attached'}</span>`,
       note: attached.length
-        ? 'Every family on this program signs these once, and again when a version changes. ' +
-          'Which clauses a program carries is set by its type; the wording is the same everywhere it appears.'
-        : 'A birthday party is quoted from the enquiry, so there is nothing to sign.'
-    }, attached.length
-      ? h`<div class="inline">${raw(attached.map(function (name) {
-          return ui.pill(name, 'ok');
-        }).join(''))}</div>`
-      : ui.empty('No policies on this program', 'Nothing is signed for a quoted booking.'));
+        ? 'Tap a clause to attach or detach it. A family signs the set once, and again when one ' +
+          'of them is published as a new version. Open a clause from Settings to change its wording.'
+        : 'Nothing is attached, so a family books this program without signing anything. ' +
+          'That is right for a quoted booking and wrong for almost anything else.'
+    }, h`<div class="inline">${raw(D.POLICY_ALL.map(function (name) {
+      return ui.pillToggle({
+        label: name,
+        id: name,
+        act: 'togglePolicy',
+        on: Grove.policyOn(id, name)
+      });
+    }).join(''))}</div>`);
 
     return ui.grid(2, [identityCard(id), runs]) +
       '<div class="section">' + prices + '</div>' +

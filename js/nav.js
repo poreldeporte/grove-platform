@@ -109,6 +109,7 @@
     ledger: 'billing',
     newMessage: 'messages',
     programBuilder: 'programs',
+    policyDoc: 'settings',
     classRecord: 'classes',
     staffRecord: 'staff',
     studentRecord: 'families',

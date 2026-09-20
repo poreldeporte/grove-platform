@@ -464,23 +464,33 @@
       })
     ]));
 
-    var shared = [D.program('camp').short, D.program('nsd').short, D.program('pop').short].join(' · ');
-    var asCount = D.policiesFor('as').length;
-    var campCount = D.policiesFor('camp').length;
-    var privCount = D.policiesFor('priv').length;
+    /* The clauses themselves, which is where the wording lives. Which
+       programmes carry which is set on the programme; this is the library. */
+    var progIds = Object.keys(D.PROGRAMS);
+    function carriedBy(name) {
+      return progIds.filter(function (pid) { return Grove.policyOn(pid, name); });
+    }
 
     var docs = ui.card({
       title: 'Policy documents',
-      note: 'Which clauses each program carries is set by its type and listed on the program ' +
-        'itself. A camp leaves out ' + (asCount - campCount + 1) + ' of the after-school clauses and adds one; ' +
-        'a private class adds ' + (privCount - asCount) + ' on top of the full set. A new version is asked ' +
-        'for at the next sign-in and never blocks a child from attending.'
-    }, ui.kv([
-      row(D.program('as').name, asCount + ' policies'),
-      row(shared, campCount + ' policies'),
-      row(D.program('priv').name, privCount + ' policies'),
-      row(D.program('bday').name, 'None', null, 'mute')
-    ]));
+      flush: true,
+      note: 'Open one to change its wording. Publishing a new version asks every family who has ' +
+        'signed it to sign again at their next visit, and never blocks a child from attending. ' +
+        'Attach or detach a clause on the program itself.'
+    }, ui.rows(D.POLICY_ALL.map(function (name) {
+      var doc = D.policy(name);
+      var on = carriedBy(name);
+      return {
+        title: esc(name),
+        sub: esc('Version ' + doc.version + ' \u00b7 updated ' + doc.updated),
+        end: on.length
+          ? ui.mute(on.length === progIds.length
+              ? 'On every program'
+              : 'On ' + on.map(function (pid) { return D.program(pid).short; }).join(', '))
+          : ui.pill('Not in use'),
+        to: 'policyDoc', id: name
+      };
+    })));
 
     var form = ui.card({
       title: 'Registration form',
@@ -592,4 +602,67 @@
       bar(save('Saved — the next message that goes out uses the new wording'),
         'Nothing is sent while you edit. Changes reach the next message that goes out.');
   }
+  /* ---- one policy clause ----------------------------------------------------
+     Restored. It was deleted earlier in the rebuild because it rendered four
+     empty placeholder inputs under a title that never said which clause was
+     being edited — but the answer to an empty form is to fill it in, not to
+     remove the only place the wording can be changed. */
+
+  Grove.screen('policyDoc', {
+    surface: 'console',
+    crumbs: [{ label: 'Settings', to: 'settings' }],
+    crumbTitle: 'Policy',
+    title: function (ctx) { return D.policy(ctx.params.id || D.POLICY_ALL[0]).name; },
+    sub: function (ctx) {
+      var d = D.policy(ctx.params.id || D.POLICY_ALL[0]);
+      return 'Version ' + d.version + ', last changed ' + d.updated +
+        '. Families see this wording on the registration form and in their Documents.';
+    },
+    actions: [
+      { label: 'See who has signed', to: 'families' }
+    ],
+
+    body: function (ctx) {
+      var name = ctx.params.id || D.POLICY_ALL[0];
+      var doc = D.policy(name);
+      var progIds = Object.keys(D.PROGRAMS);
+      var on = progIds.filter(function (pid) { return Grove.policyOn(pid, name); });
+
+      var wording = ui.card({ title: 'Wording', fill: true }, ui.fields(null, [
+        ui.field({
+          label: 'What the family reads',
+          grow: true,
+          hint: 'Plain sentences. This is shown as written, with no heading added.',
+          control: ui.textarea({ value: doc.body })
+        })
+      ]));
+
+      var where = ui.card({
+        title: 'Where it applies',
+        note: 'A clause is attached or detached on the program itself, not here.'
+      }, ui.kv(progIds.map(function (pid) {
+        return {
+          k: D.program(pid).name,
+          v: Grove.policyOn(pid, name) ? 'Required' : 'Not attached',
+          tone: Grove.policyOn(pid, name) ? null : 'mute'
+        };
+      })));
+
+      var history = ui.card({ title: 'Version' }, ui.kv([
+        ['Current version', String(doc.version)],
+        ['Last changed', doc.updated],
+        { k: 'Signed by', v: on.length ? 'Every family on ' + on.length + ' of ' + progIds.length + ' programs' : 'Nobody \u2014 not in use', tone: on.length ? null : 'mute' }
+      ]));
+
+      return ui.grid('sidebar', [wording, ui.col([where, history])]) +
+        ui.formActions([
+          { label: 'Save wording', kind: 'primary', msg: 'Saved \u2014 version ' + doc.version + ' updated, nobody is asked to sign again' },
+          { label: 'Publish as version ' + (doc.version + 1), msg: 'Published \u2014 families sign this at their next visit' },
+          { label: 'Cancel', to: 'settings' }
+        ], {
+          sticky: true,
+          hint: 'Editing the wording leaves existing signatures alone. Publishing a new version asks for them again.'
+        });
+    }
+  });
 })();
