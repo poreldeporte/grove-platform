@@ -1,59 +1,62 @@
 /* Studio → Students, the child record, and the note form.
 
-   Fitted to Lauren Ortiz, the instructor: a tablet propped against a shelf,
-   twelve children in the room, three minutes between classes and clay on her
-   hands. She needs to know who has an allergy and what to do about it. She
-   does not need the studio's telemetry.
+   Fitted to Lauren Ortiz, the instructor: a tablet propped against a shelf, a
+   room full of children, three minutes between classes and clay on her hands.
+   She needs to know who has an allergy and what to do about it. She does not
+   need the studio's telemetry.
+
+   WHOSE CHILDREN THESE ARE
+   The children on the rolls of the classes she teaches. Every class whose
+   staff is the persona the shell hands in, D.roster(class) for each, a child
+   named once however many of her hours they are in. A child the office has
+   registered but not yet placed, or who is waiting for a seat, is on nobody's
+   roll and so is not on her screen: she meets a child in a room, and the
+   office's own screens carry the ones she will not meet yet.
 
    What this pass changed
-     - safety is the first thing on the page, on both tabs. "All children"
-       opens with a clay band naming every child with a medical alert and the
-       condition, and its button moves to the Safety tab. It was three taps
-       away before: read the table, spot a pill, open a child.
-     - the per-child attendance percentage is gone, from the list and from the
-       record. It is the owner's number and it is still on the owner's screen
-       (Console → Families → the child). A teacher taking a register does not
-       need telling that a child attends 96% of the time.
-     - the dense five-column table is two lists of large rows now, because the
-       finger tapping them may have clay on it. Age leads the row the way it
-       leads the register, so the two screens read alike.
-     - children who are not in a class — waitlisted, or registered and not yet
-       placed — are their own short list. Lauren will not meet them in a room,
-       and the table never said why they had no class.
-     - the conditions are followed immediately by what to do about one. The
-       procedure used to be the last card on the page and was written as
-       description ("An EpiPen travels with the child"). It is written as
-       instruction now and it carries the office number.
-     - the Safety tab's search box is gone. It filtered four rows.
-     - the note form is one question. Opened from a child it is a single box
-       with a sticky Save; opened from the list with nobody chosen it asks who
-       first, as large tap targets, and then asks the question. The inert
-       Student dropdown and the "About <child>" card beside it are gone — a
-       panel of age, class, family, safety and attendance is not needed to
-       write one sentence about the class that has just finished.
-     - "Take the register" on a child record opens that child's own class,
-       where the class can be identified at all.
+     - the roster is the join. Nothing here reads the free-text class sentence
+       on a child any more. The list, the register button, the safety lines,
+       the record and the note picker all go through D.roster and
+       D.classesOf, so a child cannot be shown against an hour they are not in
+       and a child in three classes says three.
+     - the list is her own rolls rather than every child on the books, and it
+       is grouped by age band, because two lists of twenty read where one
+       long list scrolls. A chip for each class she teaches narrows it to one
+       room, and the search still covers the lot.
+     - the note picker is searchable and grouped the same way. A whole roll of
+       tap targets needs a way in.
+     - "Not in a class yet" is gone with the children it held. It was a card
+       that existed to explain why a name had no class.
 
    Carried over from the earlier passes
-     - the rail item "Medical alerts" is this screen's second tab. One set of
-       facts, read from Grove.data, rather than two lists that disagreed.
+     - safety is the first thing on the page, on both tabs. "Your children"
+       opens with a clay band naming every child with a medical alert and the
+       condition, and its button moves to the Safety tab.
+     - the per-child attendance percentage is gone, from the list and from the
+       record. It is the owner's number and it is still on the owner's screen
+       (Console → Families → the child).
+     - rows are large, because the finger tapping them may have clay on it,
+       and age leads the row the way it leads the register.
+     - the conditions are followed immediately by what to do about one, and
+       the procedure is written as instruction with the office number on it.
+     - the Safety tab has no search box. It filtered a handful of rows.
+     - the note form is one question. Opened from a child it is a single box
+       with a sticky Save; opened with nobody chosen it asks who first.
      - a note's "Visible to" select stays dropped. Every note goes to the
        assigned staff and the office, which the screen says once, in words.
      - make-ups are counted off the D.MAKEUPS rows this screen lists, never
-       off STUDENTS.mk, so the count on screen is the count of the rows on
-       screen and a booked credit is not mistaken for a spare one.
+       off STUDENTS.mk, so a booked credit is not mistaken for a spare one.
 
-   Faked here, because Grove.data does not carry it
-     - a child's class is the free-text STUDENTS.cls. classOf() parses a day
-       and a start time out of it to find the CLASSES row. That resolves six
-       of the eleven children; the other five lose the register button rather
-       than link to the wrong class.
+   Written here, because Grove.data does not carry it
      - a condition carries no action plan, so every medical alert gets the
-       studio's standing rule, written here as copy.
-     - the two staff notes on a record are this file's own strings. Only the
-       author is read, from the persona and D.STAFF.
-     - "has started classes" is STUDENTS.att !== '—'. There is no attendance
-       record behind it. */
+       studio's standing rule, and the office number comes from D.STUDIO.
+     - the two staff notes on a record are this file's own sentences, picked
+       from a short set by the child's place in the dataset so a record reads
+       like itself. Only the author and the date are real, and the author is
+       read from the persona and D.STAFF.
+     - photo permission is a signed document, and D.DOCUMENTS holds one per
+       child it covers. The row appears on a record that has one, and says
+       nothing where there is nothing signed either way. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, esc = Grove.esc, D = Grove.data;
@@ -69,15 +72,31 @@
     'Expiring': 'bad'
   };
 
-  /* Small numbers read better as words in a sentence: "Three children have a
-     medical alert" is a fact, "3" is a statistic. */
+  /* Small numbers read better as words in a sentence: "Five children have a
+     medical alert" is a fact, "5" is a statistic. */
   var WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
                'eight', 'nine', 'ten', 'eleven', 'twelve'];
+
+  /* Staff notes. Two on every record, picked by the child's place in the
+     book, so a record reads like itself rather than like every other one. */
+  var FIRST_NOTES = [
+    'Loves the wheel — worth saving the front spot.',
+    'Works better standing than sitting. Give the tall bench.',
+    'Quick with a brush, slow to tidy. Start the clean-down early.',
+    'Asked to take the piece home wet. Showed them the drying rack.'
+  ];
+  var SECOND_NOTES = [
+    'Struggled with scoring — worth a second demo.',
+    'Needed the coil join shown twice before it held.',
+    'Sat with a new child all session without being asked.',
+    'Mixed a good secondary palette with no help at all.'
+  ];
 
   function word(n) { return WORDS[n] === undefined ? String(n) : WORDS[n]; }
   function cap(s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   function firstName(name) { return String(name).split(' ')[0]; }
+  function byName(a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); }
 
   function famByName(name) {
     return D.FAMILIES.filter(function (f) { return f.name === name; })[0] || D.FAMILIES[0];
@@ -85,43 +104,96 @@
   function stu(ctx) {
     return D.student(ctx.params.id) || D.STUDENTS[0];
   }
-  function flagged() {
-    return D.STUDENTS.filter(function (s) { return !!s.flag; });
+
+  /* ---- whose room this is -----------------------------------------------------
+     Never a literal. The shell hands the persona to every screen and the rail
+     shows the same person, so this screen and My classes cannot disagree
+     about whose week it is. */
+
+  function teacherName(ctx) {
+    var who = (ctx && ctx.persona) || Grove.persona('studio');
+    return (who && who.name) || '';
   }
-  function medical() {
-    return flagged().filter(function (s) { return s.flagKind === 'bad'; });
+  function myClasses(ctx) {
+    var name = teacherName(ctx);
+    return D.CLASSES.filter(function (c) { return c.staff === name; });
   }
-  function worthKnowing() {
-    return flagged().filter(function (s) { return s.flagKind !== 'bad'; });
+
+  /* The union of her rolls, a child once however many of her hours they are
+     in, alphabetical because she is looking a name up. */
+  function myChildren(ctx) {
+    var seen = {}, out = [];
+    myClasses(ctx).forEach(function (c) {
+      D.roster(c.id).forEach(function (s) {
+        if (!seen[s.id]) { seen[s.id] = true; out.push(s); }
+      });
+    });
+    return out.sort(byName);
   }
+
+  function flagged(ctx) {
+    return myChildren(ctx).filter(function (s) { return !!s.flag; });
+  }
+  function medical(ctx) {
+    return flagged(ctx).filter(function (s) { return s.flagKind === 'bad'; });
+  }
+  function worthKnowing(ctx) {
+    return flagged(ctx).filter(function (s) { return s.flagKind !== 'bad'; });
+  }
+
+  /* Brothers and sisters are read off the whole book, not off her rolls: a
+     sibling may well be in somebody else's hour. */
   function siblingsOf(s) {
     return D.STUDENTS.filter(function (k) { return k.family === s.family && k.id !== s.id; });
   }
 
-  /* STUDENTS.cls is a sentence, not a foreign key: "Mon 3:15pm · Studio 2",
-     but also "Waitlisted · Mon 3:15pm", "Camp week 4 · Clay Room", "Mon, Wed,
-     Thu" and "Not yet enrolled". A day and a start time are enough to find
-     the class record for six of the eleven children; the rest return nothing,
-     and the screen drops the register button rather than guess. */
-  function classOf(s) {
-    var head = String(s.cls).split(' · ')[0].split(' ');
-    var day = head[0];
-    var start = (head[1] || '').replace(/(am|pm)/i, '');
-    if (!start) return null;
-    return D.CLASSES.filter(function (c) {
-      return c.day === day && c.time.indexOf(start) === 0;
-    })[0] || null;
+  /* ---- naming a class ----------------------------------------------------------
+     '2:15–3:15pm' → '2:15pm'. Only the end of a range carries the meridiem in
+     this dataset, so a start time borrows it. */
+
+  function startTime(c) {
+    var parts = String(c.time).split('–');
+    var from = parts[0], to = parts[1] || '';
+    var mark = to.match(/(am|pm)$/i);
+    return /am|pm$/i.test(from) ? from : from + (mark ? mark[1] : '');
   }
 
-  /* A child the office has not placed in a class yet. Lauren will not meet
-     them in a room, so they are listed apart rather than mixed in. */
-  function inAClass(s) {
-    var c = String(s.cls);
-    return c.indexOf('Not yet enrolled') !== 0 && c.indexOf('Waitlisted') !== 0;
+  /* The way a teacher says a class: the day and the hour for a weekly class,
+     with the programme in front of it where the programme is the point, and
+     the class's own name for anything that runs all week — camp week 4 and
+     camp week 5 share a day, an hour and a room, and differ only by name. */
+  function classShort(c) {
+    var prog = D.program(c.prog);
+    /* A class that runs all week is known by its name — camp week 4 and camp
+       week 5 share a day, an hour and a room, and differ only there. */
+    if (String(c.day).indexOf('–') !== -1) {
+      var tail = c.name.split(' · ').pop();
+      return !prog || tail === c.name ? c.name : prog.short + ' ' + tail.toLowerCase();
+    }
+    var when = c.day + ' ' + startTime(c);
+    return c.prog === 'as' || !prog ? when : prog.short + ' · ' + when;
+  }
+  function classFull(c) { return classShort(c) + ' · ' + c.room; }
+
+  /* Every hour a child is in, named. D.classesOf is the join. */
+  function classText(s) {
+    var list = D.classesOf(s);
+    return list.length ? list.map(classShort).join(', ') : 'No class yet';
+  }
+  function classTextFull(s) {
+    return D.classesOf(s).map(classFull).join(', ');
   }
 
-  /* Photo permission is answered per child on the registration form, so it is
-     read from the child's own document in Grove.data, never assumed. */
+  /* The hour this teacher would take a register for. A child in two of her
+     hours gets the first of them; a child in none gets no button rather than
+     somebody else's register. */
+  function registerClass(ctx, s) {
+    var name = teacherName(ctx);
+    return D.classesOf(s).filter(function (c) { return c.staff === name; })[0] || null;
+  }
+
+  /* Photo permission is answered per child on the registration form and kept
+     as a signed document. Where there is one, it is the answer. */
   function photoDoc(s) {
     return D.DOCUMENTS.filter(function (d) {
       return d.name === 'Photo permission — ' + firstName(s.name);
@@ -141,8 +213,8 @@
     })[0];
   }
 
-  /* What to do, rather than what the flag says. The dataset holds one string
-     per child and no action plan, so a medical alert gets the studio's
+  /* What to do, rather than what the flag says. A child's record carries the
+     condition and no action plan, so a medical alert gets the studio's
      standing rule and a way of working gets the one line that matters. */
   function whatToDo(s) {
     if (s.flagKind === 'bad') {
@@ -158,14 +230,28 @@
     return f.guardian + ', ' + f.phone;
   }
 
-  function studentTabs() {
+  function studentTabs(ctx) {
     return {
       key: 'sStudents',
       items: [
-        { label: 'All children', count: D.STUDENTS.length },
-        { label: 'Safety', count: flagged().length }
+        { label: 'Your children', count: myChildren(ctx).length },
+        { label: 'Safety', count: flagged(ctx).length }
       ]
     };
+  }
+
+  /* Two lists of twenty read where one long list scrolls, and age is how a
+     teacher already thinks about a room. Groups come out youngest first. */
+  function bandGroups(list) {
+    var out = [];
+    list.forEach(function (s) {
+      var found = null;
+      out.forEach(function (g) { if (g.band === s.band) found = g; });
+      if (!found) { found = { band: s.band, kids: [], youngest: s.age }; out.push(found); }
+      found.kids.push(s);
+      if (s.age < found.youngest) found.youngest = s.age;
+    });
+    return out.sort(function (a, b) { return a.youngest - b.youngest; });
   }
 
   /* Cards down a page, each in its own grid row, with the standard gap. */
@@ -183,81 +269,84 @@
     surface: 'studio',
     eyebrow: 'the young artists',
     title: 'Students',
-    sub: 'Every child on the books, with the class and the safety flag you need at the door. ' + SAFETY_NOTE,
+    sub: 'Every child on your rolls, with the hours they are in and the safety flag you need at the door. ' + SAFETY_NOTE,
     actions: [
       { label: 'Add a note', kind: 'primary', to: 'sStudentNote' }
     ],
 
-    body: function () {
-      return Grove.tab('sStudents', 'All children') === 'Safety' ? safetyTab() : allTab();
+    body: function (ctx) {
+      return Grove.tab('sStudents', 'Your children') === 'Safety' ? safetyTab(ctx) : allTab(ctx);
     }
   });
 
   /* Named children and their conditions, in clay, above everything else on
      the page — not a badge on a tab and not a pill in the fourth column. */
-  function safetyBand() {
-    var list = medical();
+  function safetyBand(ctx) {
+    var list = medical(ctx);
     if (!list.length) return '';
 
     return ui.notice({
       kind: 'bad',
       title: list.length === 1
-        ? 'One child on the books has a medical alert'
-        : cap(word(list.length)) + ' children on the books have a medical alert',
+        ? 'One child you teach has a medical alert'
+        : cap(word(list.length)) + ' children you teach have a medical alert',
       text: list.map(function (s) { return s.name + ' — ' + s.flag; }).join('. ') + '.',
       action: { label: 'What to do', act: 'tab', 'tab-key': 'sStudents', 'tab-value': 'Safety' }
     });
   }
 
-  function allTab() {
+  function allTab(ctx) {
+    var kids = myChildren(ctx);
     var q = Grove.query('sStudentsAll');
 
-    var rows = D.STUDENTS.filter(function (s) {
-      return Grove.match(q, s.name, s.family, s.cls, s.flag);
+    /* One chip per class she teaches, named the way the class is named
+       everywhere else on this surface. */
+    var classes = myClasses(ctx);
+    var chips = ['All classes'].concat(classes.map(classShort));
+    var chosen = Grove.filter('sStudentsClass', chips[0]);
+
+    /* The chip is matched back to her own class record, so a chip means that
+       roll and not every class in the studio that happens to share a name. */
+    var only = null;
+    classes.forEach(function (c) { if (classShort(c) === chosen) only = c; });
+
+    var rows = kids.filter(function (s) {
+      var inChosen = !only || D.roster(only.id).indexOf(s) !== -1;
+      return inChosen && Grove.match(q, s.name, s.family, classText(s), s.flag);
     });
-    var here = rows.filter(inAClass);
-    var waiting = rows.filter(function (s) { return !inAClass(s); });
 
     function line(s) {
       return {
         lead: esc('Age ' + s.age),
         title: esc(s.name),
-        sub: esc(s.cls + ' · ' + s.family + ' family'),
+        sub: esc(classText(s) + ' · ' + s.family + ' family'),
         end: s.flag ? ui.pill(s.flag, s.flagKind) : '',
         to: 'sStudent', id: s.id
       };
     }
 
-    var cards = [];
-
-    if (!rows.length) {
-      cards.push(ui.card({ flush: true }, ui.empty('No children match', 'Clear the search and try again.')));
-    }
-    if (here.length) {
-      cards.push(ui.card({
-        title: 'In a class',
-        head: ui.pill(plural(here.length, 'child', 'children')),
+    var cards = bandGroups(rows).map(function (g) {
+      return ui.card({
+        title: 'Ages ' + g.band,
+        head: ui.pill(plural(g.kids.length, 'child', 'children')),
         flush: true
-      }, ui.rows(here.map(line))));
-    }
-    if (waiting.length) {
-      cards.push(ui.card({
-        title: 'Not in a class yet',
-        head: ui.pill(plural(waiting.length, 'child', 'children')),
-        flush: true,
-        note: 'Waitlisted, or registered and waiting for a place. You will not see them in a room until the office puts them in one.'
-      }, ui.rows(waiting.map(line))));
+      }, ui.rows(g.kids.map(line)));
+    });
+
+    if (!cards.length) {
+      cards.push(ui.card({ flush: true }, kids.length
+        ? ui.empty('No children match', 'Clear the search and try again.')
+        : ui.empty('No classes assigned to you yet', 'Your children appear here as soon as the office puts a class in your name.')));
     }
 
     var toolbar = ui.toolbar({
-      tabs: studentTabs(),
+      tabs: studentTabs(ctx),
       search: { key: 'sStudentsAll', placeholder: 'Search child, family, class…' },
-      count: q
-        ? rows.length + ' of ' + D.STUDENTS.length + ' children'
-        : plural(D.STUDENTS.length, 'child', 'children')
+      filters: classes.length > 1 ? { key: 'sStudentsClass', items: chips } : null,
+      count: plural(rows.length, 'child', 'children')
     });
 
-    var band = safetyBand();
+    var band = safetyBand(ctx);
     return band
       ? band + '<div class="section">' + toolbar + stacked(cards) + '</div>'
       : toolbar + stacked(cards);
@@ -266,9 +355,9 @@
   /* A medical alert and a way of working are different facts, so they are two
      groups rather than one stack of look-alike cards — and what to do sits
      between them, where it is read rather than scrolled past. */
-  function safetyTab() {
-    var urgent = medical();
-    var watch = worthKnowing();
+  function safetyTab(ctx) {
+    var urgent = medical(ctx);
+    var watch = worthKnowing(ctx);
     var proc = D.TRAINING.filter(function (t) { return t.name === 'Allergy and EpiPen procedure'; })[0];
 
     var alerts = urgent.length
@@ -280,14 +369,14 @@
           return ui.notice({
             kind: 'bad',
             title: s.name + ' — ' + s.flag,
-            text: 'In ' + s.cls + '. Emergency contact ' + contactOf(s) + '.',
+            text: 'In ' + classText(s) + '. Emergency contact ' + contactOf(s) + '.',
             action: { label: 'Open ' + firstName(s.name), to: 'sStudent', id: s.id }
           });
         }).join(''))
       : ui.card({
           title: 'Medical alerts',
           head: ui.pill('None', 'ok')
-        }, ui.empty('Nothing on file', 'No child on the books has an allergy, a condition or a medication recorded.'));
+        }, ui.empty('Nothing on file', 'No child on your rolls has an allergy, a condition or a medication recorded.'));
 
     var howTo = ui.card({
       title: 'If a child reacts',
@@ -317,14 +406,14 @@
              carries only the instruction and where to find the child. */
           return {
             title: esc(s.name + ' — ' + s.flag),
-            sub: esc('Set the room up for it before the doors open. ' + s.cls + ' · ' + contactOf(s) + '.'),
+            sub: esc('Set the room up for it before the doors open. ' + classText(s) + ' · ' + contactOf(s) + '.'),
             to: 'sStudent', id: s.id
           };
         })))
       : '';
 
     return ui.toolbar({
-      tabs: studentTabs(),
+      tabs: studentTabs(ctx),
       count: plural(urgent.length, 'medical alert', 'medical alerts') +
         (watch.length ? ' · ' + watch.length + ' more to know about' : '')
     }) + stacked([alerts, howTo, know]);
@@ -340,14 +429,14 @@
     title: function (ctx) { return stu(ctx).name; },
     sub: function (ctx) {
       var s = stu(ctx);
-      return 'Age ' + s.age + ' · ' + s.cls + ' · ' + s.family + ' family. ' + SAFETY_NOTE;
+      return 'Age ' + s.age + ' · ' + classText(s) + ' · ' + s.family + ' family. ' + SAFETY_NOTE;
     },
     actions: function (ctx) {
       var s = stu(ctx);
-      var c = classOf(s);
+      var c = registerClass(ctx, s);
       var list = [];
-      /* Only where the class record can be identified from STUDENTS.cls. A
-         button that opens somebody else's register is worse than no button. */
+      /* Only where one of her own hours holds this child. A button that opens
+         somebody else's register is worse than no button. */
       if (c) list.push({ label: 'Take the register', to: 'sAttendance', id: c.id });
       list.push({ label: 'Add a note', kind: 'primary', to: 'sStudentNote', id: s.id });
       return list;
@@ -356,9 +445,9 @@
     body: function (ctx) {
       var s = stu(ctx);
       var f = famByName(s.family);
-      var started = s.att !== '—';
       var kin = siblingsOf(s);
       var photo = photoDoc(s);
+      var hours = D.classesOf(s);
 
       /* Full width, above everything, and it answers the question she opened
          the record with: what do I do about this child. */
@@ -375,37 +464,54 @@
               '. Emergency contact ' + f.guardian + ', ' + f.phone + '.'
           });
 
-      var photoRow = photo
-        ? { k: 'Photographs', v: photo.signed ? 'Allowed' : 'Do not photograph', tone: photo.signed ? 'grove' : 'clay' }
-        : { k: 'Photographs', v: 'No form on file — ask the office', tone: 'mute' };
-
-      var about = ui.card({ title: 'About ' + firstName(s.name) }, ui.kv([
+      var kvRows = [
         ['Age', esc(s.age + ' · ages ' + s.band)],
-        ['Class', esc(s.cls)],
+        {
+          k: hours.length === 1 ? 'Class' : 'Classes',
+          v: esc(hours.length ? classTextFull(s) : 'No class yet'),
+          tone: hours.length ? null : 'mute'
+        },
         ['Family', esc(f.guardian + ' · ' + s.family + ' family')],
         kin.length
           ? {
               k: kin.length === 1 ? 'Brother or sister' : 'Brothers and sisters',
               v: esc(kin.map(function (k) { return k.name + ' · age ' + k.age; }).join(', '))
             }
-          : { k: 'Brothers and sisters', v: 'None on the books', tone: 'mute' },
-        photoRow
-      ]));
+          : { k: 'Brothers and sisters', v: 'None on the books', tone: 'mute' }
+      ];
+      /* Where a photo permission has been published for this child, it is the
+         answer and it belongs on the record. */
+      if (photo) {
+        kvRows.push({
+          k: 'Photographs',
+          v: photo.signed ? 'Allowed' : 'Do not photograph',
+          tone: photo.signed ? 'grove' : 'clay'
+        });
+      }
+
+      var about = ui.card({ title: 'About ' + firstName(s.name) }, ui.kv(kvRows));
 
       var me = (ctx && ctx.persona && ctx.persona.name) || Grove.persona('studio').name;
       var other = otherInstructor(me);
+      var seat = Math.max(0, D.STUDENTS.indexOf(s));
 
       var notes = ui.card({
         title: 'Notes from staff',
         head: ui.btn({ label: 'Add a note', kind: 'quiet', size: 'sm', to: 'sStudentNote', id: s.id }),
         flush: true,
         note: 'A note reaches the assigned staff and the office. Anything medical belongs on the safety record, where it travels with the child.'
-      }, started
-        ? ui.rows([
-            { lead: '24 Jul', title: esc(me), sub: esc('Loves the wheel — worth saving the front spot.') },
-            { lead: '17 Jul', title: esc(other ? other.name : me), sub: esc('Struggled with scoring — worth a second demo.') }
-          ])
-        : ui.empty('No notes yet', 'Notes appear here once this child has been in a class.'));
+      }, ui.rows([
+        {
+          lead: '24 Jul',
+          title: esc(me),
+          sub: esc(FIRST_NOTES[seat % FIRST_NOTES.length])
+        },
+        {
+          lead: '17 Jul',
+          title: esc(other ? other.name : me),
+          sub: esc(SECOND_NOTES[seat % SECOND_NOTES.length])
+        }
+      ]));
 
       /* Only where there is something to show. A make-up matters to a teacher
          for one reason: a child turning up in an hour that is not theirs. */
@@ -455,12 +561,12 @@
     sub: function (ctx) {
       return D.student(ctx.params.id)
         ? 'Say what happened and what the next teacher should do about it. It stays on the child’s record, with the assigned staff and the office.'
-        : 'Pick the child this is about.';
+        : 'Pick the child this is about. Every note reaches the assigned staff and the office, so there is no visibility setting to remember.';
     },
 
     body: function (ctx) {
       var s = D.student(ctx.params.id);
-      if (!s) return pickChild();
+      if (!s) return pickChild(ctx);
 
       var flagLine = s.flag
         ? ui.notice({
@@ -492,20 +598,38 @@
     }
   });
 
-  /* Eleven names, thumb-sized, with the class underneath and the flag beside
-     it — so a note about the wrong child is hard to start. */
-  function pickChild() {
-    return ui.grid(null, [ui.card({
-      title: 'Who is the note about?',
-      note: 'Every note reaches the assigned staff and the office. There is no visibility setting to remember.'
-    }, ui.choices(2, D.STUDENTS.map(function (k) {
-      return ui.choice({
-        id: k.id,
-        size: 'lg',
-        act: 'sNoteAbout',
-        title: k.name,
-        sub: k.cls + (k.flag ? ' · ' + k.flag : '')
-      });
-    })))]);
+  /* Her own children, thumb-sized, with the hours underneath and the flag
+     beside it — so a note about the wrong child is hard to start. Grouped by
+     age and searchable, because a whole roll is a lot of names to walk. */
+  function pickChild(ctx) {
+    var q = Grove.query('sNoteWho');
+    var kids = myChildren(ctx).filter(function (k) {
+      return Grove.match(q, k.name, k.family, classText(k));
+    });
+
+    var cards = bandGroups(kids).map(function (g) {
+      return ui.card({
+        title: 'Ages ' + g.band,
+        head: ui.pill(plural(g.kids.length, 'child', 'children'))
+      }, ui.choices(2, g.kids.map(function (k) {
+        return ui.choice({
+          id: k.id,
+          size: 'lg',
+          act: 'sNoteAbout',
+          title: k.name,
+          sub: classText(k) + (k.flag ? ' · ' + k.flag : '')
+        });
+      })));
+    });
+
+    if (!cards.length) {
+      cards.push(ui.card({ flush: true },
+        ui.empty('No children match', 'Clear the search and try again.')));
+    }
+
+    return ui.toolbar({
+      search: { key: 'sNoteWho', placeholder: 'Search child, family, class…' },
+      count: plural(kids.length, 'child', 'children')
+    }) + stacked(cards);
   }
 })();

@@ -23,10 +23,10 @@
        "Edit" on a post. There is a composer now. The mistake it exists to
        prevent is the audience, so the audience is the first thing on it, every
        option says how many families it reaches, the families are named down the
-       side, and the button reads "Post to 6 families".
+       side, and the button reads "Post to 68 families".
      - the composer offers an audience only for a program that has a family on
-       the roll. Six programs, four of them reaching nobody, is four dead
-       options on the one control that must not be got wrong.
+       the roll. No-School Day has nobody on it yet, and a dead option on the
+       one control that must not be got wrong is worse than no option.
      - the announcement's "Who sees it" card held three rows, two of which said
        the same thing about every announcement ever written: "Top of the family
        home screen" and "Sent by email — yes". A row whose answer never changes
@@ -50,6 +50,19 @@
      - both composers end in a sticky action bar, so "Send message" no longer
        sits below a card of conversations still waiting.
 
+   THIS PASS — the whole roll
+     - the audience is joined off the register. A child's classes come from
+       D.classesOf, not from reading the day and the hour back out of the
+       free-text line under their name, so a private lesson or a third class
+       counts towards the audience it belongs to.
+     - a studio-wide post now reaches 68 families, so "Who will get this" names
+       them under a count in the head of the card rather than a bare list you
+       have to reach the bottom of to know how long it is.
+     - the family picker on a new message is alphabetical. Sixty-eight families
+       in the order they joined is a list nobody can find a name in.
+     - a child in the thread sidebar shows the classes the register has them in
+       and, if they are in none, the class they are waiting for.
+
    KEPT DENSE ON PURPOSE
      Both tabs are tables and stay tables: six conversations and five posts read
      at a glance, one click to the one she wants. Pinned / Live / Scheduled
@@ -66,7 +79,6 @@
     Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
     Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12
   };
-  var DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   function thr(ctx) {
     var id = ctx.params.id;
@@ -129,13 +141,9 @@
 
   /* ---- who an audience reaches ---------------------------------------------
      An announcement is addressed either to every family or to the families of
-     one program, and PROGRAMS holds those names. Which families that is has to
-     be read off the roll, and the roll does not hold a link: a child's class is
-     the free-text line "Mon 3:15pm · Studio 2", so the class — and with it the
-     program — is recovered by matching the day, the hour and the room back
-     against CLASSES. Sophia Martinez's line names three days and no hour, so
-     she is matched on her age band. In a real schema this is one foreign key
-     and none of the code below exists. */
+     one program, and PROGRAMS holds those names. Which families that is comes
+     off the register: every child carries the classes they are in, so one pass
+     over the roll gives each family the programs it is actually on. */
 
   function audProgram(aud) {
     var hit = null;
@@ -145,48 +153,19 @@
     return hit;
   }
 
-  function classesOfStudent(s) {
-    var line = String(s.cls);
-    if (line.indexOf('Waitlisted') === 0 || line.indexOf('Not yet') === 0) return [];
-
-    var bits = line.split(' · ');
-    var head = bits[0], tail = bits[1] || '';
-    var room = /Studio|Room/.test(tail) ? tail : '';
-    var found = /(\d{1,2}:\d{2})/.exec(head);
-    var time = found ? found[1] : '';
-    var days = DAYS.filter(function (d) { return head.indexOf(d) !== -1; });
-
-    /* "Camp week 4 · Clay Room" names its class rather than a day. */
-    if (!days.length) {
-      var wk = /week (\d+)/i.exec(head);
-      if (!wk) return [];
-      return D.CLASSES.filter(function (c) {
-        return c.name.toLowerCase().indexOf('week ' + wk[1]) !== -1 &&
-               (!room || c.room === room);
+  /* family name -> the programs its children are enrolled in, built once. */
+  var BY_FAMILY = null;
+  function progsOfFamily(f) {
+    if (!BY_FAMILY) {
+      BY_FAMILY = {};
+      D.STUDENTS.forEach(function (s) {
+        var list = BY_FAMILY[s.family] || (BY_FAMILY[s.family] = []);
+        D.classesOf(s).forEach(function (c) {
+          if (list.indexOf(c.prog) === -1) list.push(c.prog);
+        });
       });
     }
-
-    var out = [];
-    days.forEach(function (d) {
-      var hit = D.CLASSES.filter(function (c) {
-        if (c.day !== d) return false;
-        if (time) return c.time.indexOf(time) === 0;
-        if (room) return c.room === room;
-        return c.band === s.band;
-      })[0];
-      if (hit && out.indexOf(hit) === -1) out.push(hit);
-    });
-    return out;
-  }
-
-  function progsOfFamily(f) {
-    var out = [];
-    kidsOf(f.name).forEach(function (s) {
-      classesOfStudent(s).forEach(function (c) {
-        if (out.indexOf(c.prog) === -1) out.push(c.prog);
-      });
-    });
-    return out;
+    return BY_FAMILY[f.name] || [];
   }
 
   /* Every family an audience lands on, counted off the roll rather than
@@ -325,17 +304,27 @@
     });
   }
 
-  /* One child, as the register has them: the class they are in, or the class
-     they are waiting for. Nothing here is typed by hand. */
+  /* One child, as the register has them: the classes they are in, or — if they
+     are in none — the class they are waiting for. Nothing here is typed by
+     hand and nothing is read out of a free-text line. */
+  function waitingFor(s) {
+    return D.WAITLIST.filter(function (w) { return w.child === s.name; })[0] || null;
+  }
   function childRow(s) {
-    var waiting = s.cls.indexOf('Waitlisted') === 0;
+    var classes = D.classesOf(s);
+    var waiting = classes.length ? null : waitingFor(s);
+    var line = classes.length
+      ? classes.map(function (c) { return c.day + ' ' + c.time; }).join(' · ')
+      : (waiting ? waiting.cls : 'Not yet enrolled');
+
     var end = '';
     if (waiting) end = ui.pill('Waitlist', 'warn');
     else if (s.flag) end = ui.pill(s.flag, s.flagKind === 'bad' ? 'bad' : 'warn');
     else if (s.mk) end = ui.mute(s.mk === 1 ? '1 make-up credit' : s.mk + ' make-up credits');
+
     return {
       title: esc(s.name),
-      sub: esc(s.cls),
+      sub: esc(line),
       end: end,
       to: 'studentRecord', id: s.id
     };
@@ -417,14 +406,19 @@
       var PICK = 'Choose a family';
       var unread = D.THREADS.filter(function (t) { return t.unread; });
 
+      /* Alphabetical: the whole roll is in this list, and the order families
+         joined the studio is no help at all in finding one of them. */
+      var names = D.FAMILIES.map(function (f) { return f.name + ' family'; }).sort();
+
       var to = ui.card({
         title: 'To',
         note: 'It arrives in the family portal under Messages.'
       }, ui.field({
         label: 'Family',
+        hint: families(D.FAMILIES.length) + ' on the roll, in alphabetical order.',
         control: ui.select({
           value: PICK,
-          options: [PICK].concat(D.FAMILIES.map(function (f) { return f.name + ' family'; }))
+          options: [PICK].concat(names)
         })
       }));
 
@@ -543,12 +537,15 @@
         })
       ]));
 
-      /* Named, not counted. Seeing one family under "Seasonal Camp" is what
-         stops studio-wide news going out to a single family, and the other way
-         round. No note on this card: it is the one card on the page whose
-         length is out of the composer's hands, so nothing is pinned under it. */
+      /* Named as well as counted. Seeing one family under "Private Class" is
+         what stops studio-wide news going out to a single family, and the other
+         way round — but the whole roll is 68 names, so the count sits in the
+         head where it can be read without reaching the bottom of the list. No
+         note on this card: it is the one card on the page whose length is out
+         of the composer's hands, so nothing is pinned under it. */
       var reach = ui.card({
         title: 'Who will get this',
+        head: ui.pill(families(who.length)),
         flush: true
       }, who.length
         ? ui.rows(who.map(function (f) {
@@ -599,13 +596,13 @@
       var a = ann(ctx);
       if (!isPosted(a)) {
         return [
-          { label: 'Discard', kind: 'danger', msg: 'Prototype — nothing was discarded' },
+          { label: 'Discard', kind: 'danger', msg: 'Discarded — no family had seen it' },
           { label: 'Edit', to: 'newAnnouncement', id: a.id }
         ];
       }
       var pinned = a.status === 'Pinned';
       return [
-        { label: 'Take down', kind: 'danger', msg: 'Prototype — nothing was taken down' },
+        { label: 'Take down', kind: 'danger', msg: 'Taken down — the email stays sent' },
         { label: pinned ? 'Unpin' : 'Pin to top', msg: pinned ? 'Unpinned' : 'Pinned to the top of the home screen' },
         { label: 'Edit', kind: 'primary', to: 'newAnnouncement', id: a.id }
       ];
@@ -641,7 +638,8 @@
           ? 'It sits at the top of those home screens and it emailed them once. Taking it down clears the home screens; the email stays sent.'
           : 'Nothing sends this on its own. It reaches those families when you post it, and discarding it now tells nobody, because nobody has seen it.'
       }, ui.kv([
-        ['Audience', esc(a.aud) + ' · ' + families(who.length)],
+        ['Audience', esc(a.aud)],
+        ['Families it reaches', families(who.length)],
         { k: 'Status', v: ui.pill(a.status, ANN_KIND[a.status]) },
         ['Written by', esc(a.by)]
       ]));

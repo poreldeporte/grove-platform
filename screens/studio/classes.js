@@ -11,10 +11,9 @@
 
    Cut in this pass
      - the five stat tiles above the register — Enrolled / On the register /
-       Marked / Present / Absent. Five tiles of telemetry stood above a list
-       of two children. Marked and unmarked are now a line in the save bar,
-       counted from the rows; enrolled against capacity is the owner's number
-       and is gone
+       Marked / Present / Absent. Five tiles of telemetry stood above the list.
+       Marked and unmarked are now a line in the save bar, counted from the
+       rows; enrolled against capacity is the owner's number and is gone
      - every capacity figure on My classes: "18 of 20", "12 of 12 · 3
        waiting", "1 place left", "Full", and the meter under each one. A
        teacher taking a register does not act on any of them
@@ -26,8 +25,18 @@
        on today, then the rest of the week
      - the family name on the register row, to keep the row to one line of
        state. It is on the child's own record, one tap away
+     - the line under the register explaining that the list was shorter than
+       the room. It is not. The register is the class.
 
    Changes this pass
+     - the roll is a join, not a guess. A child's record carries the classes
+       that child is in, so the roster comes from D.roster(c.id) and a child's
+       own hours from D.classesOf. Nothing here reads a placement out of the
+       free-text line on a child's record any more
+     - a camp register is eighteen children, so the list is in name order —
+       at that length she is looking for one name, not reading top to bottom —
+       and the card head carries how many children are in the room, counted
+       off the rows beneath it
      - safety is the first thing on both screens, in clay, by name, with the
        condition spelled out. On My classes it also says which of her hours
        each child is in, grouped so a child in two of her classes is named
@@ -54,15 +63,9 @@
 
    Every figure is derived from the rows on screen or read from Grove.data;
    nothing is written down. Whose classes these are comes from ctx.persona, so
-   this screen and Today can never disagree about whose week this is.
-
-   What is the spec's, not the dataset's
-     - which children hold a camp week 4 record (by child id). Nothing in
-       Grove.data joins a child to a class. Which camp room takes each of them
-       is still derived from the age band on the room, so a child cannot
-       appear on a register the class is not for.
-   Everything else — names, ages, safety flags, rooms, hours, lesson plans —
-   is read from Grove.data. */
+   this screen and Today can never disagree about whose week this is. Names,
+   ages, safety flags, rooms, hours, rolls and lesson plans all come from
+   Grove.data — there is no list of children in this file. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -70,13 +73,6 @@
   var TODAY_DAY = 'Tue';                    /* Grove.data.today — Tuesday 28 July 2026 */
   var TODAY_DATE = '28 Jul 2026';
   var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  /* The children the prototype holds a camp week 4 record for, by child id.
-     The same list Today uses, for the same reason: nothing in the dataset
-     joins a child to a class. Which camp room takes each of them is worked
-     out below from the band on the room, never written down here. */
-  var CAMP_WEEK = 'week 4';
-  var CAMP_CHILDREN = ['mia', 'emma', 'noah', 'sophia', 'iker', 'zara'];
 
   /* ---- words ----------------------------------------------------------------
      A sentence reads faster than a tile. "Three children you teach have an
@@ -175,62 +171,13 @@
   }
 
   /* ---- who is in the room ----------------------------------------------------
-     A child's placement is free text on their own record ("Mon 3:15pm · Studio
-     2", "Camp week 4 · Clay Room", "Mon, Wed, Thu"), so membership is matched
-     on the signals that string carries. Same rules as Today and Console →
-     Classes, so a child is on the same rosters in every portal. */
+     The roll is held on the children: each child's record carries the classes
+     that child is in, and D.roster hands back the class's children. Read in
+     name order, because a register of eighteen is scanned for one name rather
+     than read from the top. */
 
-  function enrolled(s) {
-    return s.cls.indexOf('Waitlisted') === -1 && s.cls.indexOf('Not yet enrolled') === -1;
-  }
-  function weekOf(name) {
-    var m = /week \d+/.exec(String(name).toLowerCase());
-    return m ? m[0] : null;
-  }
-
-  /* '2:15–3:15pm' → '2:15pm', the form a child's record writes. */
-  function startTime(c) {
-    var parts = String(c.time).split('–');
-    var a = String(parts[0] || '').toLowerCase();
-    if (a.indexOf('am') !== -1 || a.indexOf('pm') !== -1) return a;
-    var b = String(parts[1] || '').toLowerCase();
-    return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
-  }
-
-  function onRoster(c, s) {
-    if (!enrolled(s)) return false;
-
-    var text = String(s.cls).toLowerCase();
-    if (String(c.name).toLowerCase().indexOf(String(s.name).toLowerCase()) !== -1) return true;
-
-    var roomHit = text.indexOf(String(c.room).toLowerCase()) !== -1;
-    var dayHit = dayTokens(c).filter(function (d) {
-      return text.indexOf(d.toLowerCase()) !== -1;
-    }).length > 0;
-    if (!dayHit) return false;
-
-    /* A child recorded by days alone joins any class on one of those days in
-       their own age band. */
-    if (text.indexOf('·') === -1) return s.band === c.band;
-
-    return roomHit || text.indexOf(startTime(c)) !== -1;
-  }
-
-  /* Camp runs Mon–Fri in two rooms at once, so a weekday proves nothing about
-     which room a child is in — the age band does. A camp room takes the
-     children of its own week who are enrolled and in the band the room
-     advertises. */
-  function campRoster(c) {
-    if (weekOf(c.name) !== CAMP_WEEK) return [];
-    return CAMP_CHILDREN
-      .map(function (id) { return D.student(id); })
-      .filter(function (s) { return s && enrolled(s) && s.band === c.band; });
-  }
-
-  function roster(c) {
-    if (weekOf(c.name)) return campRoster(c);
-    return D.STUDENTS.filter(function (s) { return onRoster(c, s); });
-  }
+  function byName(a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); }
+  function roster(c) { return D.roster(c.id).sort(byName); }
 
   function flagged(list, kind) {
     return list.filter(function (s) { return s.flagKind === kind; });
@@ -347,7 +294,7 @@
       var onToday = today.length
         ? ui.card({ title: 'Today', flush: true }, ui.rows(today.map(function (c) {
             var plan = planFor(ctx, c);
-            var bits = [c.room];
+            var bits = [c.room, plural(roster(c).length, 'child', 'children')];
             if (spansWeek(c)) bits.push('every day this week');
             if (plan) bits.push(plan.lesson);
             else if (oneToOne(c)) bits.push('one to one');
@@ -367,7 +314,7 @@
         flush: true
       }, rest.length
         ? ui.rows(rest.map(function (c) {
-            var bits = [c.room];
+            var bits = [c.room, plural(roster(c).length, 'child', 'children')];
             if (oneToOne(c)) bits.push('one to one');
             return {
               lead: ui.timechip(dayChip(c)),
@@ -400,13 +347,21 @@
   }
 
   /* One entry per child, carrying every one of her hours that child is in, so
-     Sophia Martinez is named once and not once per class. */
+     Sophia Martinez is named once and not once per class. The child's own
+     classes come from the dataset; only the ones this teacher takes are
+     named, because those are the hours she is responsible for. */
   function byChild(classes, kind) {
-    var order = [], seen = {};
+    var order = [], seen = {}, teaches = {};
+    classes.forEach(function (c) { teaches[c.id] = true; });
     classes.forEach(function (c) {
       flagged(roster(c), kind).forEach(function (s) {
-        if (!seen[s.id]) { seen[s.id] = { who: s, when: [] }; order.push(seen[s.id]); }
-        seen[s.id].when.push(dayTokens(c).join('–') + ' ' + startOf(c.time));
+        if (!seen[s.id]) {
+          seen[s.id] = { who: s, when: [] };
+          order.push(seen[s.id]);
+          D.classesOf(s).forEach(function (k) {
+            if (teaches[k.id]) seen[s.id].when.push(dayTokens(k).join('–') + ' ' + startOf(k.time));
+          });
+        }
       });
     });
     return order;
@@ -470,27 +425,27 @@
           })
         : '';
 
-      /* Said once, quietly, under the list, and derived from it rather than
-         written down. The prototype holds records for two of the eighteen. */
       var lines = [];
       if (!runsOn(c, TODAY_DAY)) lines.push('This class does not run today.');
-      if (people.length < c.en) {
-        lines.push('The prototype holds records for ' + people.length + ' of the ' + c.en +
-          ' children enrolled, so this list is shorter than the room.');
-      }
       lines.push('If a child is here and not on the list, tell the office and they will add them.');
+
+      /* How many are in the room, counted off the rows beneath it, beside the
+         button she taps first. On a register of eighteen the number is what
+         tells her whether she is looking at the whole class. A one-to-one
+         lesson has nothing to count and nothing to mark in bulk. */
+      var head = people.length > 1
+        ? '<div class="inline">' +
+            ui.pill(plural(people.length, 'child', 'children')) +
+            ui.btn({ label: 'Everyone is here', act: 'sMarkAll', cid: c.id }) +
+          '</div>'
+        : '';
 
       var register = ui.card({
         /* The card head carries the date being marked, so the page title can
            say what the screen is and the card can say which sitting it is. */
         title: runsOn(c, TODAY_DAY) ? D.today : c.day + ' · ' + c.time,
         flush: true,
-        /* With the list, not in the page header: the common case is that
-           everybody came except one. A one-to-one lesson has nothing to mark
-           in bulk, so it does not get the button. */
-        head: people.length > 1
-          ? ui.btn({ label: 'Everyone is here', act: 'sMarkAll', cid: c.id })
-          : '',
+        head: head,
         note: lines.join(' ')
       }, people.length
         ? ui.rows(people.map(function (s) {

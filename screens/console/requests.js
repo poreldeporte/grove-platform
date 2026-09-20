@@ -52,6 +52,14 @@
    value, the free places, and the sentence explaining why a credit cannot be
    placed.
 
+   Occupancy is counted off the roll itself — D.roster(id).length — rather than
+   read from a number sitting on the class record, and a queue row is joined to
+   its class on the class's own day and start time, the key the dataset counts
+   the queue with. Queue, roll and the "12 of 12" on the row are one fact seen
+   three times. The child card lists the classes the child is actually in, from
+   D.classesOf, instead of the free-text line on the record. A result count
+   only says "n of m" while a search is narrowing the list.
+
    Noted for the rebuild: Supplies is a staff purchasing queue sitting in a
    screen otherwise made of family queues. It belongs under Inventory beside
    the stock it moves. It is left here because Inventory links into this tab
@@ -169,32 +177,44 @@
     return hit;
   }
 
-  /* Day plus either the start time or the age band, the way Classes does it.
-     Nobody waits on a camp week, so those are skipped. */
+  /* A queue row names its class the way the timetable prints it — "Mon 3:15pm ·
+     Ages 8–11" — so it is joined on the class's own day and start time, which
+     is the key the dataset counts a class's queue with. The join is exact: a
+     row cannot land on an hour the studio does not run, and the queue on the
+     class record and the rows here are the same rows. */
+  function classKey(c) { return c.day + ' ' + String(c.time).split('–')[0]; }
+
   function queueClass(w) {
-    var text = String(w.cls).toLowerCase();
+    var text = String(w.cls);
     var hit = null;
     D.CLASSES.forEach(function (c) {
-      if (hit) return;
-      if (/week \d/.test(String(c.name).toLowerCase())) return;
-      if (!mentionsDay(text, c)) return;
-      if (text.indexOf(startTime(c)) !== -1 ||
-          text.indexOf('ages ' + String(c.band).toLowerCase()) !== -1) hit = c;
+      if (!hit && text.indexOf(classKey(c)) === 0) hit = c;
     });
     return hit;
   }
 
-  function freePlaces(c) { return c ? Math.max(0, c.cap - c.en) : 0; }
+  /* Occupancy is the roll, counted. A class cannot show a number its roster
+     has no children for. */
+  function enrolled(c) { return c ? D.roster(c.id).length : 0; }
+
+  function freePlaces(c) { return c ? Math.max(0, c.cap - enrolled(c)) : 0; }
 
   function placeNote(c) {
-    var held = c.en + ' of ' + c.cap;
-    if (c.en > c.cap) return held + ' · over by ' + (c.en - c.cap);
-    if (c.en === c.cap) return held + ' · full';
-    var free = c.cap - c.en;
+    var on = enrolled(c);
+    var held = on + ' of ' + c.cap;
+    if (on > c.cap) return held + ' · over by ' + (on - c.cap);
+    if (on === c.cap) return held + ' · full';
+    var free = c.cap - on;
     return held + ' · ' + (free === 1 ? '1 place free' : free + ' places free');
   }
 
   function hourOf(c) { return c.day + ' ' + startTime(c); }
+
+  /* One class names its room too; several would run off the line. */
+  function classLine(list) {
+    if (list.length === 1) return hourOf(list[0]) + ' · ' + list[0].room;
+    return list.map(hourOf).join(' · ');
+  }
 
   /* A place can only be offered to the head of a queue whose class has room. */
   function offerable(w) { return w.pos === 1 && freePlaces(queueClass(w)) > 0; }
@@ -235,21 +255,24 @@
   function askedFor(m) { return String(m.reason).replace(/^Requested\s+/, ''); }
   function missReason(m) { return isRequest(m) ? '' : String(m.reason); }
 
-  /* The hour named in "Requested Fri 31 Jul, 10:00am", matched to a class the
-     same way the queue is matched. Where two classes share an hour, the one in
-     the child's age band wins, so a mismatch can still be reported. */
+  /* The hour named in "Requested Fri 31 Jul, 10:00am", matched to the classes
+     that run at it. Several can: both camp weeks run Mon–Fri at 10:00am. The
+     child's own age band decides between them, and among those the one with a
+     place, so "full" is only reported when every class at that hour is. */
   function askedClass(m) {
     var text = askedFor(m).toLowerCase();
     if (!text) return null;
     var band = bandOf(m).toLowerCase();
-    var any = null, onBand = null;
+    var any = null, onBand = null, open = null;
     D.CLASSES.forEach(function (c) {
       if (!mentionsDay(text, c)) return;
       if (text.indexOf(startTime(c)) === -1) return;
       if (!any) any = c;
-      if (!onBand && String(c.band).toLowerCase() === band) onBand = c;
+      if (String(c.band).toLowerCase() !== band) return;
+      if (!onBand) onBand = c;
+      if (!open && freePlaces(c) > 0) open = c;
     });
-    return onBand || any;
+    return open || onBand || any;
   }
 
   /* Every weekly hour the child's own age band can be placed into. */
@@ -267,7 +290,7 @@
     var list = bandClasses(m);
     if (!list.length) return String(m.booked);
     return 'every ages ' + bandOf(m) + ' hour is full — ' + list.map(function (c) {
-      return hourOf(c) + ' ' + c.en + ' of ' + c.cap;
+      return hourOf(c) + ' ' + enrolled(c) + ' of ' + c.cap;
     }).join(', ');
   }
 
@@ -291,7 +314,7 @@
       }
       if (freePlaces(c) < 1) {
         return { state: NEEDS, code: 'full', head: 'Class full', cls: c,
-                 why: hourOf(c) + ' is full at ' + c.en + ' of ' + c.cap };
+                 why: hourOf(c) + ' is full at ' + enrolled(c) + ' of ' + c.cap };
       }
       return { state: CONFIRMED, code: 'auto', cls: c, auto: true,
                why: 'a place was free and the age band matched' };
@@ -336,19 +359,17 @@
     return best;
   }
 
-  function queueClasses(list) {
-    var seen = [];
-    list.forEach(function (w) { if (seen.indexOf(w.cls) === -1) seen.push(w.cls); });
-    return seen;
-  }
-
+  /* Counted on the class the rows join to, not on the wording they were typed
+     with, so one queue cannot read as two. */
   function longestQueue(list) {
     var counts = {}, best = null;
     list.forEach(function (w) {
-      counts[w.cls] = (counts[w.cls] || 0) + 1;
-      if (!best || counts[w.cls] > counts[best]) best = w.cls;
+      var c = queueClass(w);
+      var key = c ? c.id : w.cls;
+      counts[key] = (counts[key] || 0) + 1;
+      if (!best || counts[key] > counts[best.key]) best = { key: key, cls: w.cls };
     });
-    return best ? { cls: best, n: counts[best] } : null;
+    return best ? { cls: best.cls, n: counts[best.key] } : null;
   }
 
   /* A tab count is how many rows that tab shows, so it always agrees with the
@@ -447,7 +468,10 @@
               })
             : '');
         }
-        return { cells: cells };
+        var row = { cells: cells };
+        /* The row joins to a real class, so it opens that class's roll. */
+        if (c) { row.to = 'classRecord'; row.id = c.id; }
+        return row;
       }),
       { emptyTitle: 'No one matches', emptyText: 'Clear the search to see the whole queue.' }
     );
@@ -474,14 +498,18 @@
       {
         label: 'Longest queue',
         value: long ? String(long.n) : '0',
-        sub: long ? 'children waiting for ' + long.cls : 'nobody is waiting'
+        sub: long
+          ? (long.n === 1 ? 'child waiting for ' : 'children waiting for ') + long.cls
+          : 'nobody is waiting'
       }
     ]);
 
     var toolbar = ui.toolbar({
       tabs: requestTabs(),
       search: { key: 'waitlist', placeholder: 'Search child or family…' },
-      count: rows.length + ' of ' + D.WAITLIST.length + ' entries'
+      count: rows.length === D.WAITLIST.length
+        ? plural(rows.length, 'child waiting', 'children waiting')
+        : rows.length + ' of ' + D.WAITLIST.length + ' waiting'
     });
 
     var note = canOffer
@@ -541,7 +569,7 @@
         { label: 'Message', size: 'sm', to: 'newMessage' }
       ]);
     }
-    var over = v.cls ? (v.cls.en + 1) : 0;
+    var over = enrolled(v.cls) + 1;
     return ui.btns([
       { label: 'Decline', size: 'sm', msg: 'Declined · ' + m.child + ' keeps the credit until ' + m.expires },
       {
@@ -620,7 +648,9 @@
     var toolbar = ui.toolbar({
       tabs: requestTabs(),
       search: { key: 'makeups', placeholder: 'Search child…' },
-      count: rows.length + ' of ' + D.MAKEUPS.length + ' credits'
+      count: rows.length === D.MAKEUPS.length
+        ? plural(rows.length, 'credit', 'credits')
+        : rows.length + ' of ' + D.MAKEUPS.length + ' credits'
     });
 
     var rule = 'A request confirms itself when the hour the family asked for has a free place ' +
@@ -706,7 +736,7 @@
       {
         label: 'Waiting on you',
         value: String(pend.length),
-        sub: 'of ' + plural(rows.length, 'request', 'requests'),
+        sub: pend.length ? 'to approve or decline' : 'the queue is clear',
         tone: pend.length ? 'plum' : null
       },
       {
@@ -727,7 +757,9 @@
     var toolbar = ui.toolbar({
       tabs: requestTabs(),
       search: { key: 'supplies', placeholder: 'Search request…' },
-      count: rows.length + ' of ' + D.SUPPLY_REQUESTS.length + ' requests'
+      count: rows.length === D.SUPPLY_REQUESTS.length
+        ? plural(rows.length, 'request', 'requests')
+        : rows.length + ' of ' + D.SUPPLY_REQUESTS.length + ' requests'
     });
 
     var note = 'Reorder points and the full stock list live under Inventory. A count only changes ' +
@@ -830,7 +862,7 @@
     if (v.code === 'full') {
       return [
         ['The hour', esc(hourOf(c) + ' · ' + c.room)],
-        { k: 'Places', v: esc(c.en + ' of ' + c.cap + ' — full'), tone: 'clay' },
+        { k: 'Places', v: esc(enrolled(c) + ' of ' + c.cap + ' — full'), tone: 'clay' },
         ['Age band', esc('ages ' + c.band + ' · matches')],
         ['Instructor', esc(c.staff)]
       ];
@@ -866,7 +898,7 @@
     var c = v.cls;
     if (v.code === 'full') {
       return [
-        { k: 'Roster', v: esc(hourOf(c) + ' goes to ' + (c.en + 1) + ' children'), tone: 'clay' },
+        { k: 'Roster', v: esc(hourOf(c) + ' goes to ' + (enrolled(c) + 1) + ' children'), tone: 'clay' },
         ['Room', esc(c.room + ' is set for ' + c.cap)],
         ['Instructor', esc(c.staff + ' is not asked first')],
         ['Credit', 'Marked used'],
@@ -876,7 +908,7 @@
     if (v.code === 'band') {
       return [
         { k: 'Age band', v: esc('an ages ' + bandOf(m) + ' child joins an ages ' + c.band + ' hour'), tone: 'clay' },
-        ['Roster', esc(hourOf(c) + ' goes to ' + (c.en + 1) + ' children')],
+        ['Roster', esc(hourOf(c) + ' goes to ' + (enrolled(c) + 1) + ' children')],
         ['Credit', 'Marked used'],
         ['Family', 'Emailed a confirmation']
       ];
@@ -954,7 +986,7 @@
       title: 'Why it did not need you',
       note: 'Only a full class, the wrong age band, a credit that has run out, or an hour nothing runs at come to you.'
     }, ui.kv([
-      ['Free place', esc(c.en + ' of ' + c.cap + ' before the placement')],
+      ['Free place', esc(enrolled(c) + ' of ' + c.cap + ' before the placement')],
       ['Age band', esc('ages ' + c.band + ' · the child is ages ' + bandOf(m))],
       ['Decided by', 'The studio rule, not a person'],
       ['Family', 'Emailed the confirmation']
@@ -1031,13 +1063,13 @@
           label: 'Add anyway',
           kind: 'primary',
           msg: v.code === 'full'
-            ? m.child + ' added · ' + hourOf(c) + ' now holds ' + (c.en + 1) + ' in a room set for ' + c.cap
+            ? m.child + ' added · ' + hourOf(c) + ' now holds ' + (enrolled(c) + 1) + ' in a room set for ' + c.cap
             : m.child + ' added · ages ' + bandOf(m) + ' in an ages ' + c.band + ' hour'
         }
       ], {
         sticky: true,
         hint: v.code === 'full'
-          ? hourOf(c) + ' goes to ' + (c.en + 1) + ' children in a room set for ' + c.cap
+          ? hourOf(c) + ' goes to ' + (enrolled(c) + 1) + ' children in a room set for ' + c.cap
           : 'Places an ages ' + bandOf(m) + ' child in an ages ' + c.band + ' hour'
       });
     }
@@ -1081,6 +1113,10 @@
     var others = held.filter(function (o) { return o.id !== m.id; });
     var thread = s ? D.THREADS.filter(function (t) { return t.fam === s.family; })[0] : null;
     var first = firstName(m.child);
+    /* The classes the child is on the roll for, not the line typed on the
+       record, so a placement is decided against the same rolls the registers
+       are drawn from. */
+    var inClasses = s ? D.classesOf(s) : [];
 
     var who = s
       ? ui.card({
@@ -1090,7 +1126,9 @@
         }, ui.kv([
           ['Age', esc(s.age + ' · ages ' + s.band)],
           ['Family', esc(s.family + ' family')],
-          ['Usual class', esc(s.cls)],
+          inClasses.length
+            ? [inClasses.length === 1 ? 'Class' : 'Classes', esc(classLine(inClasses))]
+            : { k: 'Classes', v: 'Not on any roll yet', tone: 'mute' },
           ['Attendance', esc(s.att)],
           ['Credits held', String(held.length)],
           s.flag

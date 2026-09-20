@@ -42,8 +42,8 @@
        recorded it and when
      - "6 of 6 plans". A total of itself says nothing. The count line now
        carries the figure she can act on — how many plans are not ready, how
-       many tutorials are linked to no class — and only falls back to "3 of 6"
-       while a search is narrowing the table
+       many tutorials are linked to no class — and only falls back to a
+       matched-of-total figure while a search is narrowing the table
 
    THE ONE THING SHE CAME TO DO
      - the index is a find-and-open screen, so the primary action stays in the
@@ -66,20 +66,22 @@
    READ RATHER THAN RE-TYPED
      - a plan's class is matched to a class record the way Console → Classes
        matches it, so a plan and a class cannot claim each other on one screen
-       and not the other. That gives the record its room, its hours, its age
-       band and its places
+       and not the other. A private hour is matched to the child on its roll,
+       not to the name somebody typed on the class. That gives the record its
+       room, its hours, its age band and its places, counted off the roll
      - an After-School class is named by its length in the dataset — "1 hour ·
        After-School" — which is a duration, not a name. The programme name is
        what the family portal shows a parent, so it is what shows here
 
    WHAT THE TWO PORTALS AGREE ON
-     Same three lists, same six records in each. The Studio portal reads plans,
+     Same three lists, the same records in each. The Studio portal reads plans,
      tutorials and training documents and cannot edit any of them; this screen
      says so in the same words. Both sides show only the shelf lines under the
      minimum, and both say plainly that no plan carries a materials list.
 
    EVERY FIGURE HERE IS COUNTED FROM THE ROWS ON SCREEN — the tab counts, the
-   plans not ready, the spare tutorials, the short shelf lines. None is typed.
+   plans not ready, the spare tutorials, the children on a class's roll, the
+   short shelf lines. None is typed.
 
    Not fixable from this file: on the lesson-plan record the console rail
    lights nothing, because js/nav.js maps a detail screen to its rail item in
@@ -194,7 +196,10 @@
      ages 8–11', 'Private · Zara O.' — and carries no class id, so the two are
      matched on what the strings share. These are the rules Console → Classes
      already uses to find the plans for a class, run the other way round, so a
-     plan and a class cannot claim each other on one screen and not the other. */
+     plan and a class cannot claim each other on one screen and not the other.
+     Children are the exception: a class carries its roll now, so the private
+     hour is matched to the child on it and nothing here reads a name out of a
+     class title. */
 
   function dayTokens(c) { return String(c.day).split(/[^A-Za-z]+/).filter(Boolean); }
 
@@ -210,10 +215,12 @@
     var m = /week \d+/.exec(String(name).toLowerCase());
     return m ? m[0] : null;
   }
-  /* 'Private · Zara Okafor' → 'zara'. */
-  function namedChild(name) {
-    var parts = String(name).split('· ');
-    return String(parts[parts.length - 1] || '').split(' ')[0].toLowerCase();
+  /* A private class is one child's hour, and the roll says which child. The
+     plan is matched against the name on the roll — 'Zara Okafor' → 'zara' —
+     rather than against the name somebody typed on the class. */
+  function privateChild(c) {
+    var kid = D.roster(c.id)[0];
+    return kid ? String(kid.name).split(' ')[0].toLowerCase() : null;
   }
 
   /* An After-School record is named by its length — "1 hour · After-School" —
@@ -230,7 +237,10 @@
       /* Camp runs Mon–Fri in two rooms at the same hour, so the week alone
          proves nothing and the room decides. */
       if (week) return weekOf(c.name) === week && c.room === p.room;
-      if (c.prog === 'priv') return text.indexOf(namedChild(c.name)) !== -1;
+      if (c.prog === 'priv') {
+        var kid = privateChild(c);
+        return !!kid && text.indexOf(kid) !== -1;
+      }
       var dayHit = dayTokens(c).filter(function (d) {
         return text.indexOf(d.toLowerCase()) !== -1;
       }).length > 0;
@@ -515,7 +525,7 @@
       { k: 'Room', v: esc(c.room), tone: c.room === p.room ? null : 'clay' }
     ];
     if (c.band && c.band !== '—') rows.push(['Ages', esc(c.band)]);
-    rows.push(['Enrolled', esc(c.en + ' of ' + c.cap)]);
+    rows.push(['Enrolled', esc(D.roster(c.id).length + ' of ' + c.cap)]);
     rows.push({
       k: 'Instructor',
       v: esc(p.teacher),

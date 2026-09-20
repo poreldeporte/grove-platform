@@ -13,6 +13,11 @@
        for one session belonging to one child, and it never mentioned Lucas,
        who is in class tomorrow as well. Tomorrow is now one line per child,
        the hour on the left and "can't come" on the same line
+     - every class on this page comes from the child's own enrolment — the
+       classes that child is on the roll for — and not from reading the words
+       in their timetable line. The camp week and the Saturday birthday were
+       carried here as fixed class ids; the Johnson children are on neither
+       roll, so neither is on this page any more
      - "credit" is gone from the parent's side. "Emma has 2 make-up credits:
        1 booked for Fri 31 Jul · 10:00am, 1 still to use before 31 Jul" is now
        "Emma missed Monday 13 July — the 3:15pm class", and the hour already
@@ -34,10 +39,10 @@
        page, so the phone number is never something you have to scroll for
 
    Kept deliberately: the studio's announcements are shown in the studio's own
-   words, dates and all, including the one that says "Emma has two credits".
-   Rewriting a message the studio sent would be a lie, and the notice at the
-   top of the page already says the same thing in the parent's words, with the
-   button on it. */
+   words, dates and all, including the one about the extra make-up hours this
+   Friday. Rewriting a message the studio sent would be a lie, and the notice
+   at the top of the page already says the same thing in the parent's words,
+   with the button on it. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -45,16 +50,9 @@
   /* The portal is signed in as the Johnson family. */
   var FAMILY = 'johnson';
 
-  /* js/data.js holds family phone numbers, not the studio's. Schedule → Book a
-     make-up names this one, so Home names the same one. */
+  /* The studio's own number, the one Schedule → Book a make-up prints, so the
+     two screens cannot name different desks. */
   var DESK = D.STUDIO.phone;
-
-  /* No student record names a camp week, so Schedule reads Emma's from the
-     class list as c6 and Home reads the same record. The dataset holds no
-     guest list either, so Saturday's party is the studio's one birthday
-     booking, as it was on this page before. */
-  var CAMP = 'c6';
-  var PARTY = 'c12';
 
   var DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -110,7 +108,6 @@
 
   /* ---- the family --------------------------------------------------------- */
 
-  function cls(id) { return D.CLASSES.filter(function (c) { return c.id === id; })[0]; }
   function fam() { return D.family(FAMILY); }
   function kids() {
     var name = fam().name;
@@ -127,19 +124,6 @@
      programme name instead. Schedule does the same. */
   function className(c) { return c.prog === 'as' ? D.program(c.prog).name : c.name; }
 
-  /* A student record carries the day, start time and room of that child's
-     weekly hour — 'Wed 3:15pm · Studio 2' — which is enough to find the class
-     itself, and with it the full hour and the teacher. */
-  function classFor(record) {
-    var bits = String(record).split(' · ');
-    var when = bits[0].split(' ');
-    var start = (when[1] || '').replace(/(am|pm)/i, '');
-    if (!start) return null;
-    return D.CLASSES.filter(function (c) {
-      return c.day === when[0] && c.room === bits[1] && c.time.indexOf(start) === 0;
-    })[0] || null;
-  }
-
   function entry(child, c) {
     return {
       child: child, day: c.day, time: c.time,
@@ -147,16 +131,14 @@
     };
   }
 
-  /* The family's week: each child's weekly hour, read from their own record,
-     plus the camp week Emma is in. Schedule builds the same three. */
+  /* The family's week: every class each child is on the roll for. The child's
+     own record carries the classes, so nothing here is read out of the words
+     in a timetable line, and a child in three classes shows three. */
   function week() {
     var list = [];
     kids().forEach(function (s) {
-      var c = classFor(s.cls);
-      if (c) list.push(entry(s.name, c));
+      D.classesOf(s).forEach(function (c) { list.push(entry(s.name, c)); });
     });
-    var camp = cls(CAMP);
-    if (camp) list.push(entry(D.student('emma').name, camp));
     return list;
   }
 
@@ -282,10 +264,6 @@
       return a.status !== 'Scheduled';
     }).sort(function (a, b) { return stamp(b.when) - stamp(a.when); });
   }
-  function forProgram(prog) {
-    var name = D.program(prog).name;
-    return published().filter(function (a) { return a.aud === name; })[0] || null;
-  }
 
   /* ---- tomorrow -----------------------------------------------------------
      One line per child, the hour on the left and "can't come" on the same
@@ -295,7 +273,6 @@
 
   function tomorrowCard() {
     var when = tomorrow();
-    var camp = cls(CAMP);
     var list = week().filter(function (s) { return runsOn(s.day, when); })
       .sort(function (a, b) { return minutes(a.time) - minutes(b.time); });
 
@@ -315,15 +292,9 @@
       };
     });
 
-    /* What to bring is the camp's own announcement, so it is only shown on a
-       day the camp actually runs. */
-    var onCamp = camp && list.filter(function (s) { return s.name === camp.name; }).length;
-    var bring = onCamp ? forProgram(camp.prog) : null;
-
     return ui.card({
       title: 'Tomorrow · ' + longDate(when),
-      flush: true,
-      note: bring ? 'What to bring to camp: ' + bring.body : null
+      flush: true
     }, rows.length
       ? ui.rows(rows)
       : ui.empty('Nothing tomorrow',
@@ -355,18 +326,6 @@
       });
     });
 
-    var party = cls(PARTY);
-    var partyAt = party ? nextAfter(party.day) : null;
-    if (partyAt) {
-      items.push({
-        at: partyAt,
-        lead: shortDate(partyAt),
-        title: esc(party.name),
-        sub: esc(party.time + ' · ' + party.room + ' · with ' + party.staff +
-                 ' — a guest place, nothing to pay and nothing to book')
-      });
-    }
-
     var run = nextRun();
     var owing = sum(unpaid());
     var oldest = unpaid()[0];
@@ -381,8 +340,8 @@
     });
 
     week().forEach(function (s) {
-      /* The camp week is this week and Tomorrow says how long it runs, and a
-         class that is already on the Tomorrow card is not news. */
+      /* A class that runs all week is already on the Tomorrow card, and so is
+         a class that falls tomorrow. Neither is news. */
       if (spansWeek(s.day) || runsOn(s.day, tomorrow())) return;
       var at = nextAfter(s.day);
       if (!at) return;

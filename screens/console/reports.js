@@ -1,14 +1,14 @@
 /* Console → Reports, and the report detail behind each one.
 
    Written for Sabrina at a desk. She is comfortable with a table of numbers,
-   so this is a table of numbers — eight rows, not eight paragraphs in eight
-   cards. What she came for is not "how is the studio doing", it is "what
-   needs me today", and the screen now answers that in its first row.
+   so this is a table of numbers — rows, not paragraphs in cards. What she came
+   for is not "how is the studio doing", it is "what needs me today", and the
+   screen now answers that in its first row.
 
    No charts, deliberately. The old screen drew a 38px eight-bar sparkline on
    every card. At that size the bars say nothing a sentence cannot say better,
-   and two of the nine overflowed their own track while a third had three
-   invisible zero bars.
+   and two of them overflowed their own track while a third had three invisible
+   zero bars.
 
    Every figure is DERIVED from the rows shown underneath it. The value, the
    sub-line, the finding, the reading, the thing to do and the total in each
@@ -18,29 +18,28 @@
    Cut in this pass:
      - the eight prose cards. Three rows of cards, about 1100px of scroll, and
        "$2,700 committed" — which needs nothing from her — sat at the same
-       weight as "$803 out, one card declined twice". The eight reports are now
-       two tables: the ones carrying a deadline, a failure or money that has
-       not arrived, and the ones that are only worth knowing. The split is
-       derived from the rows, and the rule is printed on the card so it is not
-       magic.
-     - "Export all · CSV". Eight tables of eight different shapes cannot be one
+       weight as "$803 out, one card declined twice". The reports are now two
+       tables: the ones carrying a deadline, a failure or money that has not
+       arrived, and the ones that are only worth knowing. The split is derived
+       from the rows, and the rule is printed on the card so it is not magic.
+     - "Export all · CSV". Reports of that many different shapes cannot be one
        CSV. Export lives on the report you are actually looking at.
      - the per-card "Open" button. The whole row is the link; two controls for
        one decision is one too many.
-     - "Refreshes · Overnight", which was the same line on all eight reports
-       and was not even true — the figures are read live from the rows.
+     - "Refreshes · Overnight", which was the same line on every report and was
+       not even true — the figures are read live from the rows.
      - the card note "A report is a read of the data, never a place to edit
        it." The sticky bar names the screen where the change is made, which
        says the same thing once and does something about it.
-     - "Period · 28 July 2026" as a headline stat. It was identical on all
-       eight and there is nothing she can do about the date. It is stated once
-       in the toolbar and once in the footnotes of each report.
+     - "Period · 28 July 2026" as a headline stat. It was identical on every
+       one and there is nothing she can do about the date. It is stated once in
+       the toolbar and once in the footnotes of each report.
      - "Counted from · 5 · families on a monthly plan" as a headline stat. The
        table foot already carries the row count.
-     - the make-up status vocabulary. The dataset carries four states —
-       awaiting approval, available, booked, expiring — and she acts on three
-       of them identically. The report now counts them by who holds the ball:
-       waiting on you, with the family, about to lapse.
+     - the make-up status vocabulary. A credit has four states — awaiting
+       approval, available, booked, expiring — and she acts on three of them
+       identically. The report now counts them by who holds the ball: waiting
+       on you, with the family, about to lapse.
      - the detail's header buttons. The one thing to do from a report is to go
        and do it somewhere else, so that button is pinned to the bottom of the
        viewport with the state line beside it.
@@ -50,10 +49,15 @@
        card" on Collection health, and that is exactly how a product ends up
        with six places to reduce what a family owes. A report reads; Billing
        charges.
-     - all eight reports, including the four that need nothing today. A figure
-       with no action is not automatically decoration — it is decoration when
-       nobody says what it means. Each one says what it means in a sentence,
-       and the ones with nothing to do say why there is nothing to do. */
+     - every report, including the ones that need nothing today. A figure with
+       no action is not automatically decoration — it is decoration when nobody
+       says what it means. Each one says what it means in a sentence, and the
+       ones with nothing to do say why there is nothing to do.
+
+   Three of these tables run long: every family on a plan, every family on the
+   books, every child on a roll. Each is ordered by the column its headline
+   claims something about — contribution, tenure, attendance — so the claim is
+   checkable at the top of the table rather than somewhere down the scroll. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -91,6 +95,23 @@
 
   function lcFirst(s) { return String(s).charAt(0).toLowerCase() + String(s).slice(1); }
 
+  /* Where a child is, read off the roster rather than off the line typed on
+     the record. One class is named in full; several are counted and named by
+     program, because three class names do not fit a cell. A child with no
+     class has only the line on the record to speak for them — waitlisted, or
+     registered and not started — so that is what it says. */
+  function classesLine(s) {
+    var list = D.classesOf(s);
+    if (!list.length) return s.cls || 'No class yet';
+    if (list.length === 1) return list[0].day + ' ' + list[0].time + ' · ' + list[0].room;
+    var progs = [];
+    list.forEach(function (c) {
+      var short = D.program(c.prog).short;
+      if (progs.indexOf(short) === -1) progs.push(short);
+    });
+    return count(list.length, 'class', 'classes') + ' · ' + listOf(progs);
+  }
+
   function median(list) {
     var s = list.slice().sort(function (a, b) { return a - b; });
     if (!s.length) return 0;
@@ -98,8 +119,8 @@
     return s.length % 2 ? s[mid] : Math.round((s[mid - 1] + s[mid]) / 2);
   }
 
-  /* The dataset states its own today, so every "since" on this screen is
-     measured from it rather than typed in. */
+  /* Today comes from the data, so every "since" on this screen is measured
+     from it rather than typed in. */
   function stamp() {
     var parts = String(D.today).split(', ');
     return parts[1] || parts[0];
@@ -139,14 +160,31 @@
   }
 
   function mrr() {
-    var on = D.FAMILIES.filter(function (f) { return planPrice(f) > 0; });
+    /* Biggest contribution first: the read below is about who carries the
+       total, and at this many families that claim should be the first row. */
+    var on = D.FAMILIES.filter(function (f) { return planPrice(f) > 0; })
+      .sort(function (a, b) { return planPrice(b) - planPrice(a); });
     var off = D.FAMILIES.filter(function (f) { return planPrice(f) === 0; });
     var sum = 0, top = on[0];
-    on.forEach(function (f) {
-      sum += planPrice(f);
-      if (planPrice(f) > planPrice(top)) top = f;
-    });
+    on.forEach(function (f) { sum += planPrice(f); });
     var atRisk = on.filter(function (f) { return f.status !== 'Active'; });
+
+    /* Naming every excluded family one by one is a list, not a sentence. They
+       group by the plan on the record, so the groups are named with their
+       count and a group of one is named by the family it is. */
+    var byPlan = [];
+    off.forEach(function (f) {
+      var hit = null;
+      byPlan.forEach(function (g) { if (g.plan === f.plan) hit = g; });
+      if (!hit) { hit = { plan: f.plan, fams: [] }; byPlan.push(hit); }
+      hit.fams.push(f);
+    });
+    byPlan.sort(function (a, b) { return b.fams.length - a.fams.length; });
+    var excluded = byPlan.map(function (g) {
+      return g.fams.length === 1
+        ? 'the ' + g.fams[0].name + ' family (' + lcFirst(g.plan) + ')'
+        : g.fams.length + ' on ' + lcFirst(g.plan);
+    });
 
     var table = ui.table(
       ['Family', 'Current plan', { label: 'A month', align: 'right' }, { label: 'Status', shrink: true }],
@@ -177,8 +215,9 @@
         ? 'No plan here carries a date. What the ' + listOf(atRisk.map(function (f) { return f.name; })) +
           ' families owe is chased in Collection health, so the same money is not worked twice.'
         : 'Every family on a plan is paying on time, and no plan here carries a date.',
-      counts: 'The session plan on each family record, priced from the after-school rate card.',
-      excludes: listOf(off.map(function (f) { return f.name + ' (' + f.plan + ')'; })) + '.',
+      counts: 'The session plan on each family record, priced from the after-school rate card. Biggest first.',
+      excludes: 'The ' + count(off.length, 'family', 'families') + ' with no monthly session plan: ' +
+        listOf(excluded) + '.',
       table: table,
       rows: on.length,
       rowNoun: 'families on a monthly plan',
@@ -216,7 +255,14 @@
 
     var table = ui.table(
       ['Family', 'With us since', { label: 'Months with us', align: 'right' }, { label: 'Status', shrink: true }],
-      D.FAMILIES.map(function (f) {
+      /* Longest-serving first, which puts the median family in the middle
+         row and makes the figure under the table something she can point at. */
+      D.FAMILIES.slice().sort(function (a, b) {
+        var ma = monthsSince(a.since), mb = monthsSince(b.since);
+        if (ma === null) return mb === null ? 0 : 1;
+        if (mb === null) return -1;
+        return mb - ma;
+      }).map(function (f) {
         var m = monthsSince(f.since);
         return {
           cells: [
@@ -248,7 +294,7 @@
       steady: out
         ? 'The ' + out.name + ' family has given notice and its last invoice has settled, so there is nothing left to collect.'
         : 'Nobody is on notice.',
-      counts: 'The join date and the status on each family record, measured against ' + stamp() + '.',
+      counts: 'The join date and the status on each family record, measured against ' + stamp() + '. Longest first.',
       excludes: 'Nothing. All ' + count(D.FAMILIES.length, 'family', 'families') + ' on the books are counted.',
       table: table,
       rows: D.FAMILIES.length,
@@ -274,12 +320,20 @@
     var worst = low.slice().sort(function (a, b) { return figure(a.att) - figure(b.att); })[0];
 
     var table = ui.table(
-      ['Child', 'Class', { label: 'Attendance', align: 'right' }, { label: 'Credits', align: 'right' }],
-      D.STUDENTS.map(function (s) {
+      ['Child', 'Classes', { label: 'Attendance', align: 'right' }, { label: 'Credits', align: 'right' }],
+      /* Lowest first. The children worth a word are the point of the report,
+         and at the length of the roster they should not be hunted for. The
+         children with nothing recorded yet sit at the end. */
+      D.STUDENTS.slice().sort(function (a, b) {
+        var fa = figure(a.att), fb = figure(b.att);
+        if (fa === null) return fb === null ? 0 : 1;
+        if (fb === null) return -1;
+        return fa - fb;
+      }).map(function (s) {
         return {
           cells: [
             ui.two(s.name, s.family + ' family'),
-            ui.mute(s.cls),
+            ui.mute(classesLine(s)),
             num(s.att),
             num(s.mk)
           ]
@@ -303,9 +357,9 @@
       todoWhy: '',
       steady: count(low.length, 'child sits', 'children sit') +
         ' below 90%, which is worth a word with the family rather than a job for today. Nothing here carries a date.',
-      counts: 'The attendance figure recorded against each enrolled child.',
+      counts: 'The attendance figure recorded against each enrolled child, lowest first.',
       excludes: 'Children with nothing recorded yet — ' +
-        listOf(without.map(function (s) { return s.name + ' (' + s.cls + ')'; })) + '.',
+        listOf(without.map(function (s) { return s.name + ' (' + classesLine(s) + ')'; })) + '.',
       table: table,
       rows: D.STUDENTS.length,
       rowNoun: 'children on the roster',
@@ -371,7 +425,7 @@
   }
 
   /* ---- 5. Make-up credits -----------------------------------------------------
-     The dataset carries four statuses. She approves one of them, rescues
+     A credit carries one of four statuses. She approves one of them, rescues
      another, and does nothing at all about the other two, so the summary
      counts them by who is holding the credit rather than by its label. */
 
@@ -487,10 +541,10 @@
   }
 
   /* ---- 7. Hours and pay --------------------------------------------------------
-     Cost per enrolled child was the old headline. It cannot be derived: the
-     dataset holds ten named children against 124 enrollments, so any per-child
-     figure would be a guess. What the staff records do support is hours,
-     classes and the hourly wage bill, and that is what this now reports. */
+     Hours, classes and the hourly wage bill are what the staff records carry,
+     so that is the headline. Cost per enrolled child was the old one, and the
+     roster answers it — every child on a class roll is countable — so it is
+     stated in the reading rather than dropped. */
 
   function hourly(s) { return /\/hr/.test(String(s.rate)) ? figure(s.rate) : null; }
   function payOf(s) {
@@ -519,6 +573,9 @@
       }
     });
     var unrated = D.STAFF.filter(function (s) { return hourly(s) === null; });
+    /* Every child on a class roll, counted off the roster rather than off the
+       enrollment figures, so a child in three classes is still one child. */
+    var onARoll = D.STUDENTS.filter(function (s) { return D.classesOf(s).length > 0; }).length;
 
     var table = ui.table(
       ['Person', 'Role', { label: 'Classes a week', align: 'right' },
@@ -548,7 +605,11 @@
           : '') + '. The teaching sits with ' + teachers + ' of the ' +
         count(D.STAFF.length, 'person', 'people') + ' on the team, ' + teachHours + ' hours between them.',
       read: 'Hourly pay comes to ' + money0(wage) + ' a week and ' + pct(teachPay, wage) +
-        ' of that is teaching. The rest is the front desk and the office.',
+        ' of that is teaching. The rest is the front desk and the office.' +
+        (onARoll
+          ? ' Spread across the ' + count(onARoll, 'child', 'children') + ' on a class roll, the wage bill is ' +
+            Grove.money(wage / onARoll) + ' a child a week.'
+          : ''),
       act: 'Hours, rates and who teaches what are set on the staff record.',
       todo: unstaffed.length ? count(unstaffed.length, 'class', 'classes') + ' unstaffed' : null,
       todoWhy: listOf(unstaffed.map(function (c) { return c.name; })) +
@@ -569,9 +630,9 @@
   }
 
   /* ---- 8. Programs -------------------------------------------------------------
-     Revenue per studio hour was the old headline, and nothing in the dataset
-     prices a studio hour. Enrollment against places is what the classes record,
-     so that is what this reports. */
+     Revenue per studio hour was the old headline, and no field prices a studio
+     hour. Enrollment against places is what the classes record, so that is what
+     this reports. */
 
   function programs() {
     var rows = Object.keys(D.PROGRAMS).map(function (id) {
@@ -796,7 +857,7 @@
         }),
         {
           emptyTitle: 'Every report needs you',
-          emptyText: 'All eight carry something with a date on it today.'
+          emptyText: 'All ' + all.length + ' carry something with a date on it today.'
         }
       ));
 

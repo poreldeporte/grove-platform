@@ -7,7 +7,17 @@
    screen before they scroll, they are asked one question at a time, and
    asking a person is an option they can see.
 
-   What changed in this pass:
+   Where a child's day comes from: a placement is now read from the class the
+   child is enrolled in — D.classesOf(s) — rather than by parsing the
+   free-text line on their record for a day and a room. The day, the room and
+   the teacher on both screens are the ones the class itself carries, a child
+   who holds more than one place gets a line for each rather than "Mon, Wed,
+   Thu", and a child with no place is either named on the waitlist or has no
+   day chosen yet. Nothing on these screens counts children by hand either:
+   the family is whoever STUDENTS holds against the household, so the page
+   reads the same for a family of one as for a family of four.
+
+   What changed in the pass before:
      - a child's card was seven rows of the studio's record: Age, Age band,
        Class, Attendance, Make-up credits, Safety, In an emergency we call.
        It is now two lines — when they are in, and what a teacher must not get
@@ -87,33 +97,36 @@
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
-  /* The signed-in parent is the Johnson household. */
-  var FAMILY = 'Johnson';
+  /* The signed-in parent is the Johnson household. Their children are whoever
+     STUDENTS holds against that family — the page never names them itself. */
+  var FAMILY_ID = 'johnson';
 
   /* The studio's number, as Console → Settings gives it to families. */
   var DESK = D.STUDIO.phone;
 
   /* A weekly place is said as a recurring day — "Mondays at 3:15pm" — rather
-     than the record's "Mon 3:15pm". Dates are left exactly as the dataset
-     writes them, so a missed class reads here the way it reads on Schedule. */
+     than the class record's "Mon". A camp runs the whole week, so its day is
+     said as one. Dates are left exactly as they are written elsewhere, so a
+     missed class reads here the way it reads on Schedule. */
   var DAYS = {
     Mon: 'Mondays', Tue: 'Tuesdays', Wed: 'Wednesdays', Thu: 'Thursdays',
-    Fri: 'Fridays', Sat: 'Saturdays', Sun: 'Sundays'
+    Fri: 'Fridays', Sat: 'Saturdays', Sun: 'Sundays', 'Mon–Fri': 'Every weekday'
   };
 
   /* A safety flag of kind "warn" has no pill of its own; amber is the nearest,
      and it is the mapping the make-up rows use elsewhere. */
   var FLAG = { bad: 'bad', warn: 'amber', ok: 'ok' };
 
+  function household() {
+    return D.family(FAMILY_ID) || D.FAMILIES[0];
+  }
   function mine() {
-    return D.STUDENTS.filter(function (s) { return s.family === FAMILY; });
+    var name = household().name;
+    return D.STUDENTS.filter(function (s) { return s.family === name; });
   }
   function kid(ctx) {
     var s = D.student(ctx.params.id);
-    return s && s.family === FAMILY ? s : mine()[0];
-  }
-  function household() {
-    return D.FAMILIES.filter(function (f) { return f.name === FAMILY; })[0] || D.FAMILIES[0];
+    return s && s.family === household().name ? s : mine()[0];
   }
   function first(s) {
     return String(s.name).split(' ')[0];
@@ -123,7 +136,7 @@
     return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
   }
 
-  /* ---- what the dataset holds about one child --------------------------------
+  /* ---- what the studio holds about one child ---------------------------------
      Every figure on these screens is counted off the rows shown. A child's
      missed classes come from MAKEUPS, never from STUDENTS.mk, because a class
      already booked back in is not one the family still has to do anything
@@ -156,34 +169,56 @@
       parts[1];
   }
 
-  /* The class record behind a child's enrollment string, when there is one.
-     Both Johnson children sit in a class CLASSES holds, so each gets a
-     teacher. An enrollment string that is not a day-and-room pair — a
-     waitlisted place, or several days at once — comes back empty. */
-  function classFor(s) {
-    var parts = String(s.cls).split(' · ');
-    var head = parts[0].split(' ');
-    var start = (head[1] || '').replace(/(am|pm)/i, '');
-    var room = parts[1] || '';
-    if (!start || !room) return null;
-    return D.CLASSES.filter(function (c) {
-      return c.day === head[0] && c.room === room && c.time.indexOf(start) === 0;
-    })[0] || null;
+  /* Where a child actually is. The places come from the classes they are
+     enrolled in — D.classesOf(s) — so the day, the room and the teacher on
+     this page are the ones the class itself carries, and a child who holds
+     more than one place gets a line for each. A child with no place at all is
+     either on a list or waiting to choose a day, and both are said plainly. */
+  function places(s) {
+    return D.classesOf(s);
+  }
+  function waiting(s) {
+    return D.WAITLIST.filter(function (w) { return w.child === s.name; });
   }
 
-  /* "Mon 3:15pm · Studio 2" said the way a parent would say it. */
-  function whenLine(s) {
-    var parts = String(s.cls).split(' · ');
-    var head = parts[0].split(' ');
-    var day = DAYS[head[0]];
-    var c = classFor(s);
-    var who = c ? c.staff : '';
-    if (!day || !head[1]) {
-      return { title: s.cls, sub: who ? 'With ' + who : '' };
+  /* "3:15–4:15pm" → "3:15pm". Only the end of a range carries the meridiem. */
+  function startTime(range) {
+    var parts = String(range).split('–');
+    var mark = /(am|pm)/i.exec(parts[0]) || /(am|pm)/i.exec(parts[1] || '');
+    return parts[0].replace(/(am|pm)/i, '') + (mark ? mark[1].toLowerCase() : '');
+  }
+
+  /* An After-School record is named by its length, which the time already
+     says, so only the other programmes are worth naming to a parent. A class
+     nobody is teaching yet says the room and stops. */
+  function whenWords(c) {
+    return (DAYS[c.day] || c.day) + ' at ' + startTime(c.time);
+  }
+  function whereWords(c) {
+    var who = c.staff && c.staff !== 'Unassigned' ? c.staff : '';
+    var line = (c.prog === 'as' ? 'In ' : c.name + ', in ') + c.room;
+    return who ? line + ' with ' + who : line;
+  }
+
+  function placeRows(s) {
+    var held = places(s);
+    if (held.length) {
+      return held.map(function (c) {
+        return { title: esc(whenWords(c)), sub: esc(whereWords(c)) };
+      });
     }
-    var sub = parts[1] ? 'In ' + parts[1] : '';
-    if (who) sub += sub ? ' with ' + who : 'With ' + who;
-    return { title: day + ' at ' + head[1], sub: sub };
+    var list = waiting(s);
+    if (list.length) {
+      return [{
+        title: 'Waiting for a place',
+        sub: esc('Number ' + list[0].pos + ' on the list for ' + list[0].cls.split(' · ')[0] +
+          ' — we ring you the moment one comes free.')
+      }];
+    }
+    return [{
+      title: 'Not in a class yet',
+      sub: 'Tell us the day you would like and we will find them a place.'
+    }];
   }
 
   /* "8–11" → "8 to 11", "12+" → "12 and over". */
@@ -237,11 +272,9 @@
   /* ---- the children ---------------------------------------------------------- */
 
   function childCard(s) {
-    var w = whenLine(s);
     var t = todos(s);
 
-    var rows = [
-      { title: esc(w.title), sub: esc(w.sub) },
+    var rows = placeRows(s).concat([
       s.flag
         ? {
             title: esc(s.flag),
@@ -253,7 +286,7 @@
             sub: 'You have not told us about an allergy or anything medical.',
             end: ui.pill('Safety', 'ok')
           }
-    ];
+    ]);
 
     /* Whatever needs the parent sits on this child's own card, with the
        button on the same line as the sentence that explains it. */
@@ -299,7 +332,7 @@
         note: 'Staff check this at the door and ring it first if anything happens.'
       }, h`<div class="stack stack--sm">
         <p>We ring <span class="strong">${f.guardian}</span> on
-        <span class="strong">${f.phone}</span>, whichever child is in.</p>
+        <span class="strong">${f.phone}</span>${kids.length > 1 ? ', whichever child is in' : ''}.</p>
         <p class="hint">Anything we write goes to ${f.email}.</p>
       </div>`);
 
@@ -365,7 +398,7 @@
       var f = household();
       var list = missedClasses(s);
       var doc = consentDoc(s);
-      var w = whenLine(s);
+      var held = places(s);
       var t = todos(s);
 
       var flag = s.flag
@@ -394,13 +427,12 @@
         <span class="strong">${f.phone}</span>, then write to ${f.email}.</p>
       </div>`);
 
-      var rows = [
-        { title: esc(w.title), sub: esc(w.sub) },
+      var rows = placeRows(s).concat([
         {
           title: esc(first(s) + ' is ' + s.age),
           sub: esc('In the group for ages ' + bandWords(s.band) + ', with us since ' + f.since)
         }
-      ];
+      ]);
       if (doc) {
         rows.push(doc.signed
           ? { title: 'Photo permission signed', sub: esc(signedLine(doc)) }
@@ -416,8 +448,14 @@
       var atStudio = ui.card({
         title: first(s) + ' at the studio',
         flush: true,
-        note: 'This is their place for the term. If the day stops working for you, tell us and ' +
-              'we will see what is possible.'
+        note: held.length > 1
+          ? 'These are their ' + held.length + ' places for the term. If a day stops working ' +
+            'for you, tell us and we will see what is possible.'
+          : (held.length
+              ? 'This is their place for the term. If the day stops working for you, tell us ' +
+                'and we will see what is possible.'
+              : 'No class is booked yet. Tell us the day you would like and we will see what ' +
+                'is possible.')
       }, ui.rows(rows));
 
       var makeups = ui.card({

@@ -75,8 +75,8 @@
     return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
   }
 
-  /* The only movement the dataset holds for an item is the supply requests
-     raised against it. Request names are sometimes shorter than the shelf
+  /* The only movement recorded against an item is the supply requests
+     raised on it. Request names are sometimes shorter than the shelf
      name ("Brushes · medium" for "Brushes · medium round"), so match on
      either being the start of the other — the same test Requests uses. */
   function movementFor(i) {

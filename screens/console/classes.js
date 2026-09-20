@@ -35,13 +35,15 @@
      - the week is no longer a literal list of dates. Monday, the six day
        columns, "Today" and every session date are worked out from
        Grove.data.today, so moving the dataset's today moves the calendar
-     - a child's make-up credits used to be dropped from the roster whenever
-       they also had a safety flag. Credits are on the detail line now, so the
-       flag and the credits can both be seen
+     - the roster is a table, not a list of rows. A class carries eight to
+       eighteen children, and at that size age, attendance, classes to make up
+       and the safety note read straight down their own columns instead of
+       being crushed onto one detail line
 
-   Everything counted here is counted off the rows being shown. Where the
-   dataset holds fewer records than the class enrolls, the card says so ("3 of
-   12 enrolled") rather than printing a total it cannot stand behind. */
+   Everything counted here is counted off the rows being shown. The roster is
+   the class — D.roster(id) returns the children on the roll — so "12 enrolled"
+   is the length of the list printed underneath it, and the waitlist pill
+   counts the rows in its own card. */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
@@ -170,8 +172,8 @@
     return D.CLASSES.filter(function (c) { return !thisWeek(c); });
   }
 
-  /* The next few dates a class runs. The dataset has no session records, so
-     they are walked forward from today across the class's own days. */
+  /* The next few dates a class runs. There are no session rows to read, so the
+     dates are walked forward from today across the class's own days. */
   function sessionDates(c, limit) {
     var one = datedAt(c);
     if (one) return [one];
@@ -221,12 +223,6 @@
   function bandLine(c) {
     if (c.band === '—') return '';
     return c.band === 'All' ? 'All ages' : 'Ages ' + c.band;
-  }
-
-  /* "3 of 12 enrolled" when the dataset holds fewer records than the class
-     enrolls, plain "12 enrolled" when it holds them all. */
-  function countOf(shown, total, word) {
-    return shown === total ? total + ' ' + word : shown + ' of ' + total + ' ' + word;
   }
 
   /* The one thing she must act on, written off the rows on screen: it names
@@ -281,7 +277,7 @@
     },
     actions: [
       { label: 'Export', msg: 'CSV exported' },
-      { label: 'New class', kind: 'primary', msg: 'Prototype — no form yet' }
+      { label: 'New class', kind: 'primary', msg: 'Class created · no sessions yet, nobody enrolled' }
     ],
 
     body: function () {
@@ -342,7 +338,7 @@
     };
   }
 
-  /* Two columns rather than three: the six days hold 6, 5, 4, 4, 3 and 1
+  /* Two columns rather than three: the six days hold 5, 6, 4, 4, 3 and 1
      sessions, and pairing them that way roughly halves the white a short day
      leaves under a tall neighbour. Each card closes on its own footer, so what
      is left reads as the end of the card. */
@@ -416,7 +412,7 @@
         { label: 'Cancel a session', kind: 'danger', to: 'classCancel', id: c.id },
         c.staff === 'Unassigned'
           ? { label: 'Assign an instructor', kind: 'primary', msg: 'Assigned · the instructor sees the class now' }
-          : { label: 'Edit class', kind: 'primary', msg: 'Prototype — no form yet' }
+          : { label: 'Edit class', kind: 'primary', msg: 'Saved · the change shows on the schedule and on every roster' }
       ];
     },
 
@@ -442,38 +438,45 @@
             text: c.en + ' children are booked into ' + c.room + ', which is set for ' + c.cap +
               '. A make-up booking landed here after the last enrollment. Moving the make-up clears ' +
               'the room; no enrolled child loses their place and no money moves.',
-            action: { label: 'Move the make-up', msg: 'Prototype — nothing was moved' }
+            action: { label: 'Move the make-up', msg: 'Make-up moved · the room is back inside its capacity' }
           })
         : '';
 
+      /* Eight to eighteen children, so the roll is a table: one line each, and
+         age, attendance, credits and the safety note read down their columns
+         rather than being folded into a sentence under the name. */
+      var flagged = kids.filter(function (k) { return !!k.flag; });
+      var urgent = flagged.some(function (k) { return k.flagKind === 'bad'; });
+
       var rosterCard = ui.card({
         title: 'Roster',
-        head: '<span class="mute">' + esc(countOf(kids.length, c.en, 'enrolled')) + '</span>',
+        head: '<span class="inline">' +
+          (flagged.length
+            ? ui.pill(plural(flagged.length, 'safety note', 'safety notes'), urgent ? 'bad' : 'warn')
+            : '') +
+          '<span class="mute">' + esc(kids.length + ' enrolled') + '</span></span>',
         flush: true,
-        note: kids.length
-          ? (kids.length < c.en
-              ? 'The prototype carries records for ' + kids.length + ' of the ' + c.en +
-                ' children enrolled. '
-              : '') +
-            'Safety notes here are the ones every teacher sees on this roster and on the attendance sheet.'
+        note: flagged.length
+          ? 'Safety notes here are the ones every teacher sees on this roster and on the attendance sheet.'
           : ''
       }, kids.length
-        ? ui.rows(kids.map(kidRow))
-        : ui.empty('No children linked yet', 'Enrollment counts come from the class; children are linked as they register.')
+        ? ui.table(
+            ['Child',
+             { label: 'Age', align: 'right', shrink: true },
+             { label: 'Attendance', align: 'right', shrink: true },
+             { label: 'To make up', align: 'right', shrink: true },
+             'Safety note'],
+            kids.map(kidRow)
+          )
+        : ui.empty('Nobody enrolled yet', 'The first child to register for this class appears here.')
       );
 
       var waitCard = ui.card({
         title: 'Waitlist',
-        head: c.wl ? ui.pill(countOf(waiting.length, c.wl, 'waiting'), 'warn') : '',
+        head: ui.pill(waiting.length + ' waiting', 'warn'),
         flush: true,
-        note: 'Nobody is turned away. A place that frees up goes to the first name on the list, at the usual price.' +
-          (waiting.length && waiting.length < c.wl
-            ? ' The prototype names the first ' + waiting.length + ' of the ' + c.wl + '.'
-            : '')
-      }, waiting.length
-        ? ui.rows(waiting.map(waitRow))
-        : ui.empty('Nobody waiting', 'Every child who asked for this class has a place.')
-      );
+        note: 'Nobody is turned away. A place that frees up goes to the first name on the list, at the usual price.'
+      }, ui.rows(waiting.map(waitRow)));
 
       var lessons = ui.card({
         title: 'Lesson plans',
@@ -512,21 +515,22 @@
         };
       })));
 
-      /* Only the cards that hold something. The roster leads, because who is
-         in the room is what she came for. When all four are here they split in
-         order — the two people cards left, the two paper ones right — which
-         happens to put the same number of rows in each column, and never
-         leaves the one-line lesson plan card wearing the stretch. */
-      var cards = [rosterCard];
-      if (c.wl || waiting.length) cards.push(waitCard);
-      if (plans.length) cards.push(lessons);
-      if (credits.length) cards.push(makeups);
+      /* The roster runs the full width on its own: it is what she came for, it
+         is a table, and at eighteen rows it would tower over whatever card was
+         put beside it. The three supporting cards — none of them more than a
+         handful of rows — share the row underneath, and only the ones holding
+         something are drawn. */
+      var extra = [];
+      if (waiting.length) extra.push(waitCard);
+      if (plans.length) extra.push(lessons);
+      if (credits.length) extra.push(makeups);
 
-      var body;
-      if (cards.length === 1) body = ui.grid(null, cards);
-      else if (cards.length === 2) body = ui.grid(2, cards);
-      else if (cards.length === 3) body = ui.grid(3, cards);
-      else body = ui.grid(2, [ui.col([cards[0], cards[1]]), ui.col([cards[2], cards[3]])]);
+      var body = ui.grid(null, [rosterCard]) +
+        (extra.length
+          ? '<div class="section">' +
+            (extra.length === 1 ? ui.grid(null, extra) : ui.grid(extra.length, extra)) +
+            '</div>'
+          : '');
 
       return flags +
         (over ? over + '<div class="section">' + body + '</div>' : body);
@@ -541,16 +545,19 @@
 
   Grove.screen('classRecord', recordDef);
 
+  /* One line of the roll. The family is under the name because two children
+     on the same roster can share a first name. */
   function kidRow(k) {
-    var bits = ['Age ' + k.age, 'attendance ' + k.att];
-    if (k.mk) bits.push(plural(k.mk, 'class to make up', 'classes to make up'));
-    var row = {
-      title: esc(k.name),
-      sub: esc(bits.join(' · ')),
-      to: 'studentRecord', id: k.id
+    return {
+      to: 'studentRecord', id: k.id,
+      cells: [
+        ui.two(k.name, k.family + ' family'),
+        ui.mute(String(k.age)),
+        ui.mute(k.att),
+        k.mk ? ui.pill(String(k.mk), 'warn') : '<span class="mute">—</span>',
+        k.flag ? ui.pill(k.flag, k.flagKind) : '<span class="mute">—</span>'
+      ]
     };
-    if (k.flag) row.end = ui.pill(k.flag, k.flagKind);
-    return row;
   }
 
   /* The queue itself is managed on Requests, so every entry goes there. */
@@ -594,8 +601,7 @@
       var pick = ui.card({
         title: 'Which session?',
         note: dates.length
-          ? 'The next dates this class runs, worked out from its day and time. The prototype does not hold ' +
-            'individual sessions, so a date already moved or covered will not show as different here.'
+          ? 'The next dates this class runs, worked out from its day and time.'
           : ''
       }, dates.length
         ? ui.choices(null, dates.map(function (d, i) {
@@ -656,9 +662,14 @@
           plural(c.en, 'class to make up', 'classes to make up') + ' · no money moves'
         : 'Nobody is enrolled, so nothing is sent';
 
+      var done = c.en
+        ? 'Cancelled · ' + plural(c.en, 'family told', 'families told') + ' and ' +
+          plural(c.en, 'class to make up issued', 'classes to make up issued')
+        : 'Cancelled · nobody was enrolled, so nothing was sent';
+
       var buttons = when
         ? [
-            { label: 'Cancel ' + longLabel(when), kind: 'danger', msg: 'Prototype — nothing was cancelled' },
+            { label: 'Cancel ' + longLabel(when), kind: 'danger', msg: done },
             { label: 'Keep the session', to: 'classRecord', id: c.id }
           ]
         : [{ label: 'Back to the class', to: 'classRecord', id: c.id }];
@@ -671,14 +682,13 @@
     }
   });
 
-  /* The children a cancellation reaches, named as far as the dataset can name
-     them and counted off the class's own enrollment for the rest. */
+  /* The children a cancellation reaches. Eighteen names will not sit on one
+     line, so a long roll names the first three and counts the rest off the
+     same list — the roster card above has every one of them. */
   function whoLine(c) {
-    var kids = roster(c);
-    if (!kids.length) return 'The prototype does not carry their records, so it cannot name them here.';
-    var names = kids.map(function (k) { return k.name; });
-    var rest = c.en - names.length;
-    return names.join(', ') + (rest > 0 ? ' and ' + plural(rest, 'other', 'others') : '');
+    var names = roster(c).map(function (k) { return k.name; });
+    if (names.length <= 4) return names.join(', ');
+    return names.slice(0, 3).join(', ') + ' and ' + plural(names.length - 3, 'other', 'others');
   }
 
   /* ---- matching ------------------------------------------------------------ */
@@ -689,35 +699,13 @@
            D.CLASSES.filter(function (c) { return c.id === 'c2'; })[0];
   }
 
-  /* The dataset writes a child's placement as free text ("Mon 3:15pm · Studio
-     2", "Camp week 4 · Clay Room", "Mon, Wed, Thu"), so the roster is matched
-     on the signals those strings carry rather than on a class id. */
+  /* The children on this class's roll, in the order a roll is read. A child
+     carries the ids of the classes they are in, so this is a lookup, not a
+     guess at what their timetable line meant. */
   function roster(c) {
-    return D.STUDENTS.filter(function (s) { return onRoster(c, s); });
-  }
-
-  function onRoster(c, s) {
-    var text = String(s.cls).toLowerCase();
-    if (text.indexOf('waitlisted') !== -1 || text.indexOf('not yet enrolled') !== -1) return false;
-
-    var name = String(c.name).toLowerCase();
-    if (name.indexOf(String(s.name).toLowerCase()) !== -1) return true;   /* private classes */
-
-    var roomHit = text.indexOf(String(c.room).toLowerCase()) !== -1;
-
-    /* Camp runs Mon–Fri, so a weekday alone proves nothing: a camp roster is
-       the children recorded against that week AND that room. */
-    var week = weekOf(name);
-    if (week) return text.indexOf(week) !== -1 && roomHit;
-
-    var dayHit = dayTokens(c).some(function (d) { return text.indexOf(d.toLowerCase()) !== -1; });
-    if (!dayHit) return false;
-
-    /* A child recorded by days alone joins any class on one of those days in
-       their own age band. */
-    if (text.indexOf('·') === -1) return s.band === c.band;
-
-    return roomHit || text.indexOf(startTime(c)) !== -1;
+    return D.roster(c.id).slice().sort(function (a, b) {
+      return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
+    });
   }
 
   function weekOf(name) {
@@ -732,18 +720,12 @@
     return who.toLowerCase();
   }
 
-  /* The waitlist writes its class the same free-text way ("Wed 4:30pm · Ages
-     8–11"), so it is matched on the day plus either the start time or the age
-     band. Camp is matched on its week, and nobody waits on camp. */
+  /* A waitlist row names its class by the day and the hour it starts ("Mon
+     3:15pm · Ages 8–11"), which is the same key the dataset counts class.wl
+     on, so the card and the count cannot disagree. */
   function waitlist(c) {
-    if (weekOf(c.name)) return [];
-    return D.WAITLIST.filter(function (w) {
-      var text = String(w.cls).toLowerCase();
-      var dayHit = dayTokens(c).some(function (d) { return text.indexOf(d.toLowerCase()) !== -1; });
-      if (!dayHit) return false;
-      return text.indexOf(startTime(c)) !== -1 ||
-             text.indexOf('ages ' + String(c.band).toLowerCase()) !== -1;
-    });
+    var key = c.day + ' ' + startTime(c);
+    return D.WAITLIST.filter(function (w) { return String(w.cls).indexOf(key) === 0; });
   }
 
   /* A lesson plan names its class in free text too ("Mon 3:15pm · ages 8–11",

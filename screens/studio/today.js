@@ -29,7 +29,7 @@
        is left of each one, with "something else" as the last of them. A
        request can still not name something the studio does not stock
      - "It is on the shelf in Studio 1" from a fulfilled request. Nothing in
-       the dataset records where a delivered item lands, and a teacher sent to
+       the studio records where a delivered item lands, and a teacher sent to
        the wrong room by a line the screen invented is worse off than one who
        was only told it had arrived
 
@@ -45,12 +45,10 @@
        hours are all derived; none of them is written down
 
    Changes from the visual review
-     - Today's safety line named Mia Chen and Emma Johnson in Studio 1, but
-       the register Lauren opens from that same row holds Mia and Noah: camp
-       runs two rooms at the same hour and Emma, at eight, is in the other
-       one. Who is in a room is now worked out with the rules the register
-       itself uses, so the safety line names the children she will actually
-       be standing in front of
+     - who is in a room comes off the class roll, Grove.data.roster, so the
+       safety line names the children Lauren will actually be standing in
+       front of and the register she opens from the same row holds exactly
+       that list
      - a second, quieter line for the children who are not an allergy but are
        worth knowing about, which is what the register screen already does
      - "not yet marked" reads the marks the register writes, and says so in
@@ -59,10 +57,19 @@
        above Monday's after-school hour, because it sorted on the clock alone.
        It reads down her week now: the day first, then the hour
 
-   What is the spec's, not the dataset's
-     - which children hold a camp week 4 record (by child id). The dataset
-       links no child to a class id. Which camp room takes each of them is
-       derived from the age band on the room, not written down
+   Now the rolls are full
+     - every class row carries how many children are on its roll. A full camp
+       room and a one-to-one hour are not the same morning, and the headcount
+       is the first thing the row is asked for. It is the length of the roll,
+       counted; how many places were sold is still the owner's business
+     - the safety line reads every child on every roll she has today, and it
+       is drawn per child: a child in two of her rooms is one warning naming
+       both rooms, not the same warning twice
+     - the row's second line used to fall back to the age band when the office
+       had published no plan, which is what the row's own title already says.
+       The repeat is gone and the headcount stands in its place
+
+   What the screen decides, because the office has not
      - the camp room's lesson focus. Every other room reads its focus from
        Grove.data.LESSON_PLANS. */
 (function () {
@@ -72,12 +79,6 @@
   var TODAY_DATE = '28 Jul 2026';
   var TODAY_DAY = 'Tue';                    /* Grove.data.today — Tuesday 28 July 2026 */
   var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  /* The children the prototype holds a camp week 4 record for, by child id.
-     The same list the register uses, for the same reason: nothing in the
-     dataset joins a child to a class. */
-  var CAMP_WEEK = 'week 4';
-  var CAMP_CHILDREN = ['mia', 'emma', 'noah', 'sophia', 'iker', 'zara'];
 
   /* What the camp room is making. The office has published no plan for it
      today, so this one phrase is the spec's. */
@@ -177,60 +178,38 @@
   function tomorrow() { return WEEK[WEEK.indexOf(TODAY_DAY) + 1] || ''; }
 
   /* ---- who is in the room --------------------------------------------------
-     The same rules the register applies, so the safety line names the children
-     Lauren will actually be standing in front of. A child's class is the free
-     text on their own record ("Mon 3:15pm · Studio 2"), so membership is
-     matched on the signals that string carries. Camp is the exception: it runs
-     two rooms at the same hour, so a weekday proves nothing about which room a
-     child is in — the age band on the room does. */
+     A class's roll is a fact, not an inference: Grove.data.roster(classId)
+     returns the children enrolled in it. The register reads the same call, so
+     the safety line and the register can never disagree about who is in the
+     room. A child's own record still writes their class in words — that is
+     for reading, not for joining. */
 
-  function enrolled(s) {
-    return s.cls.indexOf('Waitlisted') === -1 && s.cls.indexOf('Not yet enrolled') === -1;
-  }
-  function weekOf(name) {
-    var m = /week \d+/.exec(String(name).toLowerCase());
-    return m ? m[0] : null;
-  }
-
-  /* '2:15–3:15pm' → '2:15pm', the form a child's record writes. */
-  function startTime(c) {
-    var parts = String(c.time).split('–');
-    var a = String(parts[0] || '').toLowerCase();
-    if (a.indexOf('am') !== -1 || a.indexOf('pm') !== -1) return a;
-    var b = String(parts[1] || '').toLowerCase();
-    return a + (b.indexOf('am') !== -1 ? 'am' : (b.indexOf('pm') !== -1 ? 'pm' : ''));
-  }
-
-  function onRoster(c, s) {
-    if (!enrolled(s)) return false;
-
-    var text = String(s.cls).toLowerCase();
-    if (String(c.name).toLowerCase().indexOf(String(s.name).toLowerCase()) !== -1) return true;
-
-    var roomHit = text.indexOf(String(c.room).toLowerCase()) !== -1;
-    var dayHit = dayTokens(c).filter(function (d) {
-      return text.indexOf(d.toLowerCase()) !== -1;
-    }).length > 0;
-    if (!dayHit) return false;
-
-    if (text.indexOf('·') === -1) return s.band === c.band;
-    return roomHit || text.indexOf(startTime(c)) !== -1;
-  }
-
-  function campRoster(c) {
-    if (weekOf(c.name) !== CAMP_WEEK) return [];
-    return CAMP_CHILDREN
-      .map(function (id) { return D.student(id); })
-      .filter(function (s) { return s && enrolled(s) && s.band === c.band; });
-  }
-
-  function childrenIn(c) {
-    if (weekOf(c.name)) return campRoster(c);
-    return D.STUDENTS.filter(function (s) { return onRoster(c, s); });
-  }
+  function childrenIn(c) { return D.roster(c.id); }
 
   function flagged(c, kind) {
     return childrenIn(c).filter(function (s) { return s.flagKind === kind; });
+  }
+
+  /* A child can be on two of her rolls in one day — Oscar Zamora is in the
+     camp room at ten and the pop-up at four — so the safety line is drawn per
+     child and names every room she will have them in. Walking the rooms
+     instead would count the same child twice and put the same warning on
+     screen twice. */
+  function flaggedToday(classes, kind) {
+    var seen = {}, out = [];
+    classes.forEach(function (c) {
+      var where = c.room + ' from ' + startOf(c.time);
+      flagged(c, kind).forEach(function (s) {
+        if (seen[s.id]) { seen[s.id].where.push(where); return; }
+        seen[s.id] = { who: s, where: [where] };
+        out.push(seen[s.id]);
+      });
+    });
+    return out;
+  }
+
+  function safetyLine(e) {
+    return e.who.name + ' — ' + e.who.flag + '. ' + sentenceList(e.where) + '.';
   }
 
   /* The register is held in shared state under the key the Classes screen
@@ -296,40 +275,35 @@
     body: function (ctx) {
       var today = roster(ctx);
 
-      /* Safety first, by name, in clay. Every word of it is a fact from
-         Grove.data.STUDENTS and Grove.data.CLASSES. */
-      var alerts = [], watch = [];
-      today.forEach(function (c) {
-        var where = ' ' + c.room + ', from ' + startOf(c.time) + '.';
-        flagged(c, 'bad').forEach(function (s) {
-          alerts.push(s.name + ' — ' + s.flag + '.' + where);
-        });
-        flagged(c, 'warn').forEach(function (s) {
-          watch.push(s.name + ' — ' + s.flag + '.' + where);
-        });
-      });
+      /* Safety first, by name, in clay. Every word of it is a fact from the
+         class rolls and the children's own records. The children carrying a
+         red flag are not all allergies — an inhaler and a care plan are on
+         the same list — so the line counts safety notes, which is what they
+         all are and what the screen they open is called. */
+      var alerts = flaggedToday(today, 'bad');
+      var watch = flaggedToday(today, 'warn');
 
       var safety = alerts.length
         ? ui.notice({
             kind: 'bad',
             title: alerts.length === 1
-              ? 'One child in your rooms today has an allergy'
-              : words(alerts.length) + ' children in your rooms today have an allergy',
-            text: alerts.join(' '),
-            action: { label: 'Safety notes', to: 'sStudents' }
+              ? 'One child in your rooms today has a safety note'
+              : words(alerts.length) + ' children in your rooms today have safety notes',
+            text: alerts.map(safetyLine).join(' '),
+            action: { label: 'All safety notes', to: 'sStudents' }
           })
         : ui.notice({
             kind: 'ok',
-            title: 'No allergies in your rooms today',
+            title: 'No safety notes in your rooms today',
             text: 'Nothing flagged on the children you have. The full notes are on the students screen.',
-            action: { label: 'Safety notes', to: 'sStudents' }
+            action: { label: 'All safety notes', to: 'sStudents' }
           });
 
       var watching = watch.length
         ? ui.notice({
             kind: 'warn',
             title: 'Worth knowing before the doors open',
-            text: watch.join(' ')
+            text: watch.map(safetyLine).join(' ')
           })
         : '';
 
@@ -349,13 +323,13 @@
         today.length
           ? ui.rows(today.map(function (c) {
               var p = planFor(ctx, c);
-              var focus = (p && p.lesson) || FOCUS[c.id] ||
-                (c.band === '—' ? 'One to one' : 'Ages ' + c.band);
+              var focus = (p && p.lesson) || FOCUS[c.id] || '';
               return {
                 lead: ui.timechip(chipTime(c.time)),
                 title: ui.dot(D.program(c.prog).color) + ' ' + esc(className(c)) +
                   (c.band && c.band !== '—' ? esc(' · ages ' + c.band) : ''),
-                sub: esc(c.room + ' · ' + focus),
+                sub: esc([c.room, focus, plural(childrenIn(c).length, 'child', 'children')]
+                  .filter(Boolean).join(' · ')),
                 end: registerState(c),
                 to: 'sAttendance',
                 id: c.id

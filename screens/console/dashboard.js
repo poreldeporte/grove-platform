@@ -17,7 +17,7 @@
        revenue this month, average attendance, how many sit on a waitlist —
        were nothing she could act on this morning at all. Every fact it carried
        is still in the product and nearer its action: the outstanding money is
-       the money rows and their amounts; sessions today and the 53 children
+       the money rows and their amounts; sessions today and the children
        expected are the note under On today; the waitlist total is the waitlist
        table; revenue, enrollment and attendance belong to Reports, which is
        where she goes when the question is how the month is doing rather than
@@ -41,6 +41,18 @@
      - header actions went from three to one. "Add family" opened the family
        list, which is a button that asks nothing, and "New program" is already
        the primary action of the Programs screen, where it belongs
+
+   Reading the roll rather than the prose:
+     - every headcount on this page is counted off a class roster. A session in
+       On today shows the enrolment and the places its class record holds, not
+       a figure travelling alongside the session. Camp extended care is the one
+       session with no class behind it, so it keeps the numbers the day carries
+     - Waiting for a place is built from the classes that have somebody waiting
+       rather than from the distinct strings in the waitlist rows. A class with
+       a queue therefore always names its instructor and its room, and the
+       Waiting column is the class's own count rather than a second tally of
+       the same rows. The over-full class in the decision table reads the same
+       count, so the two cards cannot state different numbers for one class
 
    No sticky action bar, deliberately. This screen dispatches nine separate
    decisions rather than completing one, and there is no honest bulk button for
@@ -117,11 +129,14 @@
     return n + ' days left';
   }
 
-  /* ---- matching the free-text records back to the dataset ----------------------
-     Several records name their subject in prose rather than by key. Every match
-     below is the one the screen that owns that record already makes, so the
-     dashboard cannot state a different figure from Classes, Requests, Billing
-     or Inventory. Each one is a foreign key in waiting. */
+  /* ---- matching the free-text records back to the records they name ------------
+     A class carries its own roll, so anything about a class — who is in it, how
+     many, how many places are left — is counted off that roll. What is left
+     here are the records that still name their subject in prose rather than by
+     key: today's sessions, the supply requests, the make-up credits. Every
+     match below is the one the screen that owns that record already makes, so
+     the dashboard cannot state a different figure from Classes, Requests,
+     Billing or Inventory. Each one is a foreign key in waiting. */
 
   /* '2:15–3:15pm' -> '2:15pm'; '10:00am–1:00pm' -> '10:00am'. */
   function startTime(c) {
@@ -154,20 +169,17 @@
     return hit;
   }
 
-  /* A waitlist entry names its class as 'Mon 3:15pm · Ages 8–11'. Day plus
-     either the start time or the age band, the way Classes and Requests do it.
-     Nobody waits on a camp week, so those are skipped. */
-  function queueClass(label) {
-    var text = String(label).toLowerCase();
-    var hit = null;
-    D.CLASSES.forEach(function (c) {
-      if (hit) return;
-      if (/week \d/.test(String(c.name).toLowerCase())) return;
-      if (!mentionsDay(text, c)) return;
-      if (text.indexOf(startTime(c)) !== -1 ||
-          text.indexOf('ages ' + String(c.band).toLowerCase()) !== -1) hit = c;
+  /* A waitlist entry names its class as 'Mon 3:15pm · Ages 8–11', and the
+     dataset counts a class's queue off that same day-and-start-time opening
+     when it derives the class's waitlist figure. The screen reads the rows back
+     with the rule that produced the number, so the names it lists and the count
+     beside them are the same fact twice. */
+  function queueOpening(c) { return c.day + ' ' + String(c.time).split('–')[0]; }
+
+  function queueFor(c) {
+    return D.WAITLIST.filter(function (w) {
+      return String(w.cls).indexOf(queueOpening(c)) === 0;
     });
-    return hit;
   }
 
   /* Today's sessions carry a title, not a class key: 'Summer Camp · Week 4 ·
@@ -318,6 +330,16 @@
     return D.CLASSES.filter(function (c) { return c.en > c.cap; });
   }
 
+  /* Today's list, each session against the class record behind it. A session on
+     the timetable takes its headcount and its places from that class's roll.
+     Camp extended care answers to no class, so it keeps the day's own figures. */
+  function todaySessions() {
+    return D.TODAY.map(function (s) {
+      var c = sessionClass(s);
+      return { s: s, c: c, en: c ? c.en : s.en, cap: c ? c.cap : s.cap };
+    });
+  }
+
   /* ---- the rows ----------------------------------------------------------------
      One shape for all four kinds: a tag, who or what it is about, where it
      stands, the money if there is any, and the button that ends it. Every
@@ -440,7 +462,7 @@
   }
 
   function capacityRow(c) {
-    var waiting = D.WAITLIST.filter(function (w) { return queueClass(w.cls) === c; }).length;
+    var waiting = c.wl;
     return {
       to: 'classRecord', id: c.id,
       cells: [
@@ -468,15 +490,14 @@
 
   /* ---- queues ------------------------------------------------------------------ */
 
+  /* Every class somebody is waiting on, in timetable order, each with its own
+     queue in the order the families joined it. */
   function queues() {
-    var order = [], byClass = {};
-    D.WAITLIST.forEach(function (w) {
-      if (!byClass[w.cls]) { byClass[w.cls] = []; order.push(w.cls); }
-      byClass[w.cls].push(w);
-    });
-    return order.map(function (cls) {
-      var list = byClass[cls].slice().sort(function (a, b) { return a.pos - b.pos; });
-      return { cls: cls, list: list, c: queueClass(cls) };
+    return D.CLASSES.filter(function (c) { return c.wl > 0; }).map(function (c) {
+      return {
+        c: c,
+        list: queueFor(c).sort(function (a, b) { return a.pos - b.pos; })
+      };
     });
   }
 
@@ -535,24 +556,25 @@
         )
       );
 
+      var sessions = todaySessions();
+
       var today = ui.card(
         {
           title: 'On today',
           head: ui.btn({ label: 'Open classes', kind: 'quiet', size: 'sm', to: 'classes' }),
           flush: true,
-          note: plural(sum(D.TODAY, function (s) { return s.en; }), 'child', 'children') +
-            ' expected across ' + plural(D.TODAY.length, 'session', 'sessions') + '.'
+          note: plural(sum(sessions, function (x) { return x.en; }), 'child', 'children') +
+            ' expected across ' + plural(sessions.length, 'session', 'sessions') + '.'
         },
-        ui.rows(D.TODAY.map(function (s) {
-          var c = sessionClass(s);
-          var full = s.en >= s.cap;
+        ui.rows(sessions.map(function (x) {
+          var full = x.en >= x.cap;
           return {
-            lead: esc(s.time),
-            title: ui.dot(D.program(s.prog).color) + ' ' + esc(s.title),
-            sub: c ? esc(c.staff) : '',
-            end: '<span class="num ' + (full ? 'clay' : 'grove') + '">' + s.en + '/' + s.cap + '</span>',
-            to: c ? 'classRecord' : 'classes',
-            id: c ? c.id : undefined
+            lead: esc(x.s.time),
+            title: ui.dot(D.program(x.s.prog).color) + ' ' + esc(x.s.title),
+            sub: x.c ? esc(x.c.staff) : '',
+            end: '<span class="num ' + (full ? 'clay' : 'grove') + '">' + x.en + '/' + x.cap + '</span>',
+            to: x.c ? 'classRecord' : 'classes',
+            id: x.c ? x.c.id : undefined
           };
         }))
       );
@@ -586,14 +608,14 @@
         ui.table(
           ['Class', 'Places', { label: 'Waiting', align: 'right' }, 'First in line', 'Joined'],
           queued.map(function (q) {
-            var first = q.list[0];
+            var c = q.c, first = q.list[0];
             return {
-              to: q.c ? 'classRecord' : 'requests',
-              id: q.c ? q.c.id : undefined,
+              to: 'classRecord',
+              id: c.id,
               cells: [
-                ui.two(q.cls, q.c ? q.c.staff + ' · ' + q.c.room : 'No class on the timetable'),
-                q.c ? ui.two(q.c.en + ' of ' + q.c.cap, placeNote(q.c)) : ui.mute('—'),
-                esc(q.list.length),
+                ui.two(DAYS[c.day] + ' ' + startTime(c) + ' · ages ' + c.band, c.staff + ' · ' + c.room),
+                ui.two(c.en + ' of ' + c.cap, placeNote(c)),
+                esc(c.wl),
                 ui.two(first.child, first.fam + ' family'),
                 ui.mute(first.joined)
               ]

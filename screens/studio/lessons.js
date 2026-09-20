@@ -53,12 +53,13 @@
      - one studio name and one studio phone number, from Grove.data.STUDIO
 
    Changes from the visual review
-     - who is in the room is now worked out with the rules the register itself
-       uses. It disagreed before: this page put Mia Chen, six, in the Clay Room
-       for camp week 4, while the register Lauren opens from the same page
-       holds Emma, Sophia and Zara — camp runs two rooms at the same hour and
-       the age band on the room decides which. A safety line that names the
-       wrong child is worse than no safety line
+     - who is in the room is the class roll, read with D.roster. This page and
+       the register Lauren opens from it now read the same rows, so they cannot
+       name a different set of children. A safety line that names the wrong
+       child is worse than no safety line
+     - the rooms are full — a camp morning is fourteen or eighteen children, not
+       two — so the safety line says how many the register carries, and the
+       set-out step says how many the room is being laid out for
      - "Take the register" hands the register the class this plan belongs to,
        so the button opens the room the page is about rather than whichever
        class happens to be first in her week
@@ -69,23 +70,15 @@
      - a plan the office has not linked to a class says so, and says the
        register is the list. The page never implies a room is clear
 
-   What is the spec's, not the dataset's
-     - which children hold a camp week 4 record, by child id. Nothing in the
-       dataset joins a child to a class. Which camp room takes each of them is
-       derived from the age band on the room, not written down
-     - nothing else. The lesson, the room, the tutorial, the shelf and the
-       training documents are all read from Grove.data */
+   Nothing on this page is written down in this file
+     - the children in a room, the lesson, the room, the tutorial, the shelf
+       and the training documents all come from Grove.data, and every number is
+       counted off those rows */
 (function () {
   'use strict';
   var Grove = window.Grove, ui = Grove.ui, h = Grove.html, raw = Grove.raw, esc = Grove.esc, D = Grove.data;
 
   var WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  /* The children the prototype holds a camp week 4 record for, by child id —
-     the same list the register uses, for the same reason: nothing in the
-     dataset joins a child to a class. */
-  var CAMP_WEEK = 'week 4';
-  var CAMP_CHILDREN = ['mia', 'emma', 'noah', 'sophia', 'iker', 'zara'];
 
   /* ---- words ----------------------------------------------------------------
      A teacher reads a sentence faster than she reads a tile. "Two children in
@@ -94,6 +87,9 @@
   var WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
   function some(n, one, many) { return (WORDS[n] || String(n)) + ' ' + (n === 1 ? one : many); }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  /* How much of the room the register is carrying. A camp morning is eighteen
+     children, so the size is worth saying — but 'all 1 child' is not English. */
+  function wholeRoom(n) { return n === 1 ? 'the whole room' : 'all ' + n + ' children'; }
   function cap(s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
   function sentence(items) {
     if (items.length < 2) return items.join('');
@@ -118,8 +114,8 @@
     return (parseInt(p[2], 10) || 0) * 10000 + (m === undefined ? 0 : m) * 100 + (parseInt(p[0], 10) || 0);
   }
 
-  /* Today is read from the dataset, so "Today" on this screen can never
-     disagree with the date the rest of the prototype is set on. */
+  /* Today is read from Grove.data, so "Today" on this screen can never
+     disagree with the date every other screen is set on. */
   function todayNum() { return dayNum(String(D.today).replace(/^[A-Za-z]+,\s*/, '')); }
 
   /* '29 Jul 2026' → '29 Jul', which is what the date chip holds. */
@@ -135,18 +131,21 @@
     return list.slice().sort(function (a, b) { return dayNum(a.date) - dayNum(b.date); });
   }
 
-  /* ---- who is in the room ----------------------------------------------------
-     A child's class is the free text on their own record ("Mon 3:15pm · Studio
-     2", "Camp week 4 · Clay Room"), so membership is matched on the signals
-     that string carries. These are the register's rules, repeated here on
-     purpose: a child must not appear in this page's safety line and be missing
-     from the register the same page opens. Camp is the exception — it runs two
-     rooms at the same hour, so a weekday proves nothing about which room a
-     child is in and the age band on the room decides. */
+  /* ---- which class a plan belongs to ------------------------------------------
+     A lesson plan names its session the way the office writes it — 'Camp week 4
+     · Wed', 'Mon 3:15pm · ages 8–11', 'Private · Zara O.' — so plan and class
+     are matched on what those two names share: the camp week plus the room, the
+     day plus the start hour, or the child a private lesson is for. The day and
+     the hour are what identifies a weekly class, so a plan that moves the
+     Monday group into another room still finds its register.
+
+     Once the class is known the roll is D.roster — the same rows the register
+     reads — so nothing about who is in the room is worked out from prose.
+     Where no class matches, the page says the register is the list. */
 
   function dayTokens(c) { return String(c.day).split(/[^A-Za-z]+/).filter(Boolean); }
 
-  /* '2:15–3:15pm' → '2:15pm', the form a child's record writes. */
+  /* '2:15–3:15pm' → '2:15pm', the form a plan writes the hour in. */
   function startTime(c) {
     var parts = String(c.time).split('–');
     var a = String(parts[0] || '').toLowerCase();
@@ -159,46 +158,6 @@
     var m = /week \d+/.exec(String(name).toLowerCase());
     return m ? m[0] : null;
   }
-  function enrolled(s) {
-    return s.cls.indexOf('Waitlisted') === -1 && s.cls.indexOf('Not yet enrolled') === -1;
-  }
-
-  function onRoster(c, s) {
-    if (!enrolled(s)) return false;
-
-    var text = String(s.cls).toLowerCase();
-    if (String(c.name).toLowerCase().indexOf(String(s.name).toLowerCase()) !== -1) return true;
-
-    var roomHit = text.indexOf(String(c.room).toLowerCase()) !== -1;
-    var dayHit = dayTokens(c).filter(function (d) {
-      return text.indexOf(d.toLowerCase()) !== -1;
-    }).length > 0;
-    if (!dayHit) return false;
-
-    if (text.indexOf('·') === -1) return s.band === c.band;
-    return roomHit || text.indexOf(startTime(c)) !== -1;
-  }
-
-  function campRoster(c) {
-    if (weekOf(c.name) !== CAMP_WEEK) return [];
-    return CAMP_CHILDREN
-      .map(function (id) { return D.student(id); })
-      .filter(function (s) { return s && enrolled(s) && s.band === c.band; });
-  }
-
-  function childrenIn(c) {
-    if (weekOf(c.name)) return campRoster(c);
-    return D.STUDENTS.filter(function (s) { return onRoster(c, s); });
-  }
-
-  /* ---- which class a plan belongs to ------------------------------------------
-     A plan names its class in free text — 'Camp week 4 · Wed', 'Mon 3:15pm ·
-     ages 8–11', 'Private · Zara O.' — and there is no class id on it, so the
-     two are matched on what the strings share: the camp week plus the room, the
-     day plus the start time, or the child a private lesson is for. The day and
-     the hour are what identifies a weekly class, so a plan that moves the
-     Monday group into another room still finds its register. Where nothing
-     matches, the page says the register is the list. */
 
   function privateName(s) {
     var m = /private\s*·\s*([A-Za-z]+)/i.exec(String(s));
@@ -217,9 +176,10 @@
     })[0] || null;
   }
 
+  /* The roll of the class a plan belongs to, straight off the class. */
   function roomChildren(p) {
     var c = classForPlan(p);
-    return c ? childrenIn(c) : [];
+    return c ? D.roster(c.id) : [];
   }
   function flaggedIn(list, kind) {
     return list.filter(function (s) { return s.flagKind === kind; });
@@ -362,7 +322,8 @@
           : cap(some(notes.length, 'child you teach today has a medical note',
                      'children you teach today have a medical note')),
         text: (notes.length === 1 ? '' : noteLines(notes).join('. ') + '. ') +
-              'Read the register before the doors open — it carries the whole room.'
+              'Read the register before the doors open — it carries ' +
+              wholeRoom(room.length) + '.'
       });
     }
 
@@ -603,7 +564,8 @@
           : cap(some(notes.length, 'child in this room has a medical note',
                      'children in this room have a medical note')),
         text: (notes.length === 1 ? '' : lines.join('. ') + '. ') +
-              'Read the register before the doors open — it carries the whole room.'
+              'Read the register before the doors open — it carries ' +
+              wholeRoom(room.length) + '.'
       });
     }
 
@@ -648,7 +610,7 @@
     body: function (ctx) {
       var p = plan(ctx);
       var cls = classForPlan(p);
-      var room = cls ? childrenIn(cls) : [];
+      var room = cls ? D.roster(cls.id) : [];
 
       var watch = flaggedIn(room, 'warn');
       var watching = watch.length ? ui.notice({
